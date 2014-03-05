@@ -8,7 +8,7 @@ https://launchpad.net/gcc-arm-embedded
 - install 'doxygen' if you want the doc generated (optional)
 - make sure 'PATH' is set properly e.g. in '~/.bashrc'
   so that cmake finds the cross-compiler
-- make sure you belongs to group 'dialout'
+- make sure you belong to group 'dialout'
   if you use 'minicom' or 'miniterm.py /dev/ttyUSB1 500000'
 
 # open m3
