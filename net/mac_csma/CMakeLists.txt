@@ -21,4 +21,4 @@
 add_library(mac_csma STATIC 
 	mac_csma
 	)
-target_link_libraries(mac_csma softtimer serial_id platform)
+target_link_libraries(mac_csma softtimer platform)
