@@ -32,6 +32,7 @@
 #include "unique_id.h"
 #include "random.h"
 
+#define LOG_LEVEL LOG_LEVEL_ERROR
 #include "debug.h"
 
 /** Enter RX state */
