@@ -39,7 +39,7 @@
 static iotlab_serial_handler_t handler_config_powerpoll;
 static int32_t config_powerpoll(uint8_t cmd_type, packet_t *pkt);
 static void polling_sample(handler_arg_t arg, float voltage, float current,
-        float power, float shunt_voltage, uint32_t timestamp);
+        float power, uint32_t timestamp);
 
 void iotlab_polling_start()
 {
@@ -107,7 +107,7 @@ static int32_t config_powerpoll(uint8_t cmd_type, packet_t *pkt)
     return 1;
 }
 static void polling_sample(handler_arg_t arg, float voltage, float current,
-        float power, float shunt_voltage, uint32_t timestamp)
+        float power, uint32_t timestamp)
 {
     // Sample received pack and send!
     packet_t *pkt = packet_alloc(IOTLAB_SERIAL_PACKET_OFFSET);

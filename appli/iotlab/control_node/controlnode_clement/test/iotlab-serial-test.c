@@ -67,6 +67,11 @@ int main()
     // Start the soft timer
     soft_timer_init();
 
+    if (uart_external == NULL)
+    {
+        uart_external = uart_print;
+    }
+
     printf("Starting Serial (uart:%x, external:%x)\n", uart_print, uart_external);
     // Start the serial lib
     iotlab_serial_start(500000);

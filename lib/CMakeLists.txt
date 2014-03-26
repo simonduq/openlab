@@ -54,3 +54,5 @@ endif(${PLATFORM_HAS_SD})
 
 add_library(packet STATIC packet/packet packet/packet_storage)
 target_link_libraries(packet freertos)
+
+add_subdirectory(oml)

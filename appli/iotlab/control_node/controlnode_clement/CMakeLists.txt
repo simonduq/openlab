@@ -1,10 +1,10 @@
 #
-# This file is part of HiKoB Openlab. 
-# 
+# This file is part of HiKoB Openlab.
+#
 # HiKoB Openlab is free software: you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public License
 # as published by the Free Software Foundation, version 3.
-# 
+#
 # HiKoB Openlab is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -18,13 +18,13 @@
 #
 
 if(${PLATFORM_HAS_INA226})
-    add_executable(iotlab_controlnode 
+    add_executable(controlnode_clement_hikob
         controlnode
         iotlab-serial
         iotlab-control
         iotlab-polling
         iotlab-radio)
-    target_link_libraries(iotlab_controlnode
+    target_link_libraries(controlnode_clement_hikob
         packet
         platform)
 endif(${PLATFORM_HAS_INA226})

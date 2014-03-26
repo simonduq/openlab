@@ -1,0 +1,4 @@
+add_subdirectory(tests_pps_nico)
+add_subdirectory(test_control_node_absolute_time)
+add_subdirectory(test_stack_overflow_scanf)
+add_subdirectory(oml)
