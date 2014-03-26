@@ -18,32 +18,36 @@
  */
 
 /*
- * fiteco-a8.h
+ * iotlab-a8-m3_net.c
  *
  *  Created on: Jul 10, 2012
  *      Author: Clément Burin des Roziers <clement.burin-des-roziers.at.hikob.com>
  */
 
-#ifndef FITECO_A8_H_
-#define FITECO_A8_H_
-
 #include "platform.h"
-#include "stm32f1xx.h"
-#include "rf2xx.h"
+#include "iotlab-a8-m3.h"
 
-/* Set default uart_print to 5000000Bd */
-#ifndef PLATFORM_UART_PRINT_BAUDRATE
-#define PLATFORM_UART_PRINT_BAUDRATE 500000
-#endif
+#include "phy_rf2xx/phy_rf2xx.h"
+#include "mac_csma.h"
+#include "mac_tdma.h"
 
-/* Peripherals */
-extern rf2xx_t rf231;
+/* Phy Instantiation */
+static phy_rf2xx_t phy_rf231;
+phy_t platform_phy = &phy_rf231;
 
-void platform_leds_setup();
-void platform_drivers_setup();
-void platform_disable_uart();
-void platform_periph_setup();
-void platform_lib_setup();
-void platform_net_setup();
+const mac_csma_config_t mac_csma_config =
+{
+    .phy = &phy_rf231,
+};
 
-#endif /* FITECO_A8_H_ */
+const mac_tdma_config_t mac_tdma_config =
+{
+    .phy = &phy_rf231,
+};
+
+void platform_net_setup()
+{
+    // Setup the PHY libraries
+    phy_rf2xx_init(&phy_rf231, rf231, TIM_3, TIMER_CHANNEL_4);
+}
+

@@ -1,6 +1,6 @@
 /*
  * In the build directory just under the openlab directory:
- * cmake .. -DRELEASE=4 -DPLATFORM=fiteco-gwt
+ * cmake .. -DRELEASE=4 -DPLATFORM=iotlab-cn
  * -DRELEASE=2 to avoid any log_printf but not enough
  * LOG_LEVEL_DISABLED 4 from debug.h
  *

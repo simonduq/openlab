@@ -18,14 +18,14 @@
  */
 
 /*
- * fiteco-m3_lib.c
+ * iotlab-a8-m3_lib.c
  *
  *  Created on: Jul 10, 2012
  *      Author: Clément Burin des Roziers <clement.burin-des-roziers.at.hikob.com>
  */
 
 #include "platform.h"
-#include "fiteco-m3.h"
+#include "iotlab-a8-m3.h"
 
 #include "softtimer/soft_timer_.h"
 

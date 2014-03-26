@@ -18,14 +18,14 @@
  */
 
 /*
- * fiteco-gwt_periph.c
+ * iotlab-cn_periph.c
  *
  *  Created on: Jul 10, 2012
  *      Author: Clément Burin des Roziers <clement.burin-des-roziers.at.hikob.com>
  */
 
 #include "platform.h"
-#include "fiteco-gwt.h"
+#include "iotlab-cn.h"
 
 #include "rcc.h"
 #include "nvic_.h"

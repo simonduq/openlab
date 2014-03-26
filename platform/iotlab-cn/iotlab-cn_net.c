@@ -18,28 +18,36 @@
  */
 
 /*
- * fiteco-a8_lib.c
+ * iotlab-cn_net.c
  *
  *  Created on: Jul 10, 2012
  *      Author: Clément Burin des Roziers <clement.burin-des-roziers.at.hikob.com>
  */
 
 #include "platform.h"
-#include "fiteco-a8.h"
+#include "iotlab-cn.h"
 
-#include "softtimer/soft_timer_.h"
+#include "phy_rf2xx/phy_rf2xx.h"
+#include "mac_csma.h"
+#include "mac_tdma.h"
 
-#if !defined(PLATFORM_OS) || (PLATFORM_OS == FREERTOS)
-#include "event.h"
-#endif
+/* Phy Instantiation */
+static phy_rf2xx_t phy_rf231;
+phy_t platform_phy = &phy_rf231;
 
-void platform_lib_setup()
+const mac_csma_config_t mac_csma_config =
 {
-    // Setup the software timer
-    soft_timer_config(TIM_3, TIMER_CHANNEL_1);
-    timer_start(TIM_3, 0xFFFF, soft_timer_update, NULL);
+    .phy = &phy_rf231,
+};
 
-    // Setup the event system
-    event_init();
+const mac_tdma_config_t mac_tdma_config =
+{
+    .phy = &phy_rf231,
+};
+
+void platform_net_setup()
+{
+    // Setup the PHY libraries
+    phy_rf2xx_init(&phy_rf231, rf231, TIM_3, TIMER_CHANNEL_4);
 }
 

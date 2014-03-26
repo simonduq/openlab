@@ -8,7 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "platform.h"
-#include "fiteco-a8/fiteco-a8.h"
+#include "iotlab-a8-m3/iotlab-a8-m3.h"
 #include "printf.h"
 #include "gpio.h"
 #include "afio.h"

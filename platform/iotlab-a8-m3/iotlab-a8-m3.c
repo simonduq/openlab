@@ -18,14 +18,14 @@
  */
 
 /*
- * fiteco-a8.c
+ * iotlab-a8-m3.c
  *
  *  Created on: Jul 10, 2012
  *      Author: Clément Burin des Roziers <clement.burin-des-roziers.at.hikob.com>
  */
 
 #include "platform.h"
-#include "fiteco-a8.h"
+#include "iotlab-a8-m3.h"
 
 #include "watchdog.h"
 #include "rcc.h"

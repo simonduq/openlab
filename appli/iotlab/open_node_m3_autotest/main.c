@@ -1,7 +1,7 @@
 /*
  * In the build directory just under the openlab directory:
- * cmake .. -DRELEASE=2 -DPLATFORM=fiteco-m3
- * cmake .. -DRELEASE=2 -DPLATFORM=fiteco-a8
+ * cmake .. -DRELEASE=2 -DPLATFORM=iotlab-m3
+ * cmake .. -DRELEASE=2 -DPLATFORM=iotlab-a8-m3
  * -DRELEASE=2 to avoid any log_printf
  */
 #include <stdint.h>
@@ -14,7 +14,7 @@
 #include "unique_id.h"
 #include "l3g4200d.h"
 #include "lsm303dlhc.h"
-#ifdef FITECO_M3
+#ifdef IOTLAB_M3
 #include "lps331ap.h"
 #include "isl29020.h"
 #include "n25xxx.h"
@@ -62,7 +62,7 @@ static void char_handler_irq(handler_arg_t arg, uint8_t c);
 static void vParseFrame();
 
 
-#ifdef FITECO_A8
+#ifdef IOTLAB_A8_M3
 static volatile uint32_t seconds = 0;
 
 static void pps_handler_irq(handler_arg_t arg)
@@ -161,7 +161,7 @@ ping_pong_cleanup:
     phy_reset(platform_phy);
 }
 
-#ifdef FITECO_M3
+#ifdef IOTLAB_M3
 static int test_flash_nand()
 {
     static uint8_t buf_EE[256] = {[0 ... 255] = 0xEE};
@@ -176,7 +176,7 @@ static int test_flash_nand()
     // check read values
     return memcmp(buf_EE, buf, sizeof(buf));
 }
-#endif // FITECO_M3
+#endif // IOTLAB_M3
 
 
 /**
@@ -198,7 +198,7 @@ int main(void) {
     soft_timer_init();
 
     //init sensor
-#ifdef FITECO_M3
+#ifdef IOTLAB_M3
     isl29020_prepare(ISL29020_LIGHT__AMBIENT, ISL29020_RESOLUTION__16bit,
             ISL29020_RANGE__1000lux);
     isl29020_sample_continuous();
@@ -243,7 +243,7 @@ static void vParseFrame()
     char *i2c2_err_msg;
     static soft_timer_t led_alarm;
 
-#ifdef FITECO_M3
+#ifdef IOTLAB_M3
     uint32_t pressure;
 #endif
 
@@ -281,7 +281,7 @@ static void vParseFrame()
         break;
 
 
-#ifdef FITECO_M3
+#ifdef IOTLAB_M3
 
     case GET_LIGHT:
         printf("ACK LIGHT = %f lux\n", isl29020_read_sample());
@@ -342,7 +342,7 @@ static void vParseFrame()
             printf("NACK %s\n", i2c2_err_msg);
         break;
 
-#ifdef FITECO_A8
+#ifdef IOTLAB_A8_M3
 
     case TST_GPIO_PPS_START:
 

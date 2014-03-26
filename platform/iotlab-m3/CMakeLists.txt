@@ -26,12 +26,12 @@ include_directories(
 # Add the platform library
 add_library(platform STATIC
 	${PROJECT_SOURCE_DIR}/platform/platform
-	fiteco-m3
-	fiteco-m3_leds
-	fiteco-m3_drivers
-	fiteco-m3_lib
-	fiteco-m3_periph
-	fiteco-m3_net
+	iotlab-m3
+	iotlab-m3_leds
+	iotlab-m3_drivers
+	iotlab-m3_lib
+	iotlab-m3_periph
+	iotlab-m3_net
 	)
 
 # Allow for some more cyclic deps in libraries

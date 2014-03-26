@@ -1,7 +1,7 @@
 set(OOCD_TARGET stm32f1x)
 
-set(PLATFORM_OOCD_ITF ${PROJECT_SOURCE_DIR}/platform/scripts/fiteco-m3.cfg)
-set(MY_C_FLAGS "${MY_C_FLAGS} -DFITECO_M3")
+set(PLATFORM_OOCD_ITF ${PROJECT_SOURCE_DIR}/platform/scripts/iotlab-m3.cfg)
+set(MY_C_FLAGS "${MY_C_FLAGS} -DIOTLAB_M3")
 
 set(LINKSCRIPT ../scripts/stm32f103rey6.ld)
 

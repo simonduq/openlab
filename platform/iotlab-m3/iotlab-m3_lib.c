@@ -18,32 +18,28 @@
  */
 
 /*
- * fiteco-m3.h
+ * iotlab-m3_lib.c
  *
  *  Created on: Jul 10, 2012
  *      Author: Clément Burin des Roziers <clement.burin-des-roziers.at.hikob.com>
  */
 
-#ifndef FITECO_M3_H_
-#define FITECO_M3_H_
-
 #include "platform.h"
-#include "stm32f1xx.h"
-#include "rf2xx.h"
+#include "iotlab-m3.h"
 
-/* Set default uart_print to 5000000Bd */
-#ifndef PLATFORM_UART_PRINT_BAUDRATE
-#define PLATFORM_UART_PRINT_BAUDRATE 500000
+#include "softtimer/soft_timer_.h"
+
+#if !defined(PLATFORM_OS) || (PLATFORM_OS == FREERTOS)
+#include "event.h"
 #endif
 
-/* Peripherals */
-extern rf2xx_t rf231;
+void platform_lib_setup()
+{
+    // Setup the software timer
+    soft_timer_config(TIM_3, TIMER_CHANNEL_1);
+    timer_start(TIM_3, 0xFFFF, soft_timer_update, NULL);
 
-void platform_leds_setup();
-void platform_drivers_setup();
-void platform_disable_uart();
-void platform_periph_setup();
-void platform_lib_setup();
-void platform_net_setup();
+    // Setup the event system
+    event_init();
+}
 
-#endif /* FITECO_M3_H_ */

@@ -1,6 +1,6 @@
 /*
  * In the build directory just under the openlab directory:
- * cmake .. -DRELEASE=2 -DPLATFORM=fiteco-gwt
+ * cmake .. -DRELEASE=2 -DPLATFORM=iotlab-cn
  * -DRELEASE=2 to avoid any log_printf
  *
  */

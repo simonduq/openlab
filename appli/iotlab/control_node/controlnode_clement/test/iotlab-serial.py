@@ -12,7 +12,7 @@ import threading
 import traceback
 
 
-TTY_PATH = "/dev/ttyFITECO_GWT"
+TTY_PATH = "/dev/ttyCN"
 
 class Handler:
     def __init__(self):

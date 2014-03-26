@@ -18,14 +18,14 @@
  */
 
 /*
- * fiteco-m3_periph.c
+ * iotlab-a8-m3_periph.c
  *
  *  Created on: Jul 10, 2012
  *      Author: Clément Burin des Roziers <clement.burin-des-roziers.at.hikob.com>
  */
 
 #include "platform.h"
-#include "fiteco-m3.h"
+#include "iotlab-a8-m3.h"
 
 #include "rcc.h"
 #include "nvic_.h"
@@ -33,11 +33,6 @@
 #include "rf2xx/rf2xx_.h"
 #include "l3g4200d/l3g4200d_.h"
 #include "lsm303dlhc/lsm303dlhc_.h"
-#include "lps331ap/lps331ap_.h"
-#include "isl29020/isl29020_.h"
-#include "n25xxx/n25xxx_.h"
-
-#include "debug.h"
 
 /** Radio initialization procedure */
 static void radio_setup();
@@ -48,15 +43,6 @@ static void gyro_setup();
 /** Accelero/magneto initialization procedure */
 static void accmag_setup();
 
-/** Pressure sensor initialization procedure */
-static void pres_setup();
-
-/** Light sensor initialization procedure */
-static void light_setup();
-
-/** SPI flash initialization procedure */
-static void storage_setup();
-
 void platform_periph_setup()
 {
     // Configure the radio
@@ -64,11 +50,6 @@ void platform_periph_setup()
     // Configure the IMU
     gyro_setup();
     accmag_setup();
-    pres_setup();
-    // Configure the light sensor
-    light_setup();
-    // Configure the storage
-    storage_setup();
 }
 
 /* Radio instantiation */
@@ -82,31 +63,31 @@ void platform_periph_setup()
  */
 static const _rf2xx_config_t _rf231_config =
 {
-/** SPI1 */
-.spi = SPI_1,
+        /** SPI2 */
+        .spi = SPI_2,
 
-/** CSN: PA4 */
-.csn_gpio = GPIO_A, .csn_pin = GPIO_PIN_4,
+        /** CSN: PA4 */
+        .csn_gpio = GPIO_A, .csn_pin = GPIO_PIN_4,
 
-/** RSTN: PC1 */
-.rstn_gpio = GPIO_C, .rstn_pin = GPIO_PIN_1,
+        /** RSTN: PC1 */
+        .rstn_gpio = GPIO_C, .rstn_pin = GPIO_PIN_1,
 
-/** SPL_TR: PA2 */
-.slp_tr_gpio = GPIO_A, .slp_tr_pin = GPIO_PIN_2,
+        /** SPL_TR: PA2 */
+        .slp_tr_gpio = GPIO_A, .slp_tr_pin = GPIO_PIN_2,
 
-/** IRQ: EXTI 4 */
-.irq_exti_line = EXTI_LINE_Px4,
+        /** IRQ: EXTI 4 */
+        .irq_exti_line = EXTI_LINE_Px4,
 
-/** DIG2: TIM3CH3 */
-.dig2_timer = TIM_3, .dig2_channel = TIMER_CHANNEL_3,
+        /** DIG2: TIM3CH3 */
+        .dig2_timer = TIM_3, .dig2_channel = TIMER_CHANNEL_3,
 
-/** External PA: none */
-.pa_enable_gpio = NULL, .pa_enable_pin = 0,
+        /** External PA: none */
+        .pa_enable_gpio = NULL, .pa_enable_pin = 0,
 
-/** Type: 2.4GHz */
-.type = RF2XX_TYPE_2_4GHz };
-static _rf2xx_t _rf231 =
-{ .config = &_rf231_config };
+        /** Type: 2.4GHz */
+        .type = RF2XX_TYPE_2_4GHz
+};
+static _rf2xx_t _rf231 = {.config = &_rf231_config};
 rf2xx_t rf231 = &_rf231;
 
 static void radio_setup()
@@ -127,48 +108,34 @@ static void radio_setup()
 
 static void gyro_setup()
 {
-    gpio_set_input(GPIO_C, GPIO_PIN_0);
-    afio_select_exti_pin(EXTI_LINE_Px0, AFIO_PORT_C);
-    nvic_enable_interrupt_line(NVIC_IRQ_LINE_EXTI0);
-    l3g4200d_config(I2C_1, EXTI_LINE_Px0, GPIO_C, GPIO_PIN_0);
+    // Set PB9 input for GYRO DRDY
+    gpio_set_input(GPIO_C, GPIO_PIN_9);
+    afio_select_exti_pin(EXTI_LINE_Px9, AFIO_PORT_C);
+    nvic_enable_interrupt_line(NVIC_IRQ_LINE_EXTI9_5);
+    l3g4200d_config(I2C_1, EXTI_LINE_Px9, GPIO_C, GPIO_PIN_9);
 }
 
 static void accmag_setup()
 {
-    afio_select_exti_pin(EXTI_LINE_Px1, AFIO_PORT_B);
-    afio_select_exti_pin(EXTI_LINE_Px2, AFIO_PORT_B);
-    afio_select_exti_pin(EXTI_LINE_Px12, AFIO_PORT_B);
-
-    nvic_enable_interrupt_line(NVIC_IRQ_LINE_EXTI1);
-    nvic_enable_interrupt_line(NVIC_IRQ_LINE_EXTI2);
+    // Set PA11 input for MAG DRDY
+    gpio_set_input(GPIO_A, GPIO_PIN_11);
+    afio_select_exti_pin(EXTI_LINE_Px11, AFIO_PORT_A);
     nvic_enable_interrupt_line(NVIC_IRQ_LINE_EXTI15_10);
-    
-    gpio_set_input(GPIO_B, GPIO_PIN_2);
+
+    // Set PB12 for ACC INT1
     gpio_set_input(GPIO_B, GPIO_PIN_12);
-    gpio_set_input(GPIO_B, GPIO_PIN_1);
-    
+    afio_select_exti_pin(EXTI_LINE_Px12, AFIO_PORT_B);
+    nvic_enable_interrupt_line(NVIC_IRQ_LINE_EXTI15_10);
+
+    // Set PB2 for ACC INT2
+    gpio_set_input(GPIO_B, GPIO_PIN_2);
+    afio_select_exti_pin(EXTI_LINE_Px2, AFIO_PORT_B);
+    nvic_enable_interrupt_line(NVIC_IRQ_LINE_EXTI2);
+
+    // Configure LSM303DLHC
     lsm303dlhc_config(I2C_1,
-                      /* Mag Drdy */EXTI_LINE_Px2, GPIO_B, GPIO_PIN_2,
+                      /* Mag Drdy */EXTI_LINE_Px11, GPIO_A, GPIO_PIN_11,
                       /* Acc Int1 */EXTI_LINE_Px12, GPIO_B, GPIO_PIN_12,
-                      /* Acc Int2 */EXTI_LINE_Px1, GPIO_B, GPIO_PIN_1);
+                      /* Acc Int2 */EXTI_LINE_Px2, GPIO_B, GPIO_PIN_2);
 }
 
-static void pres_setup()
-{
-    lps331ap_config(I2C_1, 0);
-}
-
-static void light_setup()
-{
-    isl29020_config(I2C_1, 0);
-    isl29020_powerdown();
-}
-
-static void storage_setup()
-{
-    // Configure the flash chips
-    n25xxx_config(SPI_2, GPIO_A, GPIO_PIN_11, GPIO_C, GPIO_PIN_6, GPIO_C,
-            GPIO_PIN_9);
-
-    n25xxx_init();
-}

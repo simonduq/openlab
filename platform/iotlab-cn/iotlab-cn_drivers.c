@@ -18,7 +18,7 @@
  */
 
 /*
- * fiteco-gwt_drivers.c
+ * iotlab-cn_drivers.c
  *
  *  Created on: Jul 10, 2012
  *      Author: Clément Burin des Roziers <clement.burin-des-roziers.at.hikob.com>
@@ -26,7 +26,7 @@
 
 
 #include "platform.h"
-#include "fiteco-gwt.h"
+#include "iotlab-cn.h"
 
 #include "memmap.h"
 #include "nvic_.h"

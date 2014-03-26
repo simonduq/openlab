@@ -13,8 +13,8 @@ https://launchpad.net/gcc-arm-embedded
 
 # open m3
 mkdir build.m3 && cd build.m3
-cmake .. -DPLATFORM=fiteco-m3
+cmake .. -DPLATFORM=iotlab-m3
 
 # open a8 (m3 node)
 mkdir build.a8 && cd build.a8
-cmake .. -DPLATFORM=fiteco-a8
+cmake .. -DPLATFORM=iotlab-a8-m3

@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
   unsigned char seconds_string[2];
   uint8_t rx_buff[256];
   uint8_t tx_buff[256];
-  char *M3_path = "/dev/ttyFITECO_A8";
+  char *M3_path = "/dev/ttyA8_M3";
   char *GPS_path= "/dev/ttyO1"; 
   char rxchar;
   int ret;

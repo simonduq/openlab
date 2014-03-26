@@ -18,61 +18,25 @@
  */
 
 /*
- * fiteco-gwt_leds.c
+ * iotlab-cn_lib.c
  *
  *  Created on: Jul 10, 2012
  *      Author: Clément Burin des Roziers <clement.burin-des-roziers.at.hikob.com>
  */
 
-
 #include "platform.h"
-#include "fiteco-gwt.h"
+#include "iotlab-cn.h"
 
-void platform_leds_setup()
+#include "softtimer/soft_timer_.h"
+#include "event.h"
+
+void platform_lib_setup()
 {
-    // Configure the LEDs
-    gpio_set_output(GPIO_B, GPIO_PIN_5);
-    gpio_set_output(GPIO_D, GPIO_PIN_2);
+    // Setup the software timer
+    soft_timer_config(TIM_3, TIMER_CHANNEL_1);
+    timer_start(TIM_3, 0xFFFF, soft_timer_update, NULL);
 
-    // Set LEDs
-    leds_on(LED_0 + LED_1);
-}
-
-void leds_off(uint8_t leds)
-{
-    if (leds & LED_0)
-    {
-        gpio_pin_set(GPIO_B, GPIO_PIN_5);
-    }
-
-    if (leds & LED_1)
-    {
-        gpio_pin_set(GPIO_D, GPIO_PIN_2);
-    }
-}
-void leds_on(uint8_t leds)
-{
-    if (leds & LED_0)
-    {
-        gpio_pin_clear(GPIO_B, GPIO_PIN_5);
-    }
-
-    if (leds & LED_1)
-    {
-        gpio_pin_clear(GPIO_D, GPIO_PIN_2);
-    }
-}
-
-void leds_toggle(uint8_t leds)
-{
-    if (leds & LED_0)
-    {
-        gpio_pin_toggle(GPIO_B, GPIO_PIN_5);
-    }
-
-    if (leds & LED_1)
-    {
-        gpio_pin_toggle(GPIO_D, GPIO_PIN_2);
-    }
+    // Setup the event system
+    event_init();
 }
 

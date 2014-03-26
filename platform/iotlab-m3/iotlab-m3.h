@@ -18,36 +18,32 @@
  */
 
 /*
- * fiteco-gwt_net.c
+ * iotlab-m3.h
  *
  *  Created on: Jul 10, 2012
  *      Author: Clément Burin des Roziers <clement.burin-des-roziers.at.hikob.com>
  */
 
+#ifndef IOTLAB_M3_H_
+#define IOTLAB_M3_H_
+
 #include "platform.h"
-#include "fiteco-gwt.h"
+#include "stm32f1xx.h"
+#include "rf2xx.h"
 
-#include "phy_rf2xx/phy_rf2xx.h"
-#include "mac_csma.h"
-#include "mac_tdma.h"
+/* Set default uart_print to 5000000Bd */
+#ifndef PLATFORM_UART_PRINT_BAUDRATE
+#define PLATFORM_UART_PRINT_BAUDRATE 500000
+#endif
 
-/* Phy Instantiation */
-static phy_rf2xx_t phy_rf231;
-phy_t platform_phy = &phy_rf231;
+/* Peripherals */
+extern rf2xx_t rf231;
 
-const mac_csma_config_t mac_csma_config =
-{
-    .phy = &phy_rf231,
-};
+void platform_leds_setup();
+void platform_drivers_setup();
+void platform_disable_uart();
+void platform_periph_setup();
+void platform_lib_setup();
+void platform_net_setup();
 
-const mac_tdma_config_t mac_tdma_config =
-{
-    .phy = &phy_rf231,
-};
-
-void platform_net_setup()
-{
-    // Setup the PHY libraries
-    phy_rf2xx_init(&phy_rf231, rf231, TIM_3, TIMER_CHANNEL_4);
-}
-
+#endif /* IOTLAB_M3_H_ */

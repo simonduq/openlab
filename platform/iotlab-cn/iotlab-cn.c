@@ -18,14 +18,17 @@
  */
 
 /*
- * fiteco-m3.c
+ * iotlab-cn.c
  *
  *  Created on: Jul 10, 2012
  *      Author: Clément Burin des Roziers <clement.burin-des-roziers.at.hikob.com>
  */
 
 #include "platform.h"
-#include "fiteco-m3.h"
+#include "iotlab-cn.h"
+
+#include "FreeRTOS.h"
+#include "task.h"
 
 #include "watchdog.h"
 #include "rcc.h"
@@ -38,7 +41,6 @@
 #include "printf.h"
 #include "debug.h"
 
-platform_reset_cause_t platform_reset_cause;
 __attribute__((weak)) int32_t platform_should_start_watchdog();
 
 void platform_init()
@@ -84,7 +86,6 @@ void platform_init()
     // Feed the random number generator
     random_init(uid->uid32[2]);
 
-    log_printf("\n\nPlatform starting in ");
     uint32_t i;
 
     for (i = 1; i > 0; i--)
@@ -102,4 +103,3 @@ void platform_init()
 #endif
 }
 
-void button_set_handler(handler_t handler, handler_arg_t handler_arg) {}

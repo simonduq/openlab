@@ -4,7 +4,7 @@ include_directories(
 	${PROJECT_SOURCE_DIR}/drivers/stm32f1xx)
 
 # only run on A8 with a GPS
-if (PLATFORM STREQUAL "fiteco-a8")
+if (PLATFORM STREQUAL "iotlab-a8-m3")
 
 add_executable(getTime getTime)
 add_executable(getTimeRadioSnd getTimeRadioSnd)
@@ -16,4 +16,4 @@ target_link_libraries(getTimeRadioSnd platform printf)
 target_link_libraries(getTimeRadioRcv platform printf)
 target_link_libraries(getTimeStats platform printf)
 
-endif (PLATFORM STREQUAL "fiteco-a8")
+endif (PLATFORM STREQUAL "iotlab-a8-m3")

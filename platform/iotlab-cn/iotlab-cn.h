@@ -18,25 +18,32 @@
  */
 
 /*
- * fiteco-gwt_lib.c
+ * iotlab-cn.h
  *
  *  Created on: Jul 10, 2012
  *      Author: Clément Burin des Roziers <clement.burin-des-roziers.at.hikob.com>
  */
 
+#ifndef IOTLAB_CN_
+#define IOTLAB_CN_
+
 #include "platform.h"
-#include "fiteco-gwt.h"
+#include "stm32f1xx.h"
+#include "rf2xx.h"
 
-#include "softtimer/soft_timer_.h"
-#include "event.h"
+/* Set default uart_print to 5000000Bd */
+#ifndef PLATFORM_UART_PRINT_BAUDRATE
+#define PLATFORM_UART_PRINT_BAUDRATE 500000
+#endif
 
-void platform_lib_setup()
-{
-    // Setup the software timer
-    soft_timer_config(TIM_3, TIMER_CHANNEL_1);
-    timer_start(TIM_3, 0xFFFF, soft_timer_update, NULL);
+/* Peripherals */
+extern rf2xx_t rf231;
 
-    // Setup the event system
-    event_init();
-}
+void platform_leds_setup();
+void platform_drivers_setup();
+void platform_disable_uart();
+void platform_periph_setup();
+void platform_lib_setup();
+void platform_net_setup();
 
+#endif /* IOTLAB_CN_ */

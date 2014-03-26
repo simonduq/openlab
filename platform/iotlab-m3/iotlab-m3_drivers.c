@@ -18,7 +18,7 @@
  */
 
 /*
- * fiteco-a8_drivers.c
+ * iotlab-m3_drivers.c
  *
  *  Created on: Jul 10, 2012
  *      Author: Clément Burin des Roziers <clement.burin-des-roziers.at.hikob.com>
@@ -26,7 +26,7 @@
 
 
 #include "platform.h"
-#include "fiteco-a8.h"
+#include "iotlab-m3.h"
 
 #include "memmap.h"
 #include "nvic_.h"
@@ -63,8 +63,17 @@ void platform_drivers_setup()
     uart_enable(UART_1, PLATFORM_UART_PRINT_BAUDRATE);
 
     // Configure the DMA for the SPIs
+    dma_enable(DMA_1_CH2);
+    dma_enable(DMA_1_CH3);
     dma_enable(DMA_1_CH4);
     dma_enable(DMA_1_CH5);
+
+    // Configure the SPI 1
+    gpio_set_spi_clk(GPIO_A, GPIO_PIN_5);
+    gpio_set_spi_miso(GPIO_A, GPIO_PIN_6);
+    gpio_set_spi_mosi(GPIO_A, GPIO_PIN_7);
+    spi_set_dma(SPI_1, DMA_1_CH2, DMA_1_CH3);
+    spi_enable(SPI_1, 4000000, SPI_CLOCK_MODE_IDLE_LOW_RISING);
 
     // Configure the SPI 2
     gpio_set_spi_clk(GPIO_B, GPIO_PIN_13);
@@ -128,6 +137,11 @@ void usart1_isr()
     uart_handle_interrupt(UART_1);
 }
 
+void spi1_isr()
+{
+    spi_handle_interrupt(SPI_1);
+}
+
 void spi2_isr()
 {
     spi_handle_interrupt(SPI_2);
@@ -143,6 +157,15 @@ void i2c1_er_isr()
     i2c_handle_er_interrupt(I2C_1);
 }
 
+void dma1_channel2_isr()
+{
+    dma_handle_interrupt(DMA_1_CH2);
+}
+
+void dma1_channel3_isr()
+{
+    dma_handle_interrupt(DMA_1_CH3);
+}
 void dma1_channel4_isr()
 {
     dma_handle_interrupt(DMA_1_CH4);

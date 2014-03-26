@@ -35,7 +35,7 @@ void gpio_trigger_irq_rising(struct gpio_conf *output)
  */
 
 
-#ifdef FITECO_M3
+#ifdef IOTLAB_M3
 struct gpio_conf gpio_config[4] = {
     {}, // allow using gpio_config[gpio_num] directly
     {
@@ -61,7 +61,7 @@ struct gpio_conf gpio_config[4] = {
     },
 };
 
-#elif FITECO_A8
+#elif IOTLAB_A8_M3
 struct gpio_conf gpio_config[4] = {
     {}, // allow using gpio_config[gpio_num] directly
     {
@@ -86,7 +86,7 @@ struct gpio_conf gpio_config[4] = {
         .nvic_line = NVIC_IRQ_LINE_EXTI3,
     },
 };
-#elif FITECO_GWT
+#elif IOTLAB_CN
 struct gpio_conf gpio_config[4] = {
     {}, // allow using gpio_config[gpio_num] directly
     {

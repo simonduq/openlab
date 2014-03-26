@@ -18,7 +18,7 @@
  */
 
 /*
- * fiteco-m3_leds.c
+ * iotlab-m3_leds.c
  *
  *  Created on: Jul 10, 2012
  *      Author: Clément Burin des Roziers <clement.burin-des-roziers.at.hikob.com>
@@ -26,7 +26,7 @@
 
 
 #include "platform.h"
-#include "fiteco-m3.h"
+#include "iotlab-m3.h"
 
 void platform_leds_setup()
 {

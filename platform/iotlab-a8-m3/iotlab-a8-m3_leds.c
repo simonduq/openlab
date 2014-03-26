@@ -18,7 +18,7 @@
  */
 
 /*
- * fiteco-a8_leds.c
+ * iotlab-a8-m3_leds.c
  *
  *  Created on: Jul 10, 2012
  *      Author: Clément Burin des Roziers <clement.burin-des-roziers.at.hikob.com>
@@ -26,7 +26,7 @@
 
 
 #include "platform.h"
-#include "fiteco-a8.h"
+#include "iotlab-a8-m3.h"
 
 void platform_leds_setup()
 {

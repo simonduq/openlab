@@ -18,9 +18,9 @@
 #
 
 # Add the fiteco_gwt test apps
-if (${PLATFORM} STREQUAL "fiteco-gwt")
+if (${PLATFORM} STREQUAL "iotlab-cn")
     
     add_executable(fiteco_gwt_test_power fiteco_gwt_test_power)
     target_link_libraries(fiteco_gwt_test_power platform)
     
-endif (${PLATFORM} STREQUAL "fiteco-gwt")
+endif (${PLATFORM} STREQUAL "iotlab-cn")

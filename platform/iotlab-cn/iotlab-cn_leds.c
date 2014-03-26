@@ -18,36 +18,61 @@
  */
 
 /*
- * fiteco-a8_net.c
+ * iotlab-cn_leds.c
  *
  *  Created on: Jul 10, 2012
  *      Author: Clément Burin des Roziers <clement.burin-des-roziers.at.hikob.com>
  */
 
+
 #include "platform.h"
-#include "fiteco-a8.h"
+#include "iotlab-cn.h"
 
-#include "phy_rf2xx/phy_rf2xx.h"
-#include "mac_csma.h"
-#include "mac_tdma.h"
-
-/* Phy Instantiation */
-static phy_rf2xx_t phy_rf231;
-phy_t platform_phy = &phy_rf231;
-
-const mac_csma_config_t mac_csma_config =
+void platform_leds_setup()
 {
-    .phy = &phy_rf231,
-};
+    // Configure the LEDs
+    gpio_set_output(GPIO_B, GPIO_PIN_5);
+    gpio_set_output(GPIO_D, GPIO_PIN_2);
 
-const mac_tdma_config_t mac_tdma_config =
-{
-    .phy = &phy_rf231,
-};
+    // Set LEDs
+    leds_on(LED_0 + LED_1);
+}
 
-void platform_net_setup()
+void leds_off(uint8_t leds)
 {
-    // Setup the PHY libraries
-    phy_rf2xx_init(&phy_rf231, rf231, TIM_3, TIMER_CHANNEL_4);
+    if (leds & LED_0)
+    {
+        gpio_pin_set(GPIO_B, GPIO_PIN_5);
+    }
+
+    if (leds & LED_1)
+    {
+        gpio_pin_set(GPIO_D, GPIO_PIN_2);
+    }
+}
+void leds_on(uint8_t leds)
+{
+    if (leds & LED_0)
+    {
+        gpio_pin_clear(GPIO_B, GPIO_PIN_5);
+    }
+
+    if (leds & LED_1)
+    {
+        gpio_pin_clear(GPIO_D, GPIO_PIN_2);
+    }
+}
+
+void leds_toggle(uint8_t leds)
+{
+    if (leds & LED_0)
+    {
+        gpio_pin_toggle(GPIO_B, GPIO_PIN_5);
+    }
+
+    if (leds & LED_1)
+    {
+        gpio_pin_toggle(GPIO_D, GPIO_PIN_2);
+    }
 }
 

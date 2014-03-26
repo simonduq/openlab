@@ -18,21 +18,21 @@ void leds_blink(soft_timer_t *timer, uint32_t period, uint8_t leds_mask);
 /*
  * LEDS aliases
  */
-#ifdef FITECO_M3
+#ifdef IOTLAB_M3
 enum {
     LEDS_MASK  = LED_0 | LED_1 | LED_2,
     GREEN_LED  = LED_0,
     RED_LED    = LED_1,
     ORANGE_LED = LED_2,
 };
-#elif FITECO_A8
+#elif IOTLAB_A8_M3
 enum {
     LEDS_MASK  = LED_0 | LED_1 | LED_2,
     GREEN_LED  = LED_0,
     RED_LED    = LED_1,
     ORANGE_LED = LED_2,
 };
-#elif FITECO_GWT
+#elif IOTLAB_CN
 enum {
     LEDS_MASK  = LED_0 | LED_1,
     GREEN_LED  = LED_0,

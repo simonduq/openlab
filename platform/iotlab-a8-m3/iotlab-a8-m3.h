@@ -18,14 +18,14 @@
  */
 
 /*
- * fiteco-gwt.h
+ * iotlab-a8-m3.h
  *
  *  Created on: Jul 10, 2012
  *      Author: Clément Burin des Roziers <clement.burin-des-roziers.at.hikob.com>
  */
 
-#ifndef FITECO_GWT_H_
-#define FITECO_GWT_H_
+#ifndef IOTLAB_A8_M3_H_
+#define IOTLAB_A8_M3_H_
 
 #include "platform.h"
 #include "stm32f1xx.h"
@@ -46,4 +46,4 @@ void platform_periph_setup();
 void platform_lib_setup();
 void platform_net_setup();
 
-#endif /* FITECO_GWT_H_ */
+#endif /* IOTLAB_A8_M3_H_ */

@@ -18,14 +18,14 @@
  */
 
 /*
- * fiteco-m3_net.c
+ * iotlab-m3_net.c
  *
  *  Created on: Jul 10, 2012
  *      Author: Clément Burin des Roziers <clement.burin-des-roziers.at.hikob.com>
  */
 
 #include "platform.h"
-#include "fiteco-m3.h"
+#include "iotlab-m3.h"
 
 #include "phy_rf2xx/phy_rf2xx.h"
 #include "mac_csma.h"

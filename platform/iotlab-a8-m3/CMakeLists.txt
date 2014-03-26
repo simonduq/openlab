@@ -26,12 +26,12 @@ include_directories(
 # Add the platform library
 add_library(platform STATIC
 	${PROJECT_SOURCE_DIR}/platform/platform
-	fiteco-gwt
-	fiteco-gwt_leds
-	fiteco-gwt_drivers
-	fiteco-gwt_lib
-	fiteco-gwt_periph
-	fiteco-gwt_net
+	iotlab-a8-m3
+	iotlab-a8-m3_leds
+	iotlab-a8-m3_drivers
+	iotlab-a8-m3_lib
+	iotlab-a8-m3_periph
+	iotlab-a8-m3_net
 	)
 
 # Allow for some more cyclic deps in libraries
@@ -44,16 +44,16 @@ target_link_libraries(platform
 	
 # Periph
 	rf2xx
-	adg759
-	ina226
-	
+    lsm303dlhc
+    l3g4200d
+    lps331ap
+    
 # Lib
 	freertos
 	random
 	printf
-	event
+    event
     softtimer
-    fiteco_lib_gwt
     
 # Net
 	phy_rf2xx)
