@@ -56,8 +56,7 @@ typedef enum
 
 /** Handler for current monitor sample */
 typedef void (*fiteco_lib_gwt_current_monitor_handler_t)(handler_arg_t arg,
-        float voltage, float current, float power, float shunt_voltage,
-        uint32_t timestamp);
+        float voltage, float current, float power, uint32_t timestamp);
 
 /**
  * Select the input for the Current Monitor circuit and start sampling

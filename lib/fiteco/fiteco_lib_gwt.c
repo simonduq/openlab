@@ -37,7 +37,7 @@ static struct
 {
     const fiteco_lib_gwt_config_t *config;
 
-    uint32_t isr_timestamp;
+    volatile uint32_t isr_timestamp;
     fiteco_lib_gwt_current_monitor_handler_t handler;
 } gwt;
 
@@ -112,7 +112,7 @@ void fiteco_lib_gwt_current_monitor_select(
     ina226_alert_enable(current_sample_ready_isr, arg);
 
     // Initial read to start measures
-    ina226_read(NULL, NULL, NULL, NULL );
+    ina226_read(NULL, NULL, NULL);
 }
 
 static void current_sample_ready_isr(handler_arg_t arg)
@@ -123,15 +123,16 @@ static void current_sample_ready_isr(handler_arg_t arg)
 
 static void process_current_sample(handler_arg_t arg)
 {
+    // read timestamp value before calling ina226_read, as it may
+    // trigger another interrupt that could modify this time
+    uint32_t timestamp = gwt.isr_timestamp;
     // Read INA values
-    float u, i, p, sv;
-    ina226_read(&u, &i, &p, &sv);
+    float u, i, p;
+    ina226_read(&u, &i, &p);
 
     // Call handler
     if (gwt.handler)
-    {
-        gwt.handler(arg, u, i, p, sv, gwt.isr_timestamp);
-    }
+        gwt.handler(arg, u, i, p, timestamp);
 }
 
 void fiteco_lib_gwt_opennode_power_select(

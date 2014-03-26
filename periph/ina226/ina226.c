@@ -121,7 +121,7 @@ int ina226_conversion_ready()
     return (read_reg(INA226_REG_MASK_ENABLE) & INA226_MASK_ENABLE__CVRF) != 0;
 }
 
-void ina226_read(float *voltage, float *current, float *power, float* shunt_voltage)
+void ina226_read(float *voltage, float *current, float *power)
 {
     uint16_t voltage_reg;
     // Read BUS voltage register
@@ -132,9 +132,6 @@ void ina226_read(float *voltage, float *current, float *power, float* shunt_volt
     int16_t power_reg;
     // Read POWER register
     power_reg = (int16_t) read_reg(INA226_REG_POWER);
-    int16_t shunt_voltage_reg;
-    // Read POWER register
-    shunt_voltage_reg = (int16_t) read_reg(INA226_REG_SHUNT_VOLTAGE);
 
     // Read the mask/enable register to clear it
     (void) read_reg(INA226_REG_MASK_ENABLE);
@@ -156,11 +153,6 @@ void ina226_read(float *voltage, float *current, float *power, float* shunt_volt
 
         // Convert to Watts
         *power = (float) power_reg * 25 * ina.current_lsb;
-    }
-    if (shunt_voltage)
-    {
-        // Convert to Volts
-        *shunt_voltage = (float) shunt_voltage_reg * 2.5e-6;
     }
 }
 

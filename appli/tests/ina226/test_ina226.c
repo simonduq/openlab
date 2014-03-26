@@ -58,9 +58,9 @@ static void app_task(void *param)
 
     while (1)
     {
-        float v, i, p, sv;
-        ina226_read(&v, &i, &p, &sv);
-        log_printf("U=%f V\tI=%f A\tP=%f W\t ShuntV=%f\n", v, i, p, sv);
+        float v, i, p;
+        ina226_read(&v, &i, &p);
+        log_printf("U=%f V\tI=%f A\tP=%f W\n", v, i, p);
         soft_timer_delay_ms(100);
     }
 }

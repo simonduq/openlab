@@ -33,7 +33,7 @@
 
 static void char_rx(handler_arg_t arg, uint8_t c);
 static void process_char(handler_arg_t arg);
-static void sample_done(handler_arg_t arg, float u, float i, float p, float sv,
+static void sample_done(handler_arg_t arg, float u, float i, float p,
         uint32_t timestamp);
 
 int main()
@@ -134,10 +134,9 @@ static void process_char(handler_arg_t arg)
     }
 }
 
-static void sample_done(handler_arg_t arg, float u, float i, float p, float sv,
+static void sample_done(handler_arg_t arg, float u, float i, float p,
         uint32_t timestamp)
 {
     // Print values
-    log_printf("[%u] \tu=%f, \t\ti=%f, \t\tp=%f\tsv: %f\r\n", timestamp, u, i,
-            p, sv);
+    log_printf("[%u] \tu=%f, \t\ti=%f, \t\tp=%f\t\r\n", timestamp, u, i, p);
 }

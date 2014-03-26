@@ -128,9 +128,8 @@ void ina226_alert_disable();
  * \param voltage a pointer to store the bus voltage, in V, or NULL if not requested
  * \param current a pointer to store the load current, in A, or NULL if not requested
  * \param power a pointer to store the load power, in W, or NULL if not requested
- * \param shunt_voltage a pointer to store the shunt voltage, in V, or NULL if not requested
  */
-void ina226_read(float *voltage, float *current, float *power, float* shunt_voltage);
+void ina226_read(float *voltage, float *current, float *power);
 
 /**
  * Check if a new set of sample is available.
