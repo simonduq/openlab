@@ -43,6 +43,10 @@
 #define EVENT_QUEUE_LENGTH 12
 #endif
 
+#ifndef EVENT_HALT_ON_POST_ERROR
+#define EVENT_HALT_ON_POST_ERROR 1
+#endif
+
 // typedef
 typedef struct
 {
@@ -126,8 +130,10 @@ event_status_t event_post(event_queue_t queue, handler_t event,
     else
     {
         log_error("Failed to post to queue #%u, current event: %x", queue,
-                  entry.event);
+            entry.event);
+#if EVENT_HALT_ON_POST_ERROR
         HALT();
+#endif
         return EVENT_FULL;
     }
 }
@@ -159,8 +165,10 @@ event_status_t event_post_from_isr(event_queue_t queue, handler_t event,
     else
     {
         log_error("Failed to post to queue #%u from ISR, current event: %x",
-                  queue, entry.event);
+                 queue, entry.event);
+#if EVENT_HALT_ON_POST_ERROR
         HALT();
+#endif
         return EVENT_FULL;
     }
 }

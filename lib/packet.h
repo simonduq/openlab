@@ -29,10 +29,9 @@
 
 #include <stdint.h>
 
-enum
-{
-    PACKET_MAX_SIZE = 128,
-};
+#ifndef PACKET_MAX_SIZE
+#define PACKET_MAX_SIZE 128
+#endif
 
 typedef struct packet
 {

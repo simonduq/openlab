@@ -86,7 +86,7 @@ typedef enum
 
 typedef enum
 {
-    EVENT_OK,
+    EVENT_OK = 0,
     EVENT_FULL
 } event_status_t;
 
