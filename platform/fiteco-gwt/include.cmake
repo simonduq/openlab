@@ -1,6 +1,7 @@
 set(OOCD_TARGET stm32f1x)
 
 set(PLATFORM_OOCD_ITF ${PROJECT_SOURCE_DIR}/platform/scripts/fiteco-gwt.cfg)
+set(MY_C_FLAGS "${MY_C_FLAGS} -DFITECO_GWT")
 
 set(LINKSCRIPT ../scripts/stm32f103rey6.ld)
 
@@ -21,5 +22,20 @@ set(PLATFORM_HAS_I2C_EXTERNAL 1)
 #add i2c slave support
 set(PLATFORM_HAS_I2C_SLAVE 1)
 set(MY_C_FLAGS "${MY_C_FLAGS} -DI2C__SLAVE_SUPPORT")
+
+# -Werror by default
+set(MY_C_FLAGS "${MY_C_FLAGS} -Werror")
+
+
+#
+# Control Node configuration
+#     Hack because libs cannot be configured 'dynamically'
+#
+
+# Increase the event queue size and disable 'HALT' on post failure
+set(MY_C_FLAGS "${MY_C_FLAGS} -DEVENT_QUEUE_LENGTH=64 -DEVENT_HALT_ON_POST_ERROR=0")
+
+# serial pkt size == 256: (sync | len | payload) with len <= 255)
+set(MY_C_FLAGS "${MY_C_FLAGS} -DPACKET_MAX_SIZE=256")
 
 include(${PROJECT_SOURCE_DIR}/platform/include-cm3.cmake)

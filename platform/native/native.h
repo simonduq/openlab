@@ -30,7 +30,7 @@
 #include "timer.h"
 
 /* Drivers */
-extern timer_t tim3, tim6;
+extern openlab_timer_t tim3, tim6;
 
 void platform_drivers_setup();
 void platform_leds_setup();

@@ -89,7 +89,7 @@ void platform_init()
 
     for (i = 1; i > 0; i--)
     {
-        printf("%u... ", i);
+        log_printf("%u... ", i);
         soft_timer_delay_s(1);
     }
 

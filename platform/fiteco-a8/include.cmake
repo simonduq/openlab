@@ -1,6 +1,7 @@
 set(OOCD_TARGET stm32f1x)
 
 set(PLATFORM_OOCD_ITF ${PROJECT_SOURCE_DIR}/platform/scripts/fiteco-a8.cfg)
+set(MY_C_FLAGS "${MY_C_FLAGS} -DFITECO_A8")
 
 set(LINKSCRIPT ../scripts/stm32f103rey6.ld)
 
@@ -22,5 +23,8 @@ set(PLATFORM_HAS_I2C_EXTERNAL 1)
 #add i2c slave support
 set(PLATFORM_HAS_I2C_SLAVE 1)
 set(MY_C_FLAGS "${MY_C_FLAGS} -DI2C__SLAVE_SUPPORT")
+
+# -Werror by default
+set(MY_C_FLAGS   "${MY_C_FLAGS} -Werror")
 
 include(${PROJECT_SOURCE_DIR}/platform/include-cm3.cmake)
