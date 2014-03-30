@@ -234,7 +234,7 @@ static void csma_process_rx(handler_arg_t arg)
 
     if (dest_addr == 0xFFFF || dest_addr == mac.local_addr)
     {
-        mac_csma_data_indication(src_addr, payload, length);
+      mac_csma_data_indication(src_addr, payload, length, mac.rx_pkt.rssi, mac.rx_pkt.lqi);
     }
     else
     {
@@ -246,6 +246,7 @@ static void csma_process_rx(handler_arg_t arg)
     // Enter RX again
     csma_enter_rx(NULL);
 }
+
 
 /** Handle end of TX */
 static void csma_tx_done(phy_status_t status)

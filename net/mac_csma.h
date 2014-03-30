@@ -49,6 +49,6 @@ int mac_csma_data_send(uint16_t dest_addr, const uint8_t *data, uint8_t length);
 
 /** Function called when data is received */
 extern void mac_csma_data_indication(uint16_t src_addr, const uint8_t *data,
-        uint8_t length);
+				     uint8_t length, int8_t rssi, uint8_t lqi);
 
 #endif /* MAC_CSMA_H_ */
