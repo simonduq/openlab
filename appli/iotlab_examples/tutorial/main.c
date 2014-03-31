@@ -19,38 +19,16 @@
 
 // UART callback function
 static void char_rx(handler_arg_t arg, uint8_t c);
+static void handle_cmd(handler_arg_t arg);
 
 // timer alarm function
 static void alarm(handler_arg_t arg);
 static soft_timer_t tx_timer;
-#define TX_PERIOD soft_timer_s_to_ticks(1)
-
-// application task
-static void app_task(void *);
+#define BLINK_PERIOD soft_timer_s_to_ticks(1)
 
 /* Global variables */
-// value storing the character received from the UART, analyzed by the main function
-// volatile is required to prevent optimizations on it.
-volatile int8_t cmd = 0;
 // print help every second
 volatile int8_t print_help = 1;
-
-enum {
-    NO_EVENT = 0,
-    RX_PKT,
-    TX_PKT,
-    TX_PKT_ERROR,
-};
-
-// Got a radio event
-volatile struct {
-    int8_t got_event;
-
-    uint8_t packet[256];
-    uint16_t length;
-    uint16_t addr;
-    int16_t rssi;
-} radio = {0};
 
 /**
  * Sensors
@@ -58,24 +36,21 @@ volatile struct {
 static void temperature_sensor()
 {
     int16_t value;
-
     lps331ap_read_temp(&value);
-    printf("Temperature measure: %f\n", 42.5 + value / 480.0);
+    printf("Chip temperature measure: %f\n", 42.5 + value / 480.0);
 }
 
 static void light_sensor()
 {
     float value = isl29020_read_sample();
-
     printf("Luminosity measure: %f lux\n", value);
 }
 
 static void pressure_sensor()
 {
     uint32_t value;
-
     lps331ap_read_pres(&value);
-    printf("Pressure measure: %f\n", value / 4096.0);
+    printf("Pressure measure: %f mabar\n", value / 4096.0);
 }
 
 
@@ -87,39 +62,30 @@ static void send_packet()
     uint16_t ret;
     static uint8_t num = 0;
 
+    static char packet[PHY_MAX_TX_LENGTH - 4];  // 4 for mac layer
+    uint16_t length;
     // max pkt length <= max(cc2420, cc1101)
-    snprintf((char*)&radio.packet, 58, "Hello World!: %u", num);
-    radio.length = 1 + strlen((char*)&radio.packet);
-    radio.addr = ADDR_BROADCAST;
+    snprintf(packet, sizeof(packet), "Hello World!: %u", num++);
+    length = 1 + strlen(packet);
 
-    ret = mac_csma_data_send(radio.addr,(uint8_t *)&radio.packet, radio.length);
-    num++;
+    ret = mac_csma_data_send(ADDR_BROADCAST, (uint8_t *)packet, length);
 
-    if (ret) {
-        printf("mac_send ret %u\n", ret);
-        radio.got_event = TX_PKT;
-    } else {
-        radio.got_event = TX_PKT_ERROR;
-    }
+    printf("\nradio > ");
+    if (ret != 0)
+        printf("Packet sent\n");
+    else
+        printf("Packet sent failed\n");
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wcast-qual"
 /* Reception of a radio message */
 void mac_csma_data_indication(uint16_t src_addr,
         const uint8_t *data, uint8_t length, int8_t rssi, uint8_t lqi)
 {
-    radio.got_event = RX_PKT;
-
-    strcpy((char*)radio.packet, (const char*)data);
-    radio.length = length;
-    radio.addr = src_addr;
-    radio.rssi = rssi;
-
-    printf("MYRSSI %d\n",  mac_csma_config.phy);
-
+    printf("\nradio > ");
+    printf("Got packet from %x. Len: %u Rssi: %d: '%s'\n",
+            src_addr, length, rssi, (const char*)data);
+    handle_cmd((handler_arg_t) '\n');
 }
-#pragma GCC diagnostic pop
 
 /*
  * HELP
@@ -135,7 +101,6 @@ static void print_usage()
     printf("\ts:\tsend a radio packet\n");
     if (print_help)
         printf("\n Type Enter to stop printing this help\n");
-    printf("\n");
 }
 
 static void hardware_init()
@@ -146,9 +111,7 @@ static void hardware_init()
     soft_timer_init();
 
     // Switch off the LEDs
-    leds_off(LED_0);
-    leds_off(LED_1);
-    leds_off(LED_2);
+    leds_off(LED_0 | LED_1 | LED_2);
 
     // Uart initialisation
     uart_set_rx_handler(uart_print, char_rx, NULL);
@@ -167,13 +130,12 @@ static void hardware_init()
 
     // Initialize a openlab timer
     soft_timer_set_handler(&tx_timer, alarm, NULL);
-    soft_timer_start(&tx_timer, TX_PERIOD, 1);
+    soft_timer_start(&tx_timer, BLINK_PERIOD, 1);
 
 }
 
 static void handle_cmd(handler_arg_t arg)
 {
-
     switch ((char) (uint32_t) arg) {
         case 't':
             temperature_sensor();
@@ -188,52 +150,19 @@ static void handle_cmd(handler_arg_t arg)
             send_packet();
             break;
         case '\n':
+            printf("\ncmd > ");
             break;
         case 'h':
         default:
             print_usage();
             break;
     }
-    printf("cmd > ");
 }
-
-static void handle_radio()
-{
-
-    if (radio.got_event == NO_EVENT)
-        return;
-
-    printf("\nradio > ");
-
-    switch (radio.got_event) {
-        case RX_PKT:
-            printf("Got packet from %x. Len: %u Rssi: %d: '%s'\n",
-                    radio.addr, radio.length, radio.rssi, (char*)&radio.packet);
-            break;
-        case TX_PKT:
-            printf("Packet sent\n");
-            break;
-        case TX_PKT_ERROR:
-            printf("Packet sent failed\n");
-            break;
-        default:
-            printf("Uknown event\n");
-            break;
-    }
-
-}
-
 
 int main()
 {
     hardware_init();
-
-    // Create a task for the application
-    xTaskCreate(app_task, (const signed char * const) "app_task",
-            configMINIMAL_STACK_SIZE, NULL, 1, NULL);
-
     platform_run();
-
     return 0;
 }
 
@@ -242,52 +171,17 @@ int main()
 static void char_rx(handler_arg_t arg, uint8_t c) {
     // disable help message after receiving char
     print_help = 0;
-
-
-    if (c=='t' || c=='l' || c=='h' || c=='p' || c=='s' || c=='\n') {
-        // copy received character to cmd variable.
-        cmd = c;
-        //handle_cmd(cmd);
-        event_post_from_isr(EVENT_QUEUE_APPLI, handle_cmd,
-                (handler_arg_t) (uint32_t) c);
-
-    }
-}
-
-
-static void app_task(void *param)
-{
-    while (1) {
-
-        while ((cmd == 0) && (radio.got_event == 0))
-            soft_timer_delay_ms(10);
-
-        if (cmd) {
-            //handle_cmd(cmd);
-            event_post(EVENT_QUEUE_APPLI, handle_cmd,
-                    (handler_arg_t) (uint32_t) cmd);
-            cmd = 0;
-        }
-        if (radio.got_event) {
-            // disable help message
-            print_help = 0;
-
-            handle_radio();
-            radio.got_event = 0;
-
-            cmd = '\n';
-        }
-    }
+    event_post_from_isr(EVENT_QUEUE_APPLI, handle_cmd,
+            (handler_arg_t)(uint32_t) c);
 }
 
 static void alarm(handler_arg_t arg) {
-    leds_toggle(LED_0);
-    leds_toggle(LED_1);
-    leds_toggle(LED_2);
+    leds_toggle(LED_0 | LED_1 | LED_2);
 
     /* Print help before getting first real \n */
     if (print_help) {
-        cmd='h';
+        event_post(EVENT_QUEUE_APPLI, handle_cmd, (handler_arg_t) 'h');
+        event_post(EVENT_QUEUE_APPLI, handle_cmd, (handler_arg_t) '\n');
     }
 
 }
