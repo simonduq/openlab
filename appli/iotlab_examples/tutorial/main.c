@@ -72,10 +72,10 @@ static void light_sensor()
 
 static void pressure_sensor()
 {
-  uint32_t value;
+    uint32_t value;
 
-  lps331ap_read_pres(&value);
-  printf("Pressure measure: %f\n", value / 4096.0);
+    lps331ap_read_pres(&value);
+    printf("Pressure measure: %f\n", value / 4096.0);
 }
 
 
@@ -97,102 +97,102 @@ static void send_packet()
 
     if (ret) {
         printf("mac_send ret %u\n", ret);
-	radio.got_event = TX_PKT;
+        radio.got_event = TX_PKT;
+    } else {
+        radio.got_event = TX_PKT_ERROR;
     }
-    else
-      radio.got_event = TX_PKT_ERROR;
 }
 
-#pragma GCC diagnostic push  
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wcast-qual"
 /* Reception of a radio message */
-void mac_csma_data_indication(uint16_t src_addr, 
-			      const uint8_t *data, uint8_t length, int8_t rssi, uint8_t lqi)
-{ 
-  radio.got_event = RX_PKT;
+void mac_csma_data_indication(uint16_t src_addr,
+        const uint8_t *data, uint8_t length, int8_t rssi, uint8_t lqi)
+{
+    radio.got_event = RX_PKT;
 
-  strcpy((char*)radio.packet, (const char*)data);
-  radio.length = length;
-  radio.addr = src_addr;
-  radio.rssi = rssi;
+    strcpy((char*)radio.packet, (const char*)data);
+    radio.length = length;
+    radio.addr = src_addr;
+    radio.rssi = rssi;
 
-  printf("MYRSSI %d\n",  mac_csma_config.phy);
+    printf("MYRSSI %d\n",  mac_csma_config.phy);
 
 }
-#pragma GCC diagnostic pop   
+#pragma GCC diagnostic pop
 
 /*
  * HELP
  */
 static void print_usage()
 {
-  printf("\n\nIoT-LAB Simple Demo program\n");
-  printf("Type command\n");
-  printf("\th:\tprint this help\n");
-  printf("\tt:\ttemperature measure\n");
-  printf("\tl:\tluminosity measure\n");
-  printf("\tp:\tpressure measure\n");
-  printf("\ts:\tsend a radio packet\n");
-  if (print_help)
-    printf("\n Type Enter to stop printing this help\n");
-  printf("\n");
+    printf("\n\nIoT-LAB Simple Demo program\n");
+    printf("Type command\n");
+    printf("\th:\tprint this help\n");
+    printf("\tt:\ttemperature measure\n");
+    printf("\tl:\tluminosity measure\n");
+    printf("\tp:\tpressure measure\n");
+    printf("\ts:\tsend a radio packet\n");
+    if (print_help)
+        printf("\n Type Enter to stop printing this help\n");
+    printf("\n");
 }
 
 static void hardware_init()
 {
-  // Openlab platform init
-  platform_init();
-  event_init();
-  soft_timer_init(); 
+    // Openlab platform init
+    platform_init();
+    event_init();
+    soft_timer_init();
 
-  // Switch off the LEDs
-  leds_off(LED_0);
-  leds_off(LED_1);
-  leds_off(LED_2);
- 
-  // Uart initialisation 
-  uart_set_rx_handler(uart_print, char_rx, NULL);
+    // Switch off the LEDs
+    leds_off(LED_0);
+    leds_off(LED_1);
+    leds_off(LED_2);
 
-  // ISL29020 light sensor initialisation 
-  isl29020_prepare(ISL29020_LIGHT__AMBIENT, ISL29020_RESOLUTION__16bit,
+    // Uart initialisation
+    uart_set_rx_handler(uart_print, char_rx, NULL);
+
+    // ISL29020 light sensor initialisation
+    isl29020_prepare(ISL29020_LIGHT__AMBIENT, ISL29020_RESOLUTION__16bit,
             ISL29020_RANGE__16000lux);
-  isl29020_sample_continuous();
+    isl29020_sample_continuous();
 
-  // LPS331AP pressure sensor initialisation
-  lps331ap_powerdown();
-  lps331ap_set_datarate(LPS331AP_P_12_5HZ_T_12_5HZ);
+    // LPS331AP pressure sensor initialisation
+    lps331ap_powerdown();
+    lps331ap_set_datarate(LPS331AP_P_12_5HZ_T_12_5HZ);
 
-  // Init csma Radio mac layer
-  mac_csma_init(CHANNEL);
+    // Init csma Radio mac layer
+    mac_csma_init(CHANNEL);
 
-  // Initialize a openlab timer
-  soft_timer_set_handler(&tx_timer, alarm, NULL);
-  soft_timer_start(&tx_timer, TX_PERIOD, 1);
+    // Initialize a openlab timer
+    soft_timer_set_handler(&tx_timer, alarm, NULL);
+    soft_timer_start(&tx_timer, TX_PERIOD, 1);
 
 }
 
 static void handle_cmd(handler_arg_t arg)
 {
-  
+
     switch ((char) (uint32_t) arg) {
-        case 't': 
-	  temperature_sensor();
-	  break;  
+        case 't':
+            temperature_sensor();
+            break;
         case 'l':
-	  light_sensor();
-	  break;
-         case 'p':
-	   pressure_sensor();
-	   break;
+            light_sensor();
+            break;
+        case 'p':
+            pressure_sensor();
+            break;
         case 's':
-	  send_packet();
-	  break;
+            send_packet();
+            break;
         case '\n':
             break;
         case 'h':
         default:
-	  print_usage();
-	  break;
+            print_usage();
+            break;
     }
     printf("cmd > ");
 }
@@ -226,15 +226,15 @@ static void handle_radio()
 
 int main()
 {
-	hardware_init();	
+    hardware_init();
 
-	// Create a task for the application
-	xTaskCreate(app_task, (const signed char * const) "app_task", 
-		    configMINIMAL_STACK_SIZE, NULL, 1, NULL);
+    // Create a task for the application
+    xTaskCreate(app_task, (const signed char * const) "app_task",
+            configMINIMAL_STACK_SIZE, NULL, 1, NULL);
 
-	platform_run();
+    platform_run();
 
-	return 0;
+    return 0;
 }
 
 
@@ -246,10 +246,10 @@ static void char_rx(handler_arg_t arg, uint8_t c) {
 
     if (c=='t' || c=='l' || c=='h' || c=='p' || c=='s' || c=='\n') {
         // copy received character to cmd variable.
-        cmd = c; 
-	//handle_cmd(cmd);
-	event_post_from_isr(EVENT_QUEUE_APPLI, handle_cmd,
-			    (handler_arg_t) (uint32_t) c);
+        cmd = c;
+        //handle_cmd(cmd);
+        event_post_from_isr(EVENT_QUEUE_APPLI, handle_cmd,
+                (handler_arg_t) (uint32_t) c);
 
     }
 }
@@ -257,37 +257,37 @@ static void char_rx(handler_arg_t arg, uint8_t c) {
 
 static void app_task(void *param)
 {
-  while (1) {
+    while (1) {
 
-    while ((cmd == 0) && (radio.got_event == 0))
-      soft_timer_delay_ms(10);
+        while ((cmd == 0) && (radio.got_event == 0))
+            soft_timer_delay_ms(10);
 
-    if (cmd) {
-      //handle_cmd(cmd);
-      event_post(EVENT_QUEUE_APPLI, handle_cmd,
-		 (handler_arg_t) (uint32_t) cmd);
-      cmd = 0;
+        if (cmd) {
+            //handle_cmd(cmd);
+            event_post(EVENT_QUEUE_APPLI, handle_cmd,
+                    (handler_arg_t) (uint32_t) cmd);
+            cmd = 0;
+        }
+        if (radio.got_event) {
+            // disable help message
+            print_help = 0;
+
+            handle_radio();
+            radio.got_event = 0;
+
+            cmd = '\n';
+        }
     }
-    if (radio.got_event) {
-      // disable help message
-      print_help = 0;
-
-      handle_radio();
-      radio.got_event = 0;
-      
-      cmd = '\n';
-    }
-  }
 }
 
 static void alarm(handler_arg_t arg) {
-  leds_toggle(LED_0);
-  leds_toggle(LED_1);
-  leds_toggle(LED_2);
- 
-  /* Print help before getting first real \n */
-  if (print_help) {
-    cmd='h';
-  }
+    leds_toggle(LED_0);
+    leds_toggle(LED_1);
+    leds_toggle(LED_2);
+
+    /* Print help before getting first real \n */
+    if (print_help) {
+        cmd='h';
+    }
 
 }
