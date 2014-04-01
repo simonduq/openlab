@@ -1,25 +1,36 @@
 #include "platform.h"
-#include <stdlib.h> // atoi
 #include "printf.h"
+#include <stdlib.h> // atoi
 
-char *grace_time_ms = "0010";
 /*
-	to configure grace-time, use:
+	Flood the serial link with printfs of ints output at constant rate.
+
+	The rate of the flood is specified by parameter "grace_time_ms".
+	To configure grace_time_ms without re-compiling, use:
 	
-	sed -i 's/0010/xxxx/' ../../../bin/test_serial_flood.elf
+		sed -i 's/0010/xxxx/' ../../../bin/test_serial_flood.elf
 */
+
+static char *grace_time_ms = "0005";
+
+static int k = 0;
+void do_serial_out() {
+	printf("%d\n", ++k);
+}
+
+static soft_timer_t timer;
+#define SOFT_TIMER_PERIODIC 1
 
 int main()
 {
-	platform_init();
+	int period = atoi(grace_time_ms);
+	int ticks = soft_timer_ms_to_ticks(period ? period : 10);
 
-	int k = 0;
-	while(1)
-	{
-		printf("0x%x\n", ++k);
-		int i;
-		for (i=0; i < soft_timer_ms_to_ticks(atoi(grace_time_ms)); i++)
-			;
-	}
+	platform_init();
+	soft_timer_init();
+	soft_timer_set_handler(&timer, (handler_t)do_serial_out, NULL);
+	soft_timer_start(&timer, ticks, SOFT_TIMER_PERIODIC);
+	platform_run();
+
 	return 0;
 }
