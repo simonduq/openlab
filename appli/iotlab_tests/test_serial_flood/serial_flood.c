@@ -1,6 +1,7 @@
 #include "platform.h"
 #include "printf.h"
 #include <stdlib.h> // atoi
+#include "soft_timer.h"
 
 /*
 	Flood the serial link with printfs of ints output at constant rate.
