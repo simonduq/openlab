@@ -6,4 +6,4 @@ compile_tests:
 	bash test_all_platforms.sh
 
 clean:
-	rm -r build.*
+	rm -rf build.*
