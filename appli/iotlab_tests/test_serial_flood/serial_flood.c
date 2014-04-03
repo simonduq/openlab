@@ -9,7 +9,7 @@
 	The rate of the flood is specified by parameter "grace_time_ms".
 	To configure grace_time_ms without re-compiling, use:
 	
-		sed -i 's/0010/xxxx/' ../../../bin/test_serial_flood.elf
+		sed -i 's/0005/xxxx/' ../../../bin/test_serial_flood.elf
 */
 
 static char *grace_time_ms = "0005";
