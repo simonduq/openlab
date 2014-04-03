@@ -25,7 +25,7 @@ static soft_timer_t timer;
 int main()
 {
 	int period = atoi(grace_time_ms);
-	int ticks = soft_timer_ms_to_ticks(period ? period : 10);
+	int ticks = soft_timer_ms_to_ticks(period ? period : 5);
 
 	platform_init();
 	soft_timer_init();
