@@ -9,7 +9,7 @@
 	The rate of the flood is specified by parameter "grace_time_ms".
 	To configure grace_time_ms without re-compiling, use:
 	
-		sed -i 's/0010/xxxx/' ../../../bin/test_serial_flood.elf
+		sed -i 's/0005/xxxx/' ../../../bin/test_serial_flood.elf
 */
 
 static char *grace_time_ms = "0005";
@@ -25,7 +25,7 @@ static soft_timer_t timer;
 int main()
 {
 	int period = atoi(grace_time_ms);
-	int ticks = soft_timer_ms_to_ticks(period ? period : 10);
+	int ticks = soft_timer_ms_to_ticks(period ? period : 5);
 
 	platform_init();
 	soft_timer_init();
