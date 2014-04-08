@@ -1,2 +1,0 @@
-add_executable(test_stack_overflow_scanf stack_overflow_scanf)
-target_link_libraries(test_stack_overflow_scanf platform)

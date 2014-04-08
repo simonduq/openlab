@@ -81,6 +81,8 @@
 #define INCLUDE_vTaskDelayUntil         1
 #define INCLUDE_vTaskDelay              1
 
+#define INCLUDE_uxTaskGetStackHighWaterMark 1
+
 /* Use the system definition, if there is one */
 #define configPRIO_BITS       4        /* 15 priority levels */
 
