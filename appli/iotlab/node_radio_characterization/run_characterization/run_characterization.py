@@ -69,6 +69,9 @@ class RadioCharac(object):
 
         self.start()
 
+        self.state['options'] = {'power': power, 'channel': channel,
+                                 'num_pkts': num_pkts, 'delay': delay}
+
         self.state['config'] = {'success': [], 'failure': []}
         self.state['send'] = {'success': [], 'failure': []}
 
@@ -108,7 +111,7 @@ def main(argv):
     rad_charac = RadioCharac(nodes_list)
 
     num_pkt = 32
-    result = rad_charac.run_characterization(16, "0dBm", num_pkt, 10)
+    result = rad_charac.run_characterization(16, "-17dBm", num_pkt, 10)
 
     if '--summary' in argv:
         for sender_node in result['radio'].values():
