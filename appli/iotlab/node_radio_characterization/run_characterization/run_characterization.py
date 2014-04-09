@@ -16,11 +16,14 @@ class RadioCharac(object):
     def __init__(self, nodes_list):
         self.state = {}
         self.nodes = NodeAggregator(nodes_list)
+        self.current_sender_node = None
 
     def start(self):
+        """ Start nodes connection """
         self.nodes.start()
 
     def stop(self):
+        """ Stop nodes connection """
         self.nodes.stop()
 
     def _answers_handler(self, node_id, msg):
@@ -47,15 +50,25 @@ class RadioCharac(object):
                 sender = line[1]
 
                 # add list for this node
-                results = self.state['radio'][sender].get(node_id, [])
+                results = self.state['radio'][sender].get(
+                    node_id, {'success': [], 'errors': []})
                 self.state['radio'][sender][node_id] = results
 
                 # add rx informations
                 #results.append("%s" % ' '.join(line[2:6]))
-                results.append(tuple(line[2:6]))
+                results['success'].append(tuple(line[2:6]))
             elif line[0] == 'radio_rx_error':
-                print >> sys.stderr, ("Radio_rx_error %s %r" %
-                                      (node_id, line[1]))
+                sender = self.current_sender_node.node_id
+
+                # add list for this node
+                results = self.state['radio'][sender].get(
+                    node_id, {'success': [], 'errors': []})
+                self.state['radio'][sender][node_id] = results
+
+                results['errors'].append("%s" % line[1])
+
+                # print >> sys.stderr, "Radio_rx_error %s %s sender %s" % (
+                #         node_id, line[1], self.current_sender_node.node_id)
 
             else:
                 print >> sys.stderr, "UNKOWN_MSG: %s %r" % (node_id, msg)
@@ -93,17 +106,52 @@ class RadioCharac(object):
 
         cmd = "send_packets -i {node_id} -p {power} -n {num_pkts} -d {delay}\n"
         for node in self.nodes.values():
+            self.current_sender_node = node
             print >> sys.stderr, "sending node %s" % node.node_id
             node.send(cmd.format(node_id=node.node_id, power=power,
                                  num_pkts=num_pkts, delay=delay))
             time.sleep(2)
+            self.current_sender_node = None
 
 
         self.stop()
         return self.state
 
+def simple_results_summary(result, human_readable=False):
+    """ Parse outputs to be readable by a human """
+    num_pkt = result['options']['num_pkts']
+    for sender_node in result['radio'].values():
+        for rx_node in sender_node:
+
+            node_result = {}
+            raw_result = sender_node[rx_node]['success']
+            raw_errors = sender_node[rx_node]['errors']
+
+            if len(raw_result):
+                # Average RSSI
+                average_rssi = sum([int(res[2]) for res in raw_result]) \
+                    / float(len(raw_result))
+                node_result['average_rssi'] = average_rssi
+
+                # Packet loss
+                rx_pkt = 100 * len(raw_result) / float(num_pkt)
+                node_result['pkt_reception'] = "%.1f %%" % rx_pkt
+
+            if len(raw_errors):
+                # errors
+                node_result['errors'] = len(raw_errors)
+
+            sender_node[rx_node] = node_result
+
+            if human_readable:
+                # increase readability when using command line
+                sender_node[rx_node] = "%s" % sender_node[rx_node]
+
+    return result
+
 
 def main(argv):
+    """ Run a characterization script on all nodes from an experiment """
 
     json_dict = serial_aggregator.extract_json(sys.stdin.read())
     nodes_list = serial_aggregator.extract_nodes(json_dict, os.uname()[1])
@@ -114,19 +162,7 @@ def main(argv):
     result = rad_charac.run_characterization(16, "-17dBm", num_pkt, 10)
 
     if '--summary' in argv:
-        for sender_node in result['radio'].values():
-            for rx_node in sender_node:
-                raw_result = sender_node[rx_node]
-
-                rx_pkt = 100 * len(raw_result) / float(num_pkt)
-                average_rssi = sum([int(res[2]) for res in raw_result]) \
-                    / float(num_pkt)
-                sender_node[rx_node] = {
-                    'pkt_reception': "%.1f %%" % rx_pkt,
-                    'average_rssi': average_rssi
-                }
-
-
+        result = simple_results_summary(result, human_readable=('-h' in argv))
 
     import json
     result_str = json.dumps(result, sort_keys=True, indent=4)

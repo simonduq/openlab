@@ -150,7 +150,7 @@ static void packet_received(handler_arg_t arg)
         printf("radio_rx %s %d %u sender power num rssi lqi\n",
                 rx_pkt.data, rx_pkt.rssi, rx_pkt.lqi);
     } else {
-        printf("radio_rx_error 0x%x\n", (status));
+        printf("radio_rx_error 0x%x\n", status);
     }
     radio_listen();
 }
