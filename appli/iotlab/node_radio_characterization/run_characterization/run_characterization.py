@@ -127,7 +127,7 @@ def main(argv):
 
     import json
     result_str = json.dumps(result, sort_keys=True, indent=4)
-    print >> sys.stderr, result_str
+    print result_str
 
 
 if __name__ == "__main__":
