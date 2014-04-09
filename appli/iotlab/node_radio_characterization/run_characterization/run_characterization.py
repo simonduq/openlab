@@ -43,7 +43,7 @@ class RadioCharac(object):
                                                          (node_id, line[2]))
 
             elif line[0] == 'radio_rx':
-                # "radio_rx m3-128 9 -62 255 DATA NUM RSSI LQI"
+                # "radio_rx m3-128 -17dBm 5 -61 255 sender power num rssi lqi"
                 sender = line[1]
 
                 # add list for this node
@@ -51,7 +51,8 @@ class RadioCharac(object):
                 self.state['radio'][sender][node_id] = results
 
                 # add rx informations
-                results.append("%s" % ' '.join(line[2:5]))
+                #results.append("%s" % ' '.join(line[2:6]))
+                results.append(tuple(line[2:6]))
             elif line[0] == 'radio_rx_error':
                 print >> sys.stderr, ("Radio_rx_error %s %r" %
                                       (node_id, line[1]))
@@ -77,7 +78,6 @@ class RadioCharac(object):
 
         # init all nodes handlers and radio config
         self.state['radio'] = {}
-        print self.nodes
 
         for node in self.nodes.values():
             self.state['radio'][node.node_id] = {}
@@ -100,14 +100,30 @@ class RadioCharac(object):
         return self.state
 
 
-def main():
+def main(argv):
 
     json_dict = serial_aggregator.extract_json(sys.stdin.read())
     nodes_list = serial_aggregator.extract_nodes(json_dict, os.uname()[1])
 
     rad_charac = RadioCharac(nodes_list)
 
-    result = rad_charac.run_characterization(16, "0dBm", 32, 10)
+    num_pkt = 32
+    result = rad_charac.run_characterization(16, "0dBm", num_pkt, 10)
+
+    if '--summary' in argv:
+        for sender_node in result['radio'].values():
+            for rx_node in sender_node:
+                raw_result = sender_node[rx_node]
+
+                rx_pkt = 100 * len(raw_result) / float(num_pkt)
+                average_rssi = sum([int(res[2]) for res in raw_result]) \
+                    / float(num_pkt)
+                sender_node[rx_node] = {
+                    'pkt_reception': "%.1f %%" % rx_pkt,
+                    'average_rssi': average_rssi
+                }
+
+
 
     import json
     result_str = json.dumps(result, sort_keys=True, indent=4)
@@ -115,4 +131,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)
