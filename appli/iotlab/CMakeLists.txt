@@ -8,6 +8,8 @@ add_subdirectory(idle_with_dc)
 
 add_subdirectory(open_node_m3_autotest)
 
+add_subdirectory(node_radio_characterization)
+
 # Libraries
 add_subdirectory(autotest_common)
 add_subdirectory(lib)
