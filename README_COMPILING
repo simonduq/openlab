@@ -18,3 +18,7 @@ cmake .. -DPLATFORM=iotlab-m3
 # open a8 (m3 node)
 mkdir build.a8 && cd build.a8
 cmake .. -DPLATFORM=iotlab-a8-m3
+
+# agile-fox (starter kit)
+mkdir build.fox && cd build.fox
+cmake .. -DPLATFORM=agile-fox
