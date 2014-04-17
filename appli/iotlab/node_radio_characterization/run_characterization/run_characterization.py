@@ -159,7 +159,8 @@ def main(argv):
     rad_charac = RadioCharac(nodes_list)
 
     num_pkt = 32
-    result = rad_charac.run_characterization(16, "-17dBm", num_pkt, 10)
+    result = rad_charac.run_characterization(channel=16, power="-17dBm",
+                                             num_pkts=32, delay=10)
 
     if '--summary' in argv:
         result = simple_results_summary(result, human_readable=('-h' in argv))
