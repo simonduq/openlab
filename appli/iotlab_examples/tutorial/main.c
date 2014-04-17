@@ -13,8 +13,8 @@
 #include "mac_csma.h"
 #include "phy.h"
 
-// choose channel int [1-16]
-#define CHANNEL 10
+// choose channel PHY_MAP_CHANNEL_[12-26]
+#define CHANNEL PHY_MAP_CHANNEL_12
 #define ADDR_BROADCAST 0xFFFF
 
 // UART callback function
@@ -28,7 +28,8 @@ static soft_timer_t tx_timer;
 
 /* Global variables */
 // print help every second
-volatile int8_t print_help = 1;
+volatile int8_t print_help  = 1;
+volatile int8_t leds_active = 1;
 
 /**
  * Sensors
@@ -77,6 +78,28 @@ static void send_packet()
         printf("Packet sent failed\n");
 }
 
+static void send_big_packet()
+{
+    uint16_t ret;
+    static uint8_t num = 0;
+
+    static char packet[PHY_MAX_TX_LENGTH - 4];  // 4 for mac layer 
+    static char pluspack[40]="012345678901234567890123456789012345678\0";
+    uint16_t length;
+
+    snprintf(packet, sizeof(packet), "Big Hello World!: %u %s",num++, pluspack);
+    length = 1 + strlen(packet);
+
+    ret = mac_csma_data_send(ADDR_BROADCAST, (uint8_t *)packet, length);
+
+    printf("\nradio > ");
+    if (ret != 0)
+        printf("Big packet sent\n");
+    else
+        printf("Big packet sent failed\n");
+}
+
+
 /* Reception of a radio message */
 void mac_csma_data_indication(uint16_t src_addr,
         const uint8_t *data, uint8_t length, int8_t rssi, uint8_t lqi)
@@ -85,6 +108,24 @@ void mac_csma_data_indication(uint16_t src_addr,
     printf("Got packet from %x. Len: %u Rssi: %d: '%s'\n",
             src_addr, length, rssi, (const char*)data);
     handle_cmd((handler_arg_t) '\n');
+}
+
+/* Leds action */
+static void leds_action()
+{ 
+  printf("\nleds > ");
+  if (leds_active) { 
+    // The alarm timer looses the hand
+    leds_active = 0;
+    // Switch off the LEDs
+    leds_off(LED_0 | LED_1 | LED_2);
+    printf("off\n");
+  } else {  
+    // The alarm timer takes the hand
+    leds_active = 1;
+    printf("blinking\n");
+  }
+  
 }
 
 /*
@@ -98,7 +139,9 @@ static void print_usage()
     printf("\tt:\ttemperature measure\n");
     printf("\tl:\tluminosity measure\n");
     printf("\tp:\tpressure measure\n");
-    printf("\ts:\tsend a radio packet\n");
+    printf("\ts:\tsend a radio packet\n"); 
+    printf("\tb:\tsend a big radio packet\n"); 
+    printf("\te:\ttoggle leds blinking\n");
     if (print_help)
         printf("\n Type Enter to stop printing this help\n");
 }
@@ -149,6 +192,12 @@ static void handle_cmd(handler_arg_t arg)
         case 's':
             send_packet();
             break;
+        case 'b':
+            send_big_packet();
+            break; 
+        case 'e':
+            leds_action();
+            break;
         case '\n':
             printf("\ncmd > ");
             break;
@@ -176,7 +225,8 @@ static void char_rx(handler_arg_t arg, uint8_t c) {
 }
 
 static void alarm(handler_arg_t arg) {
-    leds_toggle(LED_0 | LED_1 | LED_2);
+     if (leds_active)
+       leds_toggle(LED_0 | LED_1 | LED_2);
 
     /* Print help before getting first real \n */
     if (print_help) {
