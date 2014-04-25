@@ -39,3 +39,6 @@ add_subdirectory(sniffer)
 add_subdirectory(iotlab)
 add_subdirectory(iotlab_examples)
 add_subdirectory(iotlab_tests)
+
+# Sensbio specific directories
+add_subdirectory(sensbio_examples)
