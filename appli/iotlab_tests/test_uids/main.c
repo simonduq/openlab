@@ -2,6 +2,7 @@
 #include "soft_timer.h"
 #include "unique_id.h"
 #include "printf.h"
+#include "iotlab_uid.h"
 
 static void print_uids(void *args)
 {
@@ -39,6 +40,8 @@ static void print_uids(void *args)
             uid->uid8[9]
             );
 
+    uint16_t id = iotlab_uid();
+    printf("iotlab_uid (16b):\n\t%02x:%02x\n", id >> 8, id & 0xFF);
 
 
     printf("\n");
