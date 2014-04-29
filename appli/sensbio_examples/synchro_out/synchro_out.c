@@ -5,7 +5,7 @@
 #include "event.h"
 #include "soft_timer.h"
 
-#include "synchro.h"
+#include "synchro_out.h"
 
 // timer alarm function
 static void alarm(handler_arg_t arg);
