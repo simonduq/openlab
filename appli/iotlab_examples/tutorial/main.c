@@ -13,8 +13,8 @@
 #include "mac_csma.h"
 #include "phy.h"
 
-// choose channel PHY_MAP_CHANNEL_[12-26]
-#define CHANNEL PHY_MAP_CHANNEL_12
+// choose channel CHANNEL_[12-26]
+#define CHANNEL 26
 #define ADDR_BROADCAST 0xFFFF
 
 // UART callback function
