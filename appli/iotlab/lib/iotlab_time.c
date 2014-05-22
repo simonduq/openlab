@@ -9,16 +9,18 @@ static void get_absolute_time(struct soft_timer_timeval *absolute_time,
 
 
 struct soft_timer_timeval time0 = {0, 0};
+struct soft_timer_timeval unix_time_ref = {0, 0};
 
-void iotlab_time_reset_time()
+void iotlab_time_set_time(struct soft_timer_timeval *t0,
+        struct soft_timer_timeval *time_ref)
 {
-    time0 = soft_timer_time_extended();
+    time0 = *t0;
+    unix_time_ref = *time_ref;
 }
 
 void iotlab_time_extend_relative(struct soft_timer_timeval *time,
         uint32_t timer_tick)
 {
-
     /* extend timer_tick to timeval */
     *time = soft_timer_time_extended();
     get_absolute_time(time, timer_tick, time->tv_sec);
@@ -27,9 +29,19 @@ void iotlab_time_extend_relative(struct soft_timer_timeval *time,
     time->tv_sec -= time0.tv_sec;
     if (time->tv_usec < time0.tv_usec) {
         time->tv_usec += 1000000;
-        time->tv_sec -= 1;
+        time->tv_sec  -= 1;
     }
     time->tv_usec -= time0.tv_usec;
+
+    /* Add unix time */
+    time->tv_sec  += unix_time_ref.tv_sec;
+    time->tv_usec += unix_time_ref.tv_usec;
+
+    /* Correct usecs > 100000 */
+    if (time->tv_usec > 1000000) {
+        time->tv_sec  += 1;
+        time->tv_usec -= 1000000;
+    }
 }
 
 

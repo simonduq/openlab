@@ -1,3 +1,4 @@
+#include <string.h>
 #include "platform.h"
 
 #include "iotlab_serial.h"
@@ -18,8 +19,8 @@
 static int32_t on_start(uint8_t cmd_type, packet_t *pkt);
 static int32_t on_stop(uint8_t cmd_type, packet_t *pkt);
 
-static int32_t reset_time(uint8_t cmd_type, packet_t *pkt);
-static void do_reset_time(handler_arg_t arg);
+static int32_t set_time(uint8_t cmd_type, packet_t *pkt);
+static void do_set_time(handler_arg_t arg);
 
 static soft_timer_t green_led_alarm;
 static int32_t green_led_blink(uint8_t cmd_type, packet_t *pkt);
@@ -41,11 +42,11 @@ void cn_control_start()
     iotlab_serial_register_handler(&handler_stop);
 
 
-    // reset_time
-    static iotlab_serial_handler_t handler_reset_time;
-    handler_reset_time.cmd_type = RESET_TIME;
-    handler_reset_time.handler = reset_time;
-    iotlab_serial_register_handler(&handler_reset_time);
+    // set_time
+    static iotlab_serial_handler_t handler_set_time;
+    handler_set_time.cmd_type = SET_TIME;
+    handler_set_time.handler = set_time;
+    iotlab_serial_register_handler(&handler_set_time);
 
 
     // green led control
@@ -99,27 +100,37 @@ static int32_t on_stop(uint8_t cmd_type, packet_t *pkt)
     return 0;
 }
 
-int32_t reset_time(uint8_t cmd_type, packet_t *pkt)
+static struct {
+        struct soft_timer_timeval unix_time;
+        struct soft_timer_timeval t0;
+} set_time_aux;
+
+
+int32_t set_time(uint8_t cmd_type, packet_t *pkt)
 {
-    if (0 != pkt->length)
+    if (8 != pkt->length)
         return 1;
+    /* Save time as soon as possible */
+    set_time_aux.t0 = soft_timer_time_extended();
+    /* copy unix time from pkt */
+    memcpy(&set_time_aux.unix_time, pkt->data, pkt->length);
 
     /* alloc the ack frame */
     packet_t *ack_pkt = iotlab_serial_packet_alloc();
     if (!ack_pkt)
         return 1;
-    ack_pkt->data[0] = RESET_TIME;
+    ack_pkt->data[0] = SET_TIME;
     ack_pkt->length = 1;
 
-    if (event_post(EVENT_QUEUE_APPLI, do_reset_time, ack_pkt))
+    if (event_post(EVENT_QUEUE_APPLI, do_set_time, ack_pkt))
         return 1;
 
     return 0;
 }
 
-static void do_reset_time(handler_arg_t arg)
+static void do_set_time(handler_arg_t arg)
 {
-    packet_t *pkt = (packet_t *)arg;
+    packet_t *ack_pkt = (packet_t *)arg;
 
     /*
      * Flush measures packets
@@ -127,16 +138,13 @@ static void do_reset_time(handler_arg_t arg)
     flush_current_consumption_measures();
     flush_current_rssi_measures();
 
-
-    /* Send the update frame */
-    if (iotlab_serial_send_frame(ACK_FRAME, pkt)) {
-        // ERF that's really bad, config failed
-        // send ERROR NOW TODO
-        packet_free(pkt);
+    // Send the update frame
+    if (iotlab_serial_send_frame(ACK_FRAME, ack_pkt)) {
+        packet_free(ack_pkt);
         return;
     }
 
-    iotlab_time_reset_time();
+    iotlab_time_set_time(&set_time_aux.t0, &set_time_aux.unix_time);
 }
 
 /*
