@@ -8,6 +8,7 @@ if(${PLATFORM_HAS_INA226})
     ${PROJECT_SOURCE_DIR}/drivers/stm32
     ${PROJECT_SOURCE_DIR}/drivers/
 
+    ${PROJECT_SOURCE_DIR}/appli/iotlab/drivers
     ${PROJECT_SOURCE_DIR}/appli/iotlab/autotest_common
     ${PROJECT_SOURCE_DIR}/appli/iotlab/lib
     )
@@ -26,6 +27,6 @@ if(${PLATFORM_HAS_INA226})
         iotlab_autotest_cn
         iotlab_serial
         iotlab_time
-        iotlab_leds
+        iotlab_leds_util
         )
 endif(${PLATFORM_HAS_INA226})

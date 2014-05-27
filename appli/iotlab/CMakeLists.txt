@@ -13,5 +13,6 @@ add_subdirectory(node_radio_characterization)
 # Libraries
 add_subdirectory(autotest_common)
 add_subdirectory(lib)
+add_subdirectory(drivers)
 
 endif (PLATFORM MATCHES "iotlab-.*")

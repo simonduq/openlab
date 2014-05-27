@@ -4,7 +4,7 @@
 #include "iotlab_serial.h"
 #include "iotlab_time.h"
 #include "iotlab_leds.h"
-
+#include "iotlab_leds_util.h"
 #include "fiteco_lib_gwt.h"
 
 #include "constants.h"

@@ -1,4 +1,5 @@
-#include "iotlab_leds.h"
+#include "iotlab_leds_util.h"
+#include "platform_leds.h"
 
 void leds_blink(soft_timer_t *timer, uint32_t period, uint8_t leds_mask)
 {
