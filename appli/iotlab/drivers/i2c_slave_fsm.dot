@@ -1,3 +1,6 @@
+// Generate pdf:
+// dot i2c_slave_fsm.dot -T pdf -O
+
 digraph finite_state_machine {
 	rankdir=LR;
 	size="8,5"
