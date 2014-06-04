@@ -5,4 +5,5 @@ include_directories(
     )
 
 add_library(iotlab_gpio STATIC iotlab_gpio)
+add_library(iotlab_i2c_slave STATIC iotlab_i2c_slave)
 

@@ -37,9 +37,4 @@ void gpio_disable_irq(struct gpio_conf *gpio);
 void gpio_trigger_irq_rising(struct gpio_conf *output);
 
 
-
-
-
-
-
 #endif // IOTLAB_GPIO_H

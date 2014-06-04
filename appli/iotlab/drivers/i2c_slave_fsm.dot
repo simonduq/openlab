@@ -7,7 +7,7 @@ digraph finite_state_machine {
 
 	node [shape = doublecircle];
     Idle;
-    RXType GetPayloadRX WaitRXStop;
+    RXHeader GetPayloadRX WaitRXStop;
     WaitRXStopType WaitTXStart WaitTXDone WaitTXStop;
 
 	node [shape = circle];
@@ -20,10 +20,10 @@ digraph finite_state_machine {
 	Idle -> SaveTimestamp [ label = "EV_RX_START" ];
 	// Idle -> Error [ label = "default" constraint = False style=dotted];
 	Idle -> Error [ label = "EV_TX_BYTE:\nsend 'ERR'" ];
-	SaveTimestamp -> RXType;
+	SaveTimestamp -> RXHeader;
 
-    RXType -> DecodeType [ label = "EV_RX_BYTE" ];
-    // RXType -> Error [ label = "default" constraint = False style=dotted];
+    RXHeader -> DecodeType [ label = "EV_RX_BYTE" ];
+    // RXHeader -> Error [ label = "default" constraint = False style=dotted];
 
     /*
      * Decode command type
