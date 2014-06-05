@@ -8,7 +8,7 @@ if(${PLATFORM_HAS_INA226})
     ${PROJECT_SOURCE_DIR}/drivers/stm32
     ${PROJECT_SOURCE_DIR}/drivers/
 
-    ${PROJECT_SOURCE_DIR}/appli/iotlab/drivers
+    ${PROJECT_SOURCE_DIR}/appli/iotlab/periph
     ${PROJECT_SOURCE_DIR}/appli/iotlab/autotest_common
     ${PROJECT_SOURCE_DIR}/appli/iotlab/lib
     )

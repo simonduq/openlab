@@ -2,7 +2,7 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/drivers/cortex-m3
     ${PROJECT_SOURCE_DIR}/drivers/stm32
     ${PROJECT_SOURCE_DIR}/drivers/stm32f1xx
-    ${PROJECT_SOURCE_DIR}/appli/iotlab/drivers
+    ${PROJECT_SOURCE_DIR}/appli/iotlab/periph
     )
 
 add_library(iotlab_serial STATIC iotlab_serial)
