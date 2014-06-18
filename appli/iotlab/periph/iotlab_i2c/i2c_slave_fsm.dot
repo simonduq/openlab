@@ -29,7 +29,7 @@ digraph finite_state_machine {
      * Decode command type
      */
     DecodeType -> GetPayloadRX [ label = "cmd_type_tx"];
-    DecodeType -> WaitRXStopType [ label = "cmd_type_rx"];
+    DecodeType -> WaitTXStart [ label = "cmd_type_rx"];
     // DecodeType -> Error [ label = "unkown_command" constraint = False style=dotted];
 
 
@@ -50,10 +50,6 @@ digraph finite_state_machine {
     /*
      * Open node wants to receive data
      */
-    WaitRXStopType -> WaitTXStart [label = "EV_RX_STOP"];
-    // WaitRXStopType -> Error [ label = "default" constraint = False style=dotted];
-
-
     HandleTXData [ label="HandleTXData\nCall correct handler\nto get data buff"];
     WaitTXStart -> HandleTXData [label = "EV_TX_START"];
     // WaitTXStart -> Error [ label = "default" constraint = False style=dotted];

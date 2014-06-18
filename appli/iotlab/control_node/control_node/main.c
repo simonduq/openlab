@@ -19,6 +19,7 @@
 #include "cn_control.h"
 #include "cn_consumption.h"
 #include "cn_radio.h"
+#include "cn_i2c.h"
 #include "cn_autotest.h"
 
 int main()
@@ -32,7 +33,6 @@ int main()
     else
         uart_enable(uart_external, 500000);
 
-
     // Start the soft timer
     soft_timer_init();
 
@@ -41,8 +41,11 @@ int main()
 
     // Start the application libs
     cn_control_start();
+
     cn_consumption_start();
     cn_radio_start();
+    /* map i2c start stop to dc start/stop */
+    cn_control_config(cn_i2c_stop, cn_i2c_start);
     cn_autotest_start();
     cn_logger_reset();
 

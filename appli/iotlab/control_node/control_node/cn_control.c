@@ -14,6 +14,17 @@
 #include "cn_consumption.h"
 #include "cn_radio.h"
 
+static struct {
+
+    void (*pre_stop_cmd)();
+    void (*post_start_cmd)();
+
+
+} cn_control = {
+    .pre_stop_cmd = NULL,
+    .post_start_cmd = NULL
+};
+
 
 
 static int32_t on_start(uint8_t cmd_type, packet_t *pkt);
@@ -62,6 +73,12 @@ void cn_control_start()
     iotlab_serial_register_handler(&handler_green_led_on);
 }
 
+void cn_control_config(void (*pre_stop_cmd)(), void (*post_start_cmd)())
+{
+    cn_control.pre_stop_cmd = pre_stop_cmd;
+    cn_control.post_start_cmd = post_start_cmd;
+}
+
 static int32_t on_start(uint8_t cmd_type, packet_t *pkt)
 {
     if (1 != pkt->length)
@@ -79,6 +96,10 @@ static int32_t on_start(uint8_t cmd_type, packet_t *pkt)
         return 1;
     }
 
+    // Run a pre_stop command before stoping
+    if (cn_control.post_start_cmd != NULL)
+        cn_control.post_start_cmd();
+
     return 0;
 }
 
@@ -86,6 +107,10 @@ static int32_t on_stop(uint8_t cmd_type, packet_t *pkt)
 {
     if (1 != pkt->length)
         return 1;
+
+    // Run a pre_stop command before stoping
+    if (cn_control.pre_stop_cmd != NULL)
+        cn_control.pre_stop_cmd();
 
     fiteco_lib_gwt_opennode_power_select(FITECO_GWT_OPENNODE_POWER__OFF);
 

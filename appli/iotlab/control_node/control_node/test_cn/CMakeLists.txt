@@ -11,17 +11,13 @@ if(${PLATFORM_HAS_INA226})
     ${PROJECT_SOURCE_DIR}/appli/iotlab/periph
     ${PROJECT_SOURCE_DIR}/appli/iotlab/autotest_common
     ${PROJECT_SOURCE_DIR}/appli/iotlab/lib
+    ${PROJECT_SOURCE_DIR}/appli/iotlab/control_node/control_node/
     )
-    add_executable(control_node
+    add_executable(test_cn
         main
-        cn_control
-        cn_consumption
-        cn_radio
-        cn_i2c
-        cn_autotest
-        cn_logger
+        ../cn_i2c
         )
-    target_link_libraries(control_node
+    target_link_libraries(test_cn
         platform
         packet
         fiteco_lib_gwt
@@ -31,5 +27,4 @@ if(${PLATFORM_HAS_INA226})
         iotlab_time
         iotlab_leds_util
         )
-add_subdirectory(test_cn)
 endif(${PLATFORM_HAS_INA226})

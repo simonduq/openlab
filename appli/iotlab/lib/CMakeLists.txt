@@ -5,7 +5,6 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/appli/iotlab/periph
     )
 
-add_library(iotlab_serial STATIC iotlab_serial)
-add_library(iotlab_time STATIC iotlab_time)
+add_library(iotlab_serial    STATIC iotlab_serial)
+add_library(iotlab_time      STATIC iotlab_time)
 add_library(iotlab_leds_util STATIC iotlab_leds_util)
-
