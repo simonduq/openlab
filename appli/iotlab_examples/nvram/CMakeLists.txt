@@ -1,0 +1,2 @@
+add_executable(nvram_example main)
+target_link_libraries(nvram_example platform)
