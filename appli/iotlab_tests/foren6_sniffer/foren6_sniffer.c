@@ -1,6 +1,11 @@
 #include <string.h>
 #include "platform.h"
+
+
+
+#define LOG_LEVEL LOG_LEVEL_INFO
 #include "debug.h"
+
 /*
  *
  * Copied and adapted from:
@@ -40,12 +45,14 @@ static void sniff_rx(phy_status_t status);
 
 void init_sniffer(uint8_t channel)
 {
+    log_info("Foren6 Sniffer with channel: %u", channel);
     phy_set_channel(platform_phy, channel);
     sniff_rx(~0);  // call without a valid status to start rx
 }
 
 static void sniff_rx(phy_status_t status)
 {
+    log_debug("status: %u", status);
     /* magic | type | len | pkt | crc | crc_ok | rssi | lqi | timestamp */
     static uint8_t data[256] = {
         [0] = 'S',
@@ -72,6 +79,8 @@ static void sniff_rx(phy_status_t status)
     phy_packet_t *rx_pkt = &sniff.pkt_buf[sniff.index];
     sniff.index = (sniff.index + 1) % 2;
 
+    log_debug("sniff.index: %u", sniff.index);
+
     // Enter RX again
     phy_status_t ret;
     ret = phy_rx_now(platform_phy, &sniff.pkt_buf[sniff.index], sniff_rx);
@@ -86,11 +95,14 @@ static void sniff_rx(phy_status_t status)
     if (status != PHY_SUCCESS)
         return;
 
+
     /* magic | type | len | pkt | crc | crc_ok | rssi | lqi | timestamp */
+
 
     // len
     const uint8_t len   = rx_pkt->length;
     data[index++] = len;
+    log_debug("len %u", len);
 
     // payload
     memcpy(&data[index], rx_pkt->data, len);
@@ -100,6 +112,7 @@ static void sniff_rx(phy_status_t status)
         log_error("CRC not managed");
         index += 2;
     }
+
     if (MY_TYPE & FIELD_CRC_OK)
         data[index++] = 1;
 
@@ -114,6 +127,8 @@ static void sniff_rx(phy_status_t status)
         data[index++] = 0xFF & (timestamp >> 8);
         data[index++] = 0xFF & (timestamp);
     }
+    log_debug("final len: %u", index);
 
-    uart_transfer(uart_external, data, index);
+    uart_transfer(uart_print, data, index);
+    log_debug("uart transferted");
 }
