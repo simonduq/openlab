@@ -5,7 +5,6 @@ add_subdirectory(test_serial_flood)
 add_subdirectory(oml)
 add_subdirectory(test_uids)
 
-if (PLATFORM MATCHES "iotlab-.*")
-    # Requires the 'iotlab-' libs
-    add_subdirectory(m3_node_interract_cn)
-endif (PLATFORM MATCHES "iotlab-.*")
+add_subdirectory(m3_node_interract_cn)
+
+add_subdirectory(foren6_sniffer)
