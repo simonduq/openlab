@@ -7,7 +7,7 @@
 #include "foren6_sniffer.h"
 
 // channel between 11 and 26
-static uint8_t channel = 26;
+static uint8_t channel = 11;
 
 static void hardware_init()
 {
