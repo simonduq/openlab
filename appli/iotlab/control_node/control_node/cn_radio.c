@@ -18,8 +18,8 @@
 static int32_t radio_off(uint8_t cmd_type, packet_t *pkt);
 static int32_t radio_polling(uint8_t cmd_type, packet_t *pkt);
 
-#if 0
 static int32_t radio_sniffer(uint8_t cmd_type, packet_t *pkt);
+#if 0
 static int32_t radio_injection(uint8_t cmd_type, packet_t *pkt);
 static int32_t radio_jamming(uint8_t cmd_type, packet_t *pkt);
 #endif
@@ -48,11 +48,11 @@ static struct
         packet_t *serial_pkt;
         uint32_t t_ref_s;
     } rssi;
-#if 0
     struct {
         phy_packet_t pkt_buf[2];
         int pkt_index;
     } sniff;
+#if 0
 
     /* Radio TX commands */
     struct {
@@ -65,7 +65,16 @@ static struct
         phy_power_t tx_power;
     } jam;
 #endif
-} radio;
+} radio = {
+    .sniff = {
+        .pkt_index = 0,
+        .pkt_buf = {
+            // static version of phy_preprare_packet
+            [0] = { .data = radio.sniff.pkt_buf[0].raw_data },
+            [1] = { .data = radio.sniff.pkt_buf[1].raw_data },
+        }
+    }
+};
 
 void cn_radio_start()
 {
@@ -80,12 +89,12 @@ void cn_radio_start()
     handler_polling.handler = radio_polling;
     iotlab_serial_register_handler(&handler_polling);
 
-#if 0
     static iotlab_serial_handler_t handler_sniffer;
     handler_sniffer.cmd_type = CONFIG_RADIO_SNIFFER;
     handler_sniffer.handler = radio_sniffer;
     iotlab_serial_register_handler(&handler_sniffer);
 
+#if 0
     static iotlab_serial_handler_t handler_injection;
     handler_injection.cmd_type = CONFIG_RADIO_INJECTION;
     handler_injection.handler = radio_injection;
@@ -147,13 +156,13 @@ static int manage_channel_switch()
 
 static void set_next_channel()
 {
+    phy_idle(platform_phy);
+
     do {
         radio.current_channel++;
         if (radio.current_channel > PHY_2400_MAX_CHANNEL)
             radio.current_channel = PHY_2400_MIN_CHANNEL;
     } while ((radio.channels & (1 << radio.current_channel)) == 0);
-
-    phy_idle(platform_phy);
     phy_set_channel(platform_phy, radio.current_channel);
 }
 
@@ -195,9 +204,9 @@ static int32_t radio_polling(uint8_t cmd_type, packet_t *pkt)
     /*
      * Check arguments validity
      */
-    if ((radio.channels & PHY_MAP_CHANNEL_2400_ALL) == 0)
-        return 1;
     radio.channels &= PHY_MAP_CHANNEL_2400_ALL;
+    if (radio.channels == 0)
+        return 1;
 
     if (0 == measure_period)
         return 1;
@@ -283,161 +292,155 @@ static void poll_time(handler_arg_t arg)
 }
 
 
-#if 0
 
 
 /* ********************** SNIFFER **************************** */
 
-static void sniff_rx(phy_status_t status);
-static void sniff_send_to_serial(handler_arg_t arg);
+static void sniff_rx();
+static void sniff_handle_rx(phy_status_t status);
+static void sniff_handle_rx_appli_queue(handler_arg_t arg);
+#if 0
 static void sniff_switch_channel(handler_arg_t arg);
+#endif
 
 static int32_t radio_sniffer(uint8_t cmd_type, packet_t *pkt)
 {
-    // Stop all
-    proper_stop();
-
     /*
      * Expected packet format is (length:6B):
-     *      * channels bitmap           [4B]
-     *      * time per channel (1/100s) [2B]
+     *      * channels                  [4B]
+     *      * time per channel (ms)     [2B]
      */
-    if (pkt->length != 6) {
-        log_warning("Bad Packet length: %u", pkt->length);
+    if (pkt->length != 6)
         return 1;
-    }
 
-    /** GET values, system endian */
+    size_t index = 0;
     uint16_t time_per_channel;
 
-    const uint8_t *data = pkt->data;
-    memcpy(&radio.channels, data, 4);
-    data += 4;
-    memcpy(&time_per_channel, data, 2);
-    data += 2;
+    /** GET values, system endian */
+    memcpy(&radio.channels, &pkt->data[index], 4);
+    index += 4;
+    memcpy(&time_per_channel, &pkt->data[index], sizeof(uint16_t));
+    index += 2;
 
-    // Check validity of channels
-    if ((radio.channels & PHY_MAP_CHANNEL_2400_ALL) == 0)
-        return 1;
+    /*
+     * Check arguments validity
+     */
     radio.channels &= PHY_MAP_CHANNEL_2400_ALL;
+    if (radio.channels == 0)
+        return 1;
 
+    /* Must switch with multiple channels */
+    if (radio.channels & (radio.channels -1)) {
+        // Multiple channels
+        return 1; // TODO handle multiple channels
+
+        if (0 == time_per_channel)
+            return 1;
+    } else {
+        if (0 != time_per_channel)
+            return 1;
+    }
+
+
+    /*
+     * Now config radio
+     */
+
+    // Stop previous and reset config
+    proper_stop();
+    // Select first radio channel
     set_next_channel();
 
     // Select first packet
     radio.sniff.pkt_index = 0;
-    phy_prepare_packet(radio.sniff.pkt_buf + radio.sniff.pkt_index);
 
-    // Start listening
-    phy_set_channel(platform_phy, radio.current_channel);
-    phy_status_t ret = phy_rx(platform_phy, 0,
-            soft_timer_time() + soft_timer_ms_to_ticks(500),
-            radio.sniff.pkt_buf + radio.sniff.pkt_index, sniff_rx);
-    if (ret != PHY_SUCCESS)
-    {
-        log_error("PHY RX Failed");
-    }
-    log_debug("Sniff RX on channel %u", radio.current_channel);
+    sniff_rx();
 
+    // TODO, See how to do this correctly with multiple channels
+    // problems with the multiple queues
+    // iotlab_serial should be called from appli queue
+#if 0
     // Start channel switch timer
-    if (time_per_channel != 0)
-    {
-        soft_timer_set_handler(&radio.period_tim, sniff_switch_channel, NULL);
-        soft_timer_start(&radio.period_tim,
-                soft_timer_ms_to_ticks(10 * time_per_channel), 1);
+    if (time_per_channel != 0) {
+        soft_timer_set_handler(&radio.timer, sniff_switch_channel, NULL);
+        soft_timer_start(&radio.timer, soft_timer_ms_to_ticks(time_per_channel), 1);
     }
+#endif
 
     // OK
     return 0;
 }
 
-static void sniff_rx(phy_status_t status)
+static void sniff_rx()
 {
-    // Switch packets
-    phy_packet_t *rx_packet = radio.sniff.pkt_buf + radio.sniff.pkt_index;
+    phy_packet_t *tx_pkt = &radio.sniff.pkt_buf[radio.sniff.pkt_index];
+    phy_rx_now(platform_phy, tx_pkt, sniff_handle_rx);
+    // TODO Handle errors on phy_rx_now
+}
+
+static void sniff_handle_rx(phy_status_t status)
+{
+    event_post(EVENT_QUEUE_APPLI, sniff_handle_rx_appli_queue,
+            (handler_arg_t)status);
+}
+
+static void sniff_handle_rx_appli_queue(handler_arg_t arg)
+{
+    phy_status_t status = (phy_status_t)arg;
+
+    // Get current packet and Switch packets
+    phy_packet_t *rx_pkt = &radio.sniff.pkt_buf[radio.sniff.pkt_index];
     radio.sniff.pkt_index = (radio.sniff.pkt_index + 1) % 2;
 
-    // Enter RX again
-    phy_status_t ret = phy_rx(platform_phy, 0,
-            soft_timer_time() + soft_timer_ms_to_ticks(500),
-            radio.sniff.pkt_buf + radio.sniff.pkt_index, sniff_rx);
+    sniff_rx();
 
-    if (ret != PHY_SUCCESS)
-    {
-        log_error("PHY RX Failed");
+    packet_t *serial_pkt = NULL;
+
+    switch (status) {
+    case (PHY_RX_CRC_ERROR):
+    case (PHY_SUCCESS):
+        serial_pkt = iotlab_serial_packet_alloc();
+    default:
+        break;
     }
 
-    if (status == PHY_SUCCESS)
-    {
-        // Send packet to serial
-        packet_t *serial_pkt = iotlab_serial_packet_alloc();
-        if (serial_pkt == NULL)
-        {
-            log_error("Failed to get a packet for sniffed RX");
-            return;
-        }
+    // Send packet to serial
+    if (serial_pkt == NULL)
+        return;
+    pkt->length  = 0;
 
-        uint8_t *data = serial_pkt->data;
+    uint8_t channel = (uint8_t) radio.current_channel;
+    uint8_t crc_ok = (status == PHY_SUCCESS);
+    struct soft_timer_timeval timestamp;
+    iotlab_time_extend_relative(&timestamp, rx_pkt->timestamp);
 
-        //prepare the time
-        struct soft_timer_timeval meas_time; ////, current_time;
-        ////current_time = soft_timer_time_extended();
-        iotlab_time_extend_relative(&meas_time, rx_packet->timestamp);
-        ////get_absolute_time(&meas_time, rx_packet->timestamp, current_time.tv_sec);
+    // timestamp, channel, crc_ok, [RSSI, LQI, captured length, payload]
+    iotlab_serial_append_data(serial_pkt, &timestamp, sizeof(timestamp));
+    iotlab_serial_append_data(serial_pkt, &channel,   sizeof(uint8_t));
+    iotlab_serial_append_data(serial_pkt, &crc_ok,    sizeof(uint8_t));
 
-        // Place timestamp, channel, RSSI, LQI, captured length, as header
-        data = packer_uint32_pack(data, meas_time.tv_sec);
-        data = packer_uint32_pack(data, meas_time.tv_usec);
-        *data++ = radio.current_channel;
-        *data++ = rx_packet->rssi;
-        *data++ = rx_packet->lqi;
-        *data++ = rx_packet->length;
-        //rx_packet->length + 4 as time is now 2*32bits 1 for sec, 1 for usec
-        memcpy(data, rx_packet->data, rx_packet->length + 4);
-        data += rx_packet->length;
-        serial_pkt->length = data - serial_pkt->data;
-
-        event_post(EVENT_QUEUE_APPLI, sniff_send_to_serial, serial_pkt);
+    if (crc_ok) {
+        // Add payload if packet correct
+        iotlab_serial_append_data(serial_pkt, &rx_pkt->rssi,   sizeof(uint8_t));
+        iotlab_serial_append_data(serial_pkt, &rx_pkt->lqi,    sizeof(uint8_t));
+        iotlab_serial_append_data(serial_pkt, &rx_pkt->length, sizeof(uint8_t));
+        iotlab_serial_append_data(serial_pkt, &rx_pkt->data,   rx_pkt->length);
     }
-}
 
-static void sniff_send_to_serial(handler_arg_t arg)
-{
-    packet_t *pkt = arg;
-    if (iotlab_serial_send_frame(RADIO_SNIFFER_FRAME, pkt))
-    {
-        log_error("Failed to send captured frame");
-        packet_free(pkt);
-    }
+    if (iotlab_serial_send_frame(RADIO_SNIFFER_FRAME, serial_pkt))
+        packet_free(serial_pkt);
 }
 
 
+#if 0
 static void sniff_switch_channel(handler_arg_t arg)
 {
-    phy_idle(platform_phy);
-
-    // Select next channel
-    do
-    {
-        radio.current_channel++;
-        if (radio.current_channel > PHY_2400_MAX_CHANNEL)
-        {
-            radio.current_channel = PHY_2400_MIN_CHANNEL;
-        }
-    } while ((radio.channels & (1 << radio.current_channel)) == 0);
-
-    // Enter RX on new channel
-    phy_set_channel(platform_phy, radio.current_channel);
-    phy_status_t ret = phy_rx(platform_phy, 0,
-            soft_timer_time() + soft_timer_ms_to_ticks(500),
-            radio.sniff.pkt_buf + radio.sniff.pkt_index, sniff_rx);
-    if (ret != PHY_SUCCESS)
-    {
-        log_error("PHY RX Failed");
-    }
-
-    log_debug("Sniff RX on channel %u", radio.current_channel);
-
+    set_next_channel();
+    sniff_rx();
 }
+#endif
+
+#if 0
 
 /* ********************** INJECTION **************************** */
 static void injection_time(handler_arg_t arg);

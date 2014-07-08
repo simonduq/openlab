@@ -22,9 +22,9 @@ enum frame_type {
         /* Control node measure/noise config */
         CONFIG_RADIO_STOP    = 0xC0,
         CONFIG_RADIO_MEAS    = 0xC1,
+        CONFIG_RADIO_SNIFFER = 0xC3,
         /*
          * CONFIG_RADIO_NOISE   = 0xC2,
-         * CONFIG_RADIO_SNIFFER = 0xC3,
          * CONFIG_RADIO_INJECTION = 0xC4,
          *
          * CONFIG_SENSOR        = 0xC9,
@@ -41,6 +41,7 @@ enum frame_type {
 
         // Measures
         RADIO_MEAS_FRAME     = 0xF1,
+        RADIO_SNIFFER_FRAME  = 0xF3,
         CONSUMPTION_FRAME    = 0xFC,
 
         LOGGER_FRAME         = 0xEE,  // log messages
@@ -68,7 +69,7 @@ enum alimentation {
         DC      = 0x1,
 };
 
-enum {
+enum mode {
         STOP  = 0x0,
         START = 0x1,
 };
