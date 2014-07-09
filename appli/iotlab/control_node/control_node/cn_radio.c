@@ -407,25 +407,26 @@ static void sniff_handle_rx_appli_queue(handler_arg_t arg)
     // Send packet to serial
     if (serial_pkt == NULL)
         return;
-    pkt->length  = 0;
+    serial_pkt->length  = 0;
 
     uint8_t channel = (uint8_t) radio.current_channel;
     uint8_t crc_ok = (status == PHY_SUCCESS);
     struct soft_timer_timeval timestamp;
     iotlab_time_extend_relative(&timestamp, rx_pkt->timestamp);
 
-    // timestamp, channel, crc_ok, [RSSI, LQI, captured length, payload]
+    // timestamp, channel, rssi, lqi, crc_ok, [captured length, payload]
     iotlab_serial_append_data(serial_pkt, &timestamp, sizeof(timestamp));
     iotlab_serial_append_data(serial_pkt, &channel,   sizeof(uint8_t));
+    iotlab_serial_append_data(serial_pkt, &rx_pkt->rssi,   sizeof(uint8_t));
+    iotlab_serial_append_data(serial_pkt, &rx_pkt->lqi,    sizeof(uint8_t));
     iotlab_serial_append_data(serial_pkt, &crc_ok,    sizeof(uint8_t));
 
-    if (crc_ok) {
-        // Add payload if packet correct
-        iotlab_serial_append_data(serial_pkt, &rx_pkt->rssi,   sizeof(uint8_t));
-        iotlab_serial_append_data(serial_pkt, &rx_pkt->lqi,    sizeof(uint8_t));
-        iotlab_serial_append_data(serial_pkt, &rx_pkt->length, sizeof(uint8_t));
-        iotlab_serial_append_data(serial_pkt, &rx_pkt->data,   rx_pkt->length);
-    }
+    if (!crc_ok)
+        rx_pkt->length = 0;
+
+    // Add payload if packet correct
+    iotlab_serial_append_data(serial_pkt, &rx_pkt->length, sizeof(uint8_t));
+    iotlab_serial_append_data(serial_pkt, &rx_pkt->data,   rx_pkt->length);
 
     if (iotlab_serial_send_frame(RADIO_SNIFFER_FRAME, serial_pkt))
         packet_free(serial_pkt);
