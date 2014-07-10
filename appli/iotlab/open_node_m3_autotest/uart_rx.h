@@ -30,6 +30,7 @@ enum frameType {
     TST_I2C_CN = 9,
     TST_GPIO_PPS_START = 0xA,
     TST_GPIO_PPS_STOP = 0x1A,
+    TST_GPIO_PPS_GET = 0x2A,
     RADIO_PKT = 0xB,
     GET_TIME = 0xD,
     GET_UID = 0xE,

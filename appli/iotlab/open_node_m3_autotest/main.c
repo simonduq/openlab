@@ -357,6 +357,10 @@ static void vParseFrame()
         printf("ACK GPS_PPS_STOP = %d pps\n", seconds);
         break;
 
+    case TST_GPIO_PPS_GET:
+        printf("ACK GPS_PPS_GET = %d pps\n", seconds);
+        break;
+
 #endif
 
     case GET_TIME:
