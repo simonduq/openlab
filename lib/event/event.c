@@ -78,7 +78,7 @@ void event_init(void)
 
         // Create the 1st task, plate its number in the param variable
         xTaskCreate(event_task, (const signed char *) "evt0",
-                    configMINIMAL_STACK_SIZE, (void *) 0,
+                    4 * configMINIMAL_STACK_SIZE, (void *) 0,
                     event_priorities[0], tasks);
         log_info("Priority of event task #0: %u/%u", event_priorities[0], configMAX_PRIORITIES - 1);
 
