@@ -102,7 +102,7 @@ static void radio_rx_tx_done(phy_status_t status)
 }
 
 
-static char *radio_pkt(uint8_t tx_power, uint8_t channel)
+static char *radio_pkt(uint8_t channel, uint8_t tx_power)
 {
     static phy_packet_t tx_pkt = {
         .data = tx_pkt.raw_data,
@@ -141,7 +141,7 @@ radio_cleanup:
     return ret;
 }
 
-static char *radio_ping_pong(uint8_t tx_power, uint8_t channel)
+static char *radio_ping_pong(uint8_t channel, uint8_t tx_power)
 {
     char *ret = NULL;
     int success;
@@ -389,19 +389,19 @@ static int cmd_get_magneto(char *command)
 static int cmd_radio_pkt(char *command)
 {
     char power[8];
-    uint8_t tx_power, channel;
+    uint8_t channel, tx_power;
 
-    if (2 != sscanf(command, "radio_pkt %8s %u", power, &channel))
+    if (2 != sscanf(command, "radio_pkt %u %8s", &channel, power))
+        return 1;
+    if (11 > channel || channel > 26)
         return 1;
     tx_power = parse_power(power);
     if (255 == tx_power)
         return 1;
-    if (11 > channel || channel > 26)
-        return 1;
 
-    char *err_msg = radio_pkt(tx_power, channel);
+    char *err_msg = radio_pkt(channel, tx_power);
     if (NULL == err_msg)
-        printf("ACK radio_pkt %s %u\n", power, channel);
+        printf("ACK radio_pkt %s %u\n", channel, power);
     else
         printf("NACK radio_pkt %s\n", err_msg);
     return 0;
@@ -411,19 +411,19 @@ static int cmd_radio_pkt(char *command)
 static int cmd_radio_ping_pong(char *command)
 {
     char power[8];
-    uint8_t tx_power, channel;
+    uint8_t channel, tx_power;
 
-    if (2 != sscanf(command, "radio_ping_pong %8s %u", power, &channel))
+    if (2 != sscanf(command, "radio_ping_pong %u %8s", &channel, power))
+        return 1;
+    if (11 > channel || channel > 26)
         return 1;
     tx_power = parse_power(power);
     if (255 == tx_power)
         return 1;
-    if (11 > channel || channel > 26)
-        return 1;
 
-    char *err_msg = radio_ping_pong(tx_power, channel);
+    char *err_msg = radio_ping_pong(channel, tx_power);
     if (NULL == err_msg)
-        printf("ACK radio_ping_pong %s %u\n", power, channel);
+        printf("ACK radio_ping_pong %u %s\n", channel, tx_power);
     else
         printf("NACK radio_ping_pong %s\n", err_msg);
     return 0;
