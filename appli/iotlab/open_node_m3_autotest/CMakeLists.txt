@@ -10,10 +10,13 @@ include_directories(
 
 # Build for open nodes
 
-if (PLATFORM STREQUAL "iotlab-m3" OR PLATFORM STREQUAL "iotlab-a8-m3")
+if (PLATFORM STREQUAL "iotlab-m3")
+add_executable(m3_autotest main)
+target_link_libraries(m3_autotest iotlab_autotest_on iotlab_gpio platform)
+endif (PLATFORM STREQUAL "iotlab-m3")
 
-add_executable(open_node_autotest main)
-target_link_libraries(open_node_autotest  iotlab_autotest_on iotlab_gpio platform)
-
-endif (PLATFORM STREQUAL "iotlab-m3" OR PLATFORM STREQUAL "iotlab-a8-m3")
+if (PLATFORM STREQUAL "iotlab-a8-m3")
+add_executable(a8_autotest main)
+target_link_libraries(a8_autotest iotlab_autotest_on iotlab_gpio platform)
+endif (PLATFORM STREQUAL "iotlab-a8-m3")
 
