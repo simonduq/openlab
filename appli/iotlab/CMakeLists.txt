@@ -7,6 +7,7 @@ add_subdirectory(control_node)
 add_subdirectory(idle_with_dc)
 
 add_subdirectory(open_node_m3_autotest)
+add_subdirectory(open_node_m3_autotest_scanf)
 
 add_subdirectory(node_radio_characterization)
 
