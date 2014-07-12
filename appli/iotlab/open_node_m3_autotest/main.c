@@ -342,6 +342,15 @@ static int cmd_get_uid(char *command)
     return 0;
 }
 
+static int cmd_echo(char *command)
+{
+    if (1 != sscanf(command, "echo %[^\n]", command))
+        return 1;
+    printf("%s\n", command);
+    return 0;
+}
+
+
 /* /Simple Commands */
 
 /* Get Sensor */
@@ -485,6 +494,7 @@ static command_func_t commands_handlers[] = {
 
     cmd_get_time,
     cmd_get_uid,
+    cmd_echo,
 
     cmd_leds_on,
     cmd_leds_off,
