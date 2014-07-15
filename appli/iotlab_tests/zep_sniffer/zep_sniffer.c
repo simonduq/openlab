@@ -1,7 +1,7 @@
 #include <string.h>
 #include "platform.h"
 
-
+#include "gps_synced_clock.h"
 
 #define LOG_LEVEL LOG_LEVEL_INFO
 #include "debug.h"
@@ -38,10 +38,21 @@ static const uint8_t magic[] = { 'E', 'X', ZEP_VERSION };
 static void sniff_rx(phy_status_t status);
 static uint8_t current_channel = 0;
 
+static void timestamp_handler(uint32_t* seconds, uint32_t* subseconds)
+{
+    gps_synced_time_t time_now;
+    gps_synced_clock_get(&time_now);
+
+    *seconds = time_now.s;
+    *subseconds = time_now.ms*1000 + time_now.us;
+    return;
+}
+
 void init_sniffer(uint8_t channel)
 {
     log_info("ZEPv2 Sniffer with channel: %u", channel);
     phy_set_channel(platform_phy, channel);
+    register_timestamp_handler(timestamp_handler);
     current_channel = channel;
     sniff_rx(~0);  // call without a valid status to start rx
 }
@@ -110,7 +121,9 @@ static void sniff_rx(phy_status_t status)
     data[index++] = rx_pkt->rssi; /* ... rssi often more meaningful than lqi */
 
     // Timestamp: XXX: change to NTP format
-    uint64_t timestamp = rx_pkt->timestamp;
+    printf("\nTIMESTAMP_MSB : %d", rx_pkt->timestamp_MSB);
+    printf("\nTIMESTAMP : %d\n", rx_pkt->timestamp);
+    uint64_t timestamp = ((uint64_t)rx_pkt->timestamp_MSB << 32) | ((2^32)/rx_pkt->timestamp);
     int i;
     for (i=0;i<8;i++)
         data[index++] = 0xFF & (timestamp >> (8*(7-i)));
