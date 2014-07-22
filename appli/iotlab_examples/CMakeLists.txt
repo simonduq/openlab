@@ -9,4 +9,5 @@ endif(${PLATFORM_HAS_CSMA})
 
 if(${PLATFORM_HAS_LSM303DLHC})
 add_subdirectory(ping_pong)
+add_subdirectory(smart_tiles)
 endif(${PLATFORM_HAS_LSM303DLHC})
