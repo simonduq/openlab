@@ -20,7 +20,7 @@ static soft_timer_t tx_timer;
 #define ACQ_PERIOD soft_timer_ms_to_ticks(5)
 /* times of computation before transmit a result */
 /* period in sec = (ACQ_PERIOD=5 x TX_COMPUTE) / 1000 */
-#define TX_PERIOD 10
+#define TX_PERIOD 200
 
 //event handler
 static void handle_ev(handler_arg_t arg);
