@@ -37,7 +37,7 @@
 static xSemaphoreHandle tdma_mutex;
 struct tdma_global tdma_data;
 
-void mac_tdma_init (uint16_t addr)
+void mac_tdma_init ()
 {
     if (tdma_mutex == NULL)
     {
@@ -51,6 +51,9 @@ void mac_tdma_init (uint16_t addr)
     /* Init tdma modules. */
     tdma_frame_init();
     tdma_slot_init();
+
+    // Get MAC address
+    uint16_t addr = (platform_uid ? platform_uid() : 0);
 
     /* eventually generate address */
     if (addr == 0x0000 || addr == 0xffff)

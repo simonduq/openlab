@@ -44,6 +44,11 @@ static void print_uids(void *args)
     printf("iotlab_uid (16b):\n\t%02x:%02x\n", id >> 8, id & 0xFF);
 
 
+    printf("platform_uid: 0x%x\n", platform_uid);
+    if (platform_uid)
+        printf("platform_uid() == 0x%04x\n", platform_uid());
+
+
     printf("\n");
 }
 

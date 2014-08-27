@@ -59,8 +59,8 @@ int main()
 {
     platform_init();
 
-    /* init tdma (0 means automatically generated address) */
-    mac_tdma_init(0);
+    /* init tdma */
+    mac_tdma_init();
 
     /* start coordinator */
     mac_tdma_start_coord(&cfg);

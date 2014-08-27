@@ -74,12 +74,8 @@ extern const mac_tdma_config_t mac_tdma_config;
 
 /**
  * Initialize the MAC layer.
- *
- * If the given address is 0x0000 or 0xffff, an address is generated.
- *
- * \param addr the address of this device
  */
-void mac_tdma_init(uint16_t addr);
+void mac_tdma_init();
 
 /**
  * Start as node.

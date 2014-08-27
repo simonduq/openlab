@@ -35,11 +35,19 @@
 #include "random.h"
 #include "soft_timer.h"
 
+#include "iotlab_uid.h"
+
 #include "printf.h"
 #include "debug.h"
 
 platform_reset_cause_t platform_reset_cause;
 __attribute__((weak)) int32_t platform_should_start_watchdog();
+
+// Use iotlab_uid as mac address
+uint16_t platform_uid()
+{
+    return iotlab_uid();
+}
 
 void platform_init()
 {

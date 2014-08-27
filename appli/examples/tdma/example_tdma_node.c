@@ -45,8 +45,8 @@ int main()
 {
     platform_init();
 
-    /* init tdma with automatically generated address */
-    mac_tdma_init(0);
+    /* init tdma */
+    mac_tdma_init();
 
     /* start node to look for network on channel 21 with panid 0x6666 */
     mac_tdma_start_node(21, 0x6666);

@@ -60,6 +60,11 @@ typedef union
 extern const uid_t const *uid;
 
 /**
+ * Return a 16b uid processed from uid
+ */
+__attribute__((weak)) uint16_t platform_uid();
+
+/**
  * Print the unique ID using printf on the configured serial output.
  */
 void uid_print();

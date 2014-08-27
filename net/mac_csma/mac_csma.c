@@ -22,6 +22,7 @@
  *
  *  Created on: Jan 20, 2013
  *      Author: Clément Burin des Roziers <clement.burin-des-roziers.at.hikob.com>
+ *              Gaëtan Harter <gaetan.harter.at.inria.fr>
  */
 
 #include "FreeRTOS.h"
@@ -76,8 +77,6 @@ static void give()
     xSemaphoreGive(mac.mutex);
 }
 
-__attribute__((weak)) void serial_id_read(uint8_t *addr);
-
 void mac_csma_init(int channel)
 {
     if (mac.mutex == NULL)
@@ -90,16 +89,12 @@ void mac_csma_init(int channel)
     mac.channel = channel;
 
     // Get MAC address
-    uint8_t ext_addr[8] =
-    { 0, 0, 0, 0, 0, 0, 0, 0 };
-    if (serial_id_read) serial_id_read(ext_addr);
-    const uint8_t all_zeros[8] =
-    { 0, 0, 0, 0, 0, 0, 0, 0 };
+    uint16_t addr = (platform_uid ? platform_uid() : 0);
 
     // Check if all zero
-    if (memcmp(ext_addr, all_zeros, 8) != 0)
+    if (addr)
     {
-        packer_uint16_unpack(ext_addr + 6, &mac.local_addr);
+        mac.local_addr = addr;
     }
     else
     {
