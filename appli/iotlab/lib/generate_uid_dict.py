@@ -28,7 +28,7 @@ def extract_json(json_str):
     """
     try:
         answer_dict = json.loads(json_str)
-    except ValueError:
+    except ValueError:  # pragma: no cover
         sys.stderr.write('Could not load JSON object from input.\n')
         sys.exit(1)
     return answer_dict
