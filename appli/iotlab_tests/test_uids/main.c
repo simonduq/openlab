@@ -3,6 +3,7 @@
 #include "unique_id.h"
 #include "printf.h"
 #include "iotlab_uid.h"
+#include "iotlab_uid_num_hashtable.h"
 
 static void print_uids(void *args)
 {
@@ -47,6 +48,24 @@ static void print_uids(void *args)
     printf("platform_uid: 0x%x\n", platform_uid);
     if (platform_uid)
         printf("platform_uid() == 0x%04x\n", platform_uid());
+
+
+    struct node my_node = node_from_uid(id);
+    char *node_str;
+
+    switch (my_node.node_type) {
+    case M3:
+        node_str = "m3";
+        break;
+    case A8:
+        node_str = "a8";
+        break;
+    default:
+        node_str = "Uknown type";
+        break;
+    }
+    printf("My node is: %x%03x: %s-%u\n", my_node.node_type, my_node.node_num,
+            node_str, my_node.node_num);
 
 
     printf("\n");
