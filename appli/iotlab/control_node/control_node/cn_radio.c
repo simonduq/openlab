@@ -426,7 +426,7 @@ static void sniff_handle_rx_appli_queue(handler_arg_t arg)
 
     // Add payload if packet correct
     iotlab_serial_append_data(serial_pkt, &rx_pkt->length, sizeof(uint8_t));
-    iotlab_serial_append_data(serial_pkt, &rx_pkt->data,   rx_pkt->length);
+    iotlab_serial_append_data(serial_pkt, rx_pkt->data,    rx_pkt->length);
 
     if (iotlab_serial_send_frame(RADIO_SNIFFER_FRAME, serial_pkt))
         packet_free(serial_pkt);
