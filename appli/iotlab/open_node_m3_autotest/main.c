@@ -108,6 +108,11 @@ static char *radio_pkt(uint8_t channel, uint8_t tx_power)
         .data = tx_pkt.raw_data,
         .length = 125,
     };
+    uint16_t i;
+    for (i = 0; i < 125; i++) {
+        tx_pkt.data[i] = i;
+    }
+
     int success;
     char *ret = NULL;
     xQueueReceive(radio_queue, &success, 0);  // cleanup queue
