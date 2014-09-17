@@ -2,6 +2,7 @@ add_subdirectory(serial_echo)
 add_subdirectory(simple_idle)
 add_subdirectory(serial_helo)
 add_subdirectory(nvram)
+add_subdirectory(simple_robot)
 
 if(${PLATFORM_HAS_CSMA})
 add_subdirectory(tutorial)
