@@ -108,6 +108,11 @@ static char *radio_pkt(uint8_t channel, uint8_t tx_power)
         .data = tx_pkt.raw_data,
         .length = 125,
     };
+    uint16_t i;
+    for (i = 0; i < 125; i++) {
+        tx_pkt.data[i] = i;
+    }
+
     int success;
     char *ret = NULL;
     xQueueReceive(radio_queue, &success, 0);  // cleanup queue
@@ -397,7 +402,7 @@ static int cmd_get_magneto(char *command)
 
 static int cmd_radio_pkt(char *command)
 {
-    char power[8];
+    char power[8] = {'\0'};
     uint8_t channel, tx_power;
 
     if (2 != sscanf(command, "radio_pkt %u %8s", &channel, power))
@@ -410,7 +415,7 @@ static int cmd_radio_pkt(char *command)
 
     char *err_msg = radio_pkt(channel, tx_power);
     if (NULL == err_msg)
-        printf("ACK radio_pkt %s %u\n", channel, power);
+        printf("ACK radio_pkt %u %s\n", channel, power);
     else
         printf("NACK radio_pkt %s\n", err_msg);
     return 0;
