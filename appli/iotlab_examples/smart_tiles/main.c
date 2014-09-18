@@ -110,7 +110,7 @@ static void handle_ev(handler_arg_t arg)
   glob_counters.index++;
 
   if (peak > 0.0) {
-    printf("Peak;0.0;0.0;%f\n", peak);
+    printf("AccPeak;0.0;0.0;%f\n", peak);
   }
 
   if (glob_counters.lindex == TX_PERIOD) {
