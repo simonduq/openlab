@@ -9,7 +9,6 @@
 #include <math.h>
 
 #include "lsm303dlhc.h"
-#include "l3g4200d.h"
 #include "event.h"
 #include "detectpeak.h"
 
@@ -54,9 +53,11 @@ static void hardware_init()
 			  LSM303DLHC_ACC_RATE_400HZ,	
 			  LSM303DLHC_ACC_SCALE_2G,	
 			  LSM303DLHC_ACC_UPDATE_ON_READ);
-    // L3G4200D gyro sensor initialisation
-    // l3g4200d_powerdown();
-    // l3g4200d_gyr_config(L3G4200D_200HZ, L3G4200D_250DPS, true);
+    // LSM303DLHC magneto sensor initialisation
+    lsm303dlhc_mag_config(LSM303DLHC_MAG_RATE_220HZ,
+                          LSM303DLHC_MAG_SCALE_2_5GAUSS, 
+			  LSM303DLHC_MAG_MODE_CONTINUOUS,
+                          LSM303DLHC_TEMP_MODE_ON);
     // Initialize a openlab timer
     soft_timer_set_handler(&tx_timer, alarm, NULL);
     soft_timer_start(&tx_timer, ACQ_PERIOD, 1);
@@ -73,53 +74,74 @@ int main()
 static void handle_ev(handler_arg_t arg)
 {
   int16_t a[3];
-  //  int16_t g[3];
+  //  int16_t g[3]; 
+  int16_t m[3];
   int16_t i;
-  float af[3];
-  float peak;
-  float norm;
-  static float scale, normk;
+  float af[3], mf[3];
+  float accpeak;
+  float magpeak;
+  float accnorm, magnorm;
+  static float accscale, accnormk;
+  static float magscale, magnormk;
 
   /* Read accelerometers */ 
   lsm303dlhc_read_acc(a);
-  /* Read gyrometers */
-  //l3g4200d_read_rot_speed(g);
-
+  /* Read magnetometers */ 
+  lsm303dlhc_read_mag(m);
+ 
   /* Sensors calibration during CALIB_PERIOD*/
   if (glob_counters.index <= CALIB_PERIOD) {
-    /* Scale Accelero */
-    scale = GRAVITY;
+    /* Scale Accelero and magneto*/
+    accscale = GRAVITY;
+    magscale = 1.0;
+    /* first index */
     if (glob_counters.index == 0)
-      norm = 0.0;
-    normk = a[0] * a[0] + a[1] * a[1] + a[2] * a[2];
-    normk = sqrt(normk);
-    norm += normk;
+      {
+	accnorm = 0.0;
+	magnorm = 0.0;
+      }
+    /* computation */
+    accnormk = a[0] * a[0] + a[1] * a[1] + a[2] * a[2];
+    accnormk = sqrt(accnormk);
+    accnorm += accnormk;
+    magnormk = m[0] * m[0] + m[1] * m[1] + m[2] * m[2];
+    magnormk = sqrt(magnormk);
+    magnorm += magnormk;
+    /* last index */
     if (glob_counters.index == CALIB_PERIOD) {
-      norm = norm / CALIB_PERIOD;
-      scale = GRAVITY / norm;
+      accnorm = accnorm / CALIB_PERIOD;
+      accscale = GRAVITY / accnorm;
+      magnorm = magnorm / CALIB_PERIOD;
+      magscale = 1.0 / magnorm;
     }
-  }
-
-  
-  /* Conversion */
-  for (i=0; i < 3; i++) {
-    af[i] = a[i] * ACC_RES * scale;
-  }
-  /* Peak detection */
-  detect_peak(glob_counters.index, af, &peak);
-  glob_counters.index++;
-
-  if (peak > 0.0) {
-    printf("Peak;0.0;0.0;%f\n", peak);
-  }
-
-  if (glob_counters.lindex == TX_PERIOD) {
-    printf("Acc;%f;%f;%f\n", af[0], af[1], af[2]);
-    // printf("Gyr;%f;%f;%f\n", g[0] * GYR_RES, g[1] * GYR_RES, g[2] * GYR_RES);
-    glob_counters.lindex=0;
-  }
+    glob_counters.index++;
+  } /* After calibration */
   else {
-    glob_counters.lindex++;
+    /* Conversion */
+    for (i=0; i < 3; i++) {
+      af[i] = a[i] * ACC_RES * accscale; 
+      mf[i] = m[i] * magscale;
+    } 
+    /* Peaks detection after calibration*/ 
+    detect_peak(glob_counters.index, af, &accpeak); 
+    detect_peak(glob_counters.index, mf, &magpeak);
+
+    glob_counters.index++;
+    /* Printing */
+    if (accpeak > 0.0) {
+      printf("AccPeak;0.0;0.0;%f\n", accpeak);
+    }
+    if (magpeak > 0.0) {
+      printf("MagPeak;0.0;0.0;%f\n", magpeak);
+    }
+    if (glob_counters.lindex == TX_PERIOD) {
+      printf("Acc;%f;%f;%f\n", af[0], af[1], af[2]);
+      printf("Mag;%f;%f;%f\n", mf[0], mf[1], mf[2]);
+      glob_counters.lindex=0;
+    }
+    else {
+      glob_counters.lindex++;
+    }
   }
 }
 

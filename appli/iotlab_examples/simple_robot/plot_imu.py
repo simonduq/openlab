@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+import numpy as np
 
 """ plot_imu.py
 
@@ -13,9 +14,9 @@ import matplotlib.pyplot as plt
 
 FIELDS = {'time': 0, 'name': 1, 'type': 2, 'X': 3, 'Y': 4, 'Z': 5}
 
-FILE = 'data/top30.txt'
-NODES = ['m3-29', 'm3-30', 'm3-31', 'm3-32']
-
+FILE = 'robot1.txt'
+#NODES = ['m3-29', 'm3-30', 'm3-31', 'm3-32']
+NODES = ['m3-30']
 
 def imu_load(filename):
     """ Load iot-lab imu file
@@ -32,7 +33,7 @@ def imu_load(filename):
     """
 
     try:
-        mytype = [('time', '<f8'), ('name', '|S11'), ('type', '|S11'),
+        mytype = [('name', '|S11'), ('type', '|S11'),
                   ('X', '<f8'), ('Y', '<f8'), ('Z', '<f8')]
         # pylint:disable=I0011,E1101
         data = np.genfromtxt(filename, skip_header=1, invalid_raise=False,
@@ -45,7 +46,7 @@ def imu_load(filename):
         sys.exit(3)
 
     # Start time to 0 sec
-    data['time'] = data['time'] - data['time'][0]
+    #data['time'] = 0
 
     return data
 
@@ -88,14 +89,34 @@ def imu_plot(data, title):
     plt.figure()
     plt.grid()
     plt.title(title)
-    plt.plot(data['time'], data['X'])
-    plt.plot(data['time'], data['Y'])
-    plt.plot(data['time'], data['Z'])
+    plt.plot(data['X'])
+    plt.plot(data['Y'])
+    plt.plot(data['Z'])
     plt.ylabel('Acceleration (G)')
     plt.xlabel('Sample Time (sec)')
 
     return
 
+
+def imu_plot_norm(data, title):
+    """ Plot iot-lab imu data
+
+    Parameters:
+    ------------
+    data: numpy array
+      [time name type X Y Z]
+    title: string
+       title of the plot
+    """
+    plt.figure()
+    plt.grid()
+    plt.title(title)
+    norm = np.sqrt(data['X']**2 + data['Y']**2 + data['Z']**2)
+    plt.plot(norm)
+    plt.ylabel('Norm')
+    plt.xlabel('Sample Time (sec)')
+
+    return
 
 def imu_all_plot(data, title, ylabel, nodes):
     """ Plot iot-lab imu data
@@ -138,8 +159,12 @@ def test0(index):
     """ test 0
     """
     data = imu_load(FILE)
+    print NODES[index]
     datanode = imu_extract(data, NODES[index], sensor_type='Acc')
     imu_plot(datanode, "Accelerometers " + NODES[index])
+    datanode = imu_extract(data, NODES[index], sensor_type='Mag')
+    imu_plot(datanode, "Magnetometers " + NODES[index])
+    imu_plot_norm(datanode, "Norm Magnetometers " + NODES[index])
 
 
 def test1():
@@ -152,7 +177,8 @@ def test1():
 
 if __name__ == "__main__":
     test0(0)
-    test0(1)
-    test0(2)
-    test0(3)
-    test1()
+#    test0(1)
+#    test0(2)
+#    test0(3)
+#    test1()
+    plt.show()
