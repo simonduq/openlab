@@ -124,12 +124,14 @@ static void handle_ev(handler_arg_t arg)
     } 
     /* Peaks detection after calibration*/ 
     detect_peak(glob_counters.index, af, &accpeak); 
-    detect_peak(glob_counters.index, mf, &magpeak);
+    detect_peak_2(glob_counters.index, mf, &magpeak);
+    magpeak=0.0;
 
     glob_counters.index++;
     /* Printing */
     if (accpeak > 0.0) {
       printf("AccPeak;0.0;0.0;%f\n", accpeak);
+      printf("DBG %f\n",accscale);
     }
     if (magpeak > 0.0) {
       printf("MagPeak;0.0;0.0;%f\n", magpeak);
