@@ -134,11 +134,11 @@ static void sniff_rx(phy_status_t status)
     data[index++] = rx_pkt->rssi; /* ... rssi often more meaningful than lqi */
 
     // Timestamp: XXX: change to NTP format
-    printf("\nTIMESTAMP_MSB : %d", rx_pkt->timestamp_MSB);
-    printf("\nTIMESTAMP : %d\n", rx_pkt->timestamp);
+    printf("\nTIMESTAMP_MSB : %d", rx_pkt->timestamp_alt.msb);
+    printf("\nTIMESTAMP : %d\n", rx_pkt->timestamp_alt.lsb);
     uint64_t timestamp = 0;
-    timestamp |= (((uint64_t)rx_pkt->timestamp_MSB + JAN_1970) << 32);
-    timestamp |= (((uint64_t)rx_pkt->timestamp) * FRAC) / 1000000;
+    timestamp |= (((uint64_t)rx_pkt->timestamp_alt.msb + JAN_1970) << 32);
+    timestamp |= (((uint64_t)rx_pkt->timestamp_alt.lsb) * FRAC) / 1000000;
     int i;
     for (i=0;i<8;i++)
         data[index++] = 0xFF & (timestamp >> (8*(7-i)));
