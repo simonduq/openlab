@@ -34,6 +34,19 @@
 #define MAGIC_LEN 3
 #define ZEP_VERSION 2
 
+
+
+
+
+
+/*
+ * RFC 5905                   NTPv4 Specification                 June 2010
+ */
+/* 1970 - 1900 in seconds */
+#define JAN_1970        2208988800UL
+/* 2^32 as an int */
+#define FRAC       (((uint64_t)1) << 32)
+
 static const uint8_t magic[] = { 'E', 'X', ZEP_VERSION };
 static void sniff_rx(phy_status_t status);
 static uint8_t current_channel = 0;
@@ -59,7 +72,7 @@ void init_sniffer(uint8_t channel)
 
 static void sniff_rx(phy_status_t status)
 {
-    uint32_t packet_counter = 0;
+    static uint32_t packet_counter = 0;
     log_debug("status: %u", status);
 /* magic | type | len | pkt | crc | crc_ok | rssi | lqi | timestamp */
     static uint8_t data[256] = {
@@ -123,7 +136,9 @@ static void sniff_rx(phy_status_t status)
     // Timestamp: XXX: change to NTP format
     printf("\nTIMESTAMP_MSB : %d", rx_pkt->timestamp_MSB);
     printf("\nTIMESTAMP : %d\n", rx_pkt->timestamp);
-    uint64_t timestamp = ((uint64_t)rx_pkt->timestamp_MSB << 32) | ((2^32)/rx_pkt->timestamp);
+    uint64_t timestamp = 0;
+    timestamp |= (((uint64_t)rx_pkt->timestamp_MSB + JAN_1970) << 32);
+    timestamp |= (((uint64_t)rx_pkt->timestamp) * FRAC) / 1000000;
     int i;
     for (i=0;i<8;i++)
         data[index++] = 0xFF & (timestamp >> (8*(7-i)));
