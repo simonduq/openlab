@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 
 FIELDS = {'time': 0, 'name': 1, 'type': 2, 'X': 3, 'Y': 4, 'Z': 5}
 
-FILE = 'robot1.txt'
+FILE = 'robot31.txt'
 #NODES = ['m3-29', 'm3-30', 'm3-31', 'm3-32']
 NODES = ['m3-30']
 

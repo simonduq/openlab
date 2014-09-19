@@ -3,28 +3,29 @@
 #include "detectpeak.h"
 
 
-/* {window_size, peak_tempo, threshold */
-count_peak_config_t PEAK_PARAM ={10, 50, 1.0} ;
-
-void peak_setparam(count_peak_config_t peak_params)
+void peak_setparam(count_peak_config_t trace, short int window_size, short int peak_tempo, float threshold)
 {
-  /* Params verification */
-  if (peak_params.window_size < 0)
-    peak_params.window_size = 0;
-  else if (peak_params.window_size >  WINDOWS_MAX )
-    peak_params.window_size =  WINDOWS_MAX;
-  if (peak_params.peak_tempo < 0)
-    peak_params.peak_tempo = 0;
-  /* Set params */
-  PEAK_PARAM.window_size = peak_params.window_size;
-  PEAK_PARAM.peak_tempo  = peak_params.peak_tempo;
-  PEAK_PARAM.threshold   = peak_params.threshold;
+  /* Params verification before set */
+  if (window_size < 0)
+    trace.window_size  = 0;
+  else if (window_size >  WINDOWS_MAX)
+    trace.window_size =  WINDOWS_MAX;
+  else
+    trace.window_size = window_size;
+
+  if (peak_tempo < 0)
+    peak_tempo = 0;
+  else
+    trace.peak_tempo  = peak_tempo;
+
+  trace.threshold   = threshold;
 }
 
-void detect_peak(int k, float sig[3], float *rpeak)
+
+void peak_detect(count_peak_config_t trace, int k, float sig[3], float *rpeak)
 {
-  static float sum, norm, norm_trace[WINDOWS_MAX], moy, dmoy, moy_trace, peak;
-  static short int sign, sign_trace, k_trace, step; 
+  static float sum, norm,  moy, dmoy, peak;
+  static short int sign, step; 
 
   /*
     0 - Choose the signal to detect
@@ -39,30 +40,30 @@ void detect_peak(int k, float sig[3], float *rpeak)
     sum = norm;
     moy = norm;
     step = 0;
-    k_trace = 0;
+    trace.k = 0;
   } 
-  else if (k < PEAK_PARAM.window_size) {
+  else if (k < trace.window_size) {
     sum = sum + norm;
     moy = sum / (k+1);
   }
   else {
-    sum = sum + norm - norm_trace[k%PEAK_PARAM.window_size];
-    moy = sum / PEAK_PARAM.window_size;
+    sum = sum + norm - trace.norm[k%trace.window_size];
+    moy = sum / trace.window_size;
   }
   /*
    2 - Search Peak 
   */
   /* Compute derivative signal */
   if (k==0) {
-    k_trace = 0;
+    trace.k = 0;
     dmoy = 0.0;
     if (dmoy >=0 )
-      sign_trace = 1;
+      trace.sign = 1;
     peak = 0;
   }
   else { 
     /* Compute derivative signal */
-    dmoy = moy - moy_trace;
+    dmoy = moy - trace.moy;
   }
   /* Compute the sign of the derivative signal */
   if (dmoy >=0 ) 
@@ -70,11 +71,11 @@ void detect_peak(int k, float sig[3], float *rpeak)
   else
     sign = -1; 
   /* Compute the switch of the sign with a signal threshold */
-  if ( (sign_trace == 1) & (sign == -1) & (moy > PEAK_PARAM.threshold) 
-       & ( k > (k_trace + PEAK_PARAM.peak_tempo) ) ) {
+  if ( (trace.sign == 1) & (sign == -1) & (moy > trace.threshold) 
+       & ( k > (trace.k + trace.peak_tempo) ) ) {
     peak = moy; 
     step ++;
-    k_trace = k;
+    trace.k = k;
   }
   else
     peak = 0.0;
@@ -88,80 +89,9 @@ void detect_peak(int k, float sig[3], float *rpeak)
   */
 
  /* Store old values */
-  norm_trace[k%PEAK_PARAM.window_size] = norm; 
-  moy_trace = moy;
-  sign_trace = sign;
+  trace.norm[k%trace.window_size] = norm; 
+  trace.moy = moy;
+  trace.sign = sign;
 }
 
 
-void detect_peak_2(int k, float sig[3], float *rpeak)
-{
-  static float sum, norm, norm_trace[WINDOWS_MAX], moy, dmoy, moy_trace, peak;
-  static short int sign, sign_trace, k_trace, step; 
-
-  /*
-    0 - Choose the signal to detect
-   */
-  /*  norm = sig[2]; */
-  norm = sig[0]*sig[0] + sig[1]*sig[1] + sig[2]*sig[2];
-  norm = sqrt(norm);
-  /* 
-   1 - Moving Average 
-  */
-  if (k==0) {
-    sum = norm;
-    moy = norm;
-    step = 0;
-    k_trace = 0;
-  } 
-  else if (k < PEAK_PARAM.window_size) {
-    sum = sum + norm;
-    moy = sum / (k+1);
-  }
-  else {
-    sum = sum + norm - norm_trace[k%PEAK_PARAM.window_size];
-    moy = sum / PEAK_PARAM.window_size;
-  }
-  /*
-   2 - Search Peak 
-  */
-  /* Compute derivative signal */
-  if (k==0) {
-    k_trace = 0;
-    dmoy = 0.0;
-    if (dmoy >=0 )
-      sign_trace = 1;
-    peak = 0;
-  }
-  else { 
-    /* Compute derivative signal */
-    dmoy = moy - moy_trace;
-  }
-  /* Compute the sign of the derivative signal */
-  if (dmoy >=0 ) 
-    sign = 1;
-  else
-    sign = -1; 
-  /* Compute the switch of the sign with a signal threshold */
-  if ( (sign_trace == 1) & (sign == -1) & (moy > PEAK_PARAM.threshold) 
-       & ( k > (k_trace + PEAK_PARAM.peak_tempo) ) ) {
-    peak = moy; 
-    step ++;
-    k_trace = k;
-  }
-  else
-    peak = 0.0;
-
-  /* return value */
-  *rpeak = peak;
-
-  /* DEBUG
-  if ( peak > 0)
-    printf("PEAK %d %d %f %f \n",k, step, moy, dmoy);
-  */
-
- /* Store old values */
-  norm_trace[k%PEAK_PARAM.window_size] = norm; 
-  moy_trace = moy;
-  sign_trace = sign;
-}

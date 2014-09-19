@@ -16,14 +16,27 @@
 static void alarm(handler_arg_t arg);
 static soft_timer_t tx_timer;
 /* Period of the sensor acquisition datas */
-#define ACQ_PERIOD soft_timer_ms_to_ticks(500)
+#define ACQ_PERIOD soft_timer_ms_to_ticks(5)
+/* times of computation before transmit a result */
+/* period in sec = (ACQ_PERIOD=5 x TX_COMPUTE) / 1000 */
+#define TX_PERIOD 200
 
 //event handler
 static void handle_ev(handler_arg_t arg);
 
-#define ACC_RES (1e-3)     // The resolution is 1 mg for the +/-2g scale
-#define GYR_RES (8.75e-3)  // The resolution is 8.75mdps for the +/-250dps scale
+#define ACC_RES (1e-3)    // The resolution is 1 mg for the +/-2g scale
+#define GYR_RES (8.75e-3) // The resolution is 8.75mdps for the +/-250dps scale
+#define CALIB_PERIOD 100  // period in sec = CALIB_PERIOD=5 x TX_COMPUTE) / 1000 
 
+/** Global counters structure */
+typedef struct TypCounters {
+ /* index incremented at each criteria computation */
+  uint32_t index;
+  /* local index incremented at each computation between 2 packet sending*/
+  uint16_t lindex;
+} TypCounters;
+
+TypCounters glob_counters = {0, 0};
 
 static void hardware_init()
 {
@@ -61,20 +74,52 @@ static void handle_ev(handler_arg_t arg)
   int16_t i;
   float acc[3];
   float gyr[3];
+  static float pitch;
+  static float biais;
+
 
   /* Read accelerometers */ 
   lsm303dlhc_read_acc(rawacc);
   /* Read gyrometers */
   l3g4200d_read_rot_speed(rawgyr);
 
-  /* Conversion */
-  for (i=0; i < 3; i++) {
-    acc[i] = rawacc[i] * ACC_RES;
-    gyr[i] = rawgyr[i] * GYR_RES;
+  /* Gyrometer pitch biais estimation during CALIB_PERIOD*/
+  if (glob_counters.index <= CALIB_PERIOD) {
+    /* first index */
+    if (glob_counters.index == 0)
+      {
+	biais = 0.0;
+	pitch = 0.0;
+      }
+    /* estimation */
+    biais += gyr[0];
+    /* last index */
+    if (glob_counters.index == CALIB_PERIOD) {
+      biais = biais / CALIB_PERIOD;
+    }
+  } /* After calibration */
+  else {
+    for (i=0; i < 3; i++) {
+      acc[i] = rawacc[i] * ACC_RES;
+      gyr[i] = rawgyr[i] * GYR_RES;
+    }
+
+    /* Compute pitch value, see ACQ_PERIOD */
+    pitch = pitch + (gyr[0] - biais) * 0.005 ;
+
+    if (glob_counters.lindex == TX_PERIOD) {
+      /* Print accelerometers and gyrometers values */
+      printf("Acc;%f;%f;%f\n", acc[0], acc[1], acc[2]);
+      printf("Gyr;%f;%f;%f\n", gyr[0], gyr[1], gyr[2]);
+      /* Print pitch angle */
+      printf("Ang;%f\n", pitch*180/M_PI);
+      glob_counters.lindex=0;
+    }
+    else {
+      glob_counters.lindex++;
+    }
   }
-  /* Peak detection */
-  printf("Acc;%f;%f;%f\n", acc[0], acc[1], acc[2]);
-  printf("Gyr;%f;%f;%f\n", gyr[0], gyr[1], gyr[2]);
+  glob_counters.index++;
 }
 
 static void alarm(handler_arg_t arg) {
