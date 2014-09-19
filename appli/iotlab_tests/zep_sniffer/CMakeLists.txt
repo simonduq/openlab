@@ -1,7 +1,7 @@
-if(${PLATFORM_HAS_PHY})
+if (PLATFORM STREQUALS "iotlab-a8-m3")
     add_executable(zep_sniffer main zep_sniffer gps_synced_clock)
     target_link_libraries(zep_sniffer platform)
-endif(${PLATFORM_HAS_PHY})
+endif (PLATFORM STREQUALS "iotlab-a8-m3")
 
 include_directories(
 ${PROJECT_SOURCE_DIR}/drivers/stm32f1xx
