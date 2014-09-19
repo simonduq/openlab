@@ -209,14 +209,23 @@ typedef struct
 
     /** The timestamp of a packet, i.e. its SFD, for both TX and RX packets */
     uint32_t timestamp;
-    uint32_t timestamp_MSB;
 
     /** The end of packet time, for both RX and TX */
     uint32_t eop_time;
-    uint32_t eop_time_MSB;
 
     /** Internal time values used for scheduled RX, see \ref phy_rx */
     uint32_t t_rx_start, t_rx_end;
+
+    /** Added timestamps for other timestamping mechanisms */
+    struct {
+        uint32_t lsb;
+        uint32_t msb;
+    } timestamp_alt;
+    struct {
+        uint32_t lsb;
+        uint32_t msb;
+    } eop_time_alt;
+
 } phy_packet_t;
 
 /**

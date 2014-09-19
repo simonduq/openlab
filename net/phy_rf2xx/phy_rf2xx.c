@@ -1569,10 +1569,11 @@ static void dig2_capture_handler(handler_arg_t arg, uint16_t timer_value)
     // Store timer value, if rx packet specified
     if (_phy->pkt)
     {
+        _phy->pkt->timestamp = soft_timer_convert_time(timer_value);
+
         if (phy_timestamp_handler)
-          phy_timestamp_handler(&(_phy->pkt->timestamp_MSB), &(_phy->pkt->timestamp));
-        else
-          _phy->pkt->timestamp = soft_timer_convert_time(timer_value);
+            phy_timestamp_handler(&(_phy->pkt->timestamp_alt.msb),
+                    &(_phy->pkt->timestamp_alt.lsb));
     }
 }
 static void rx_start_handler(handler_arg_t arg, uint16_t timer_value)
@@ -1641,10 +1642,10 @@ static void irq_handler(handler_arg_t arg)
     phy_rf2xx_t *_phy = arg;
 
     // Store IRQ time in EOP
+    _phy->pkt->eop_time = soft_timer_time();
     if (phy_timestamp_handler)
-        phy_timestamp_handler(&(_phy->pkt->eop_time_MSB), &(_phy->pkt->eop_time));
-    else
-        _phy->pkt->eop_time = soft_timer_time();
+        phy_timestamp_handler(&(_phy->pkt->eop_time_alt.msb),
+                &(_phy->pkt->eop_time_alt.lsb));
 
     // Call IRQ handler from event task
     event_post_from_isr(EVENT_QUEUE_NETWORK, handle_irq, arg);
