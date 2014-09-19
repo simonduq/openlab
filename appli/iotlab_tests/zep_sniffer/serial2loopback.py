@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/env python
 #---------------------------------------------------------------------------
 # Read information from serial port and output it to wireshark on loopback
 # as UDP packets
@@ -11,10 +11,12 @@
 
 import serial, socket, sys
 
+NODE_PORT = '/dev/ttyA8_M3'
+
 ZepPort = 17754
 
 sd = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-mote = serial.Serial(port="/dev/ttyUSB2",baudrate=500000) #XXX: port
+mote = serial.Serial(port=NODE_PORT, baudrate=500000)  #XXX: port
 
 Magic = "EX\x02"
 
@@ -23,7 +25,7 @@ while True:
 
     while True:
         pos = data.find(Magic)
-        if pos > 0: 
+        if pos > 0:
             break
         elif pos == 0:
             data = data[len(Magic):]
