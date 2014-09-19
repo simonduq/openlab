@@ -5,10 +5,11 @@ ZEP SNIFFER and GPS SYNCED timestamps
 Overview
 --------
 
-3 components:
+4 components:
 - sniffer outputing zep
 - gps timestamping lib
 - serial2loopback.py client script
+- `send_absolute_time.py` client script
 
 Running a demo
 --------------
@@ -22,10 +23,11 @@ sniffer node needs python script serial2loopback.py on A8
 0. build emmiter and sniffer firmwares
 1. flash emmiter node (a8-3)
 2. flash sniffer node (a8-2)
-3. run ./serial2loopback.py
-4. run tcpdump -vvv -i lo
-5. send packet on emmiter node
-6. check tcpdump output to see zep packet
+3. run ./send_absolute_time.py
+4. run ./serial2loopback.py
+5. run tcpdump -vvv -i lo
+6. send packet on emmiter node
+7. check tcpdump output to see zep packet
 ```
 
 cd build.a8
@@ -38,7 +40,9 @@ ssh a8-2 flash_a8.sh zep_sniffer.elf
 
 ssh a8-3 flash_a8.sh tutorial_m3.elf
 
+scp send_absolute_time.py a8-2:
 scp serial2loopback.py a8-2:
+ssh a8-2 ./send_absolute_time.py &
 ssh a8-2 ./serial2loopback.py &
 ssh a8-2 tcpdump -vvv -i lo
 
