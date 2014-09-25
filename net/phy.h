@@ -215,6 +215,17 @@ typedef struct
 
     /** Internal time values used for scheduled RX, see \ref phy_rx */
     uint32_t t_rx_start, t_rx_end;
+
+    /** Added timestamps for other timestamping mechanisms */
+    struct {
+        uint32_t lsb;
+        uint32_t msb;
+    } timestamp_alt;
+    struct {
+        uint32_t lsb;
+        uint32_t msb;
+    } eop_time_alt;
+
 } phy_packet_t;
 
 /**
@@ -441,6 +452,19 @@ phy_power_t phy_convert_power(float power);
  * \return the status of the operation, SUCCESS if jamming is ongoing
  */
 phy_status_t phy_jam(phy_t phy, uint8_t channel, phy_power_t power);
+
+/**
+ * Register an alternative timestamp handler.
+ *
+ * Sets a function that is used to get current time to timestamp events.
+ * If set, it will replace the internal timer.
+ *
+ * \param timestamp_handler the callback function that gets the timestamp.
+ * \return nothing.
+ */
+typedef void (*timestamp_handler_cb_t)(uint32_t*, uint32_t*);
+void register_timestamp_handler(timestamp_handler_cb_t timestamp_handler);
+
 
 /**
  * @}

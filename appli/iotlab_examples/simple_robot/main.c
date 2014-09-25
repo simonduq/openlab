@@ -8,9 +8,11 @@
 #include <string.h>
 #include <math.h>
 
+#include "soft_timer.h"
 #include "lsm303dlhc.h"
 #include "l3g4200d.h"
 #include "event.h"
+
 
 // timer alarm function
 static void alarm(handler_arg_t arg);

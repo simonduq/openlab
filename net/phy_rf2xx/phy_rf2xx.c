@@ -37,6 +37,9 @@
 #include "printf.h"
 #include "debug.h"
 
+/* Private Variables */
+static timestamp_handler_cb_t phy_timestamp_handler;
+
 /* Private Functions */
 /** Convert Power from PHY power to RF231 power */
 static int convert_power(phy_power_t power);
@@ -981,6 +984,11 @@ phy_status_t phy_jam(phy_t phy, uint8_t channel, phy_power_t power)
     // Return Success
     return PHY_SUCCESS;
 }
+
+void register_timestamp_handler(timestamp_handler_cb_t timestamp_handler)
+{
+    phy_timestamp_handler = timestamp_handler;
+}
 // ***************** Internal methods (mutex taken before) ******************* //
 
 static int convert_power(phy_power_t power)
@@ -1562,6 +1570,10 @@ static void dig2_capture_handler(handler_arg_t arg, uint16_t timer_value)
     if (_phy->pkt)
     {
         _phy->pkt->timestamp = soft_timer_convert_time(timer_value);
+
+        if (phy_timestamp_handler)
+            phy_timestamp_handler(&(_phy->pkt->timestamp_alt.msb),
+                    &(_phy->pkt->timestamp_alt.lsb));
     }
 }
 static void rx_start_handler(handler_arg_t arg, uint16_t timer_value)
@@ -1631,6 +1643,9 @@ static void irq_handler(handler_arg_t arg)
 
     // Store IRQ time in EOP
     _phy->pkt->eop_time = soft_timer_time();
+    if (phy_timestamp_handler)
+        phy_timestamp_handler(&(_phy->pkt->eop_time_alt.msb),
+                &(_phy->pkt->eop_time_alt.lsb));
 
     // Call IRQ handler from event task
     event_post_from_isr(EVENT_QUEUE_NETWORK, handle_irq, arg);
@@ -1641,3 +1656,4 @@ static void fifo_read_done_handler(handler_arg_t arg)
     // Call RX end handler from event task
     event_post_from_isr(EVENT_QUEUE_NETWORK, handle_rx_end, arg);
 }
+

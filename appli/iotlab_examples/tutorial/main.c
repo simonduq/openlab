@@ -8,13 +8,15 @@
 #include "soft_timer.h"
 #include "event.h"
 
+#ifdef IOTLAB_M3
 #include "lps331ap.h"
 #include "isl29020.h"
+#endif
 #include "mac_csma.h"
 #include "phy.h"
 
 // choose channel CHANNEL_[12-26]
-#define CHANNEL 26
+#define CHANNEL 11
 #define ADDR_BROADCAST 0xFFFF
 
 // UART callback function
@@ -34,6 +36,7 @@ volatile int8_t leds_active = 1;
 /**
  * Sensors
  */
+#ifdef IOTLAB_M3
 static void temperature_sensor()
 {
     int16_t value;
@@ -53,6 +56,7 @@ static void pressure_sensor()
     lps331ap_read_pres(&value);
     printf("Pressure measure: %f mabar\n", value / 4096.0);
 }
+#endif
 
 
 /*
@@ -139,9 +143,11 @@ static void print_usage()
     printf("\n\nIoT-LAB Simple Demo program\n");
     printf("Type command\n");
     printf("\th:\tprint this help\n");
+#ifdef IOTLAB_M3
     printf("\tt:\ttemperature measure\n");
     printf("\tl:\tluminosity measure\n");
     printf("\tp:\tpressure measure\n");
+#endif
     printf("\ts:\tsend a radio packet\n");
     printf("\tb:\tsend a big radio packet\n");
     printf("\te:\ttoggle leds blinking\n");
@@ -162,6 +168,7 @@ static void hardware_init()
     // Uart initialisation
     uart_set_rx_handler(uart_print, char_rx, NULL);
 
+#ifdef IOTLAB_M3
     // ISL29020 light sensor initialisation
     isl29020_prepare(ISL29020_LIGHT__AMBIENT, ISL29020_RESOLUTION__16bit,
             ISL29020_RANGE__16000lux);
@@ -170,6 +177,7 @@ static void hardware_init()
     // LPS331AP pressure sensor initialisation
     lps331ap_powerdown();
     lps331ap_set_datarate(LPS331AP_P_12_5HZ_T_12_5HZ);
+#endif
 
     // Init csma Radio mac layer
     mac_csma_init(CHANNEL);
@@ -183,6 +191,7 @@ static void hardware_init()
 static void handle_cmd(handler_arg_t arg)
 {
     switch ((char) (uint32_t) arg) {
+#ifdef IOTLAB_M3
         case 't':
             temperature_sensor();
             break;
@@ -192,6 +201,7 @@ static void handle_cmd(handler_arg_t arg)
         case 'p':
             pressure_sensor();
             break;
+#endif
         case 's':
             send_packet();
             break;
