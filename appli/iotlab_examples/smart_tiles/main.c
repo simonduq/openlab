@@ -39,7 +39,7 @@ typedef struct TypCounters {
 
 TypCounters glob_counters = {0, 0};
 
-count_peak_config_t PEAKACC_TRACE;
+static count_peak_config_t PEAKACC_TRACE;
 count_peak_config_t PEAKMAG_TRACE;
 
 static void hardware_init()
@@ -62,8 +62,8 @@ static void hardware_init()
 			  LSM303DLHC_MAG_MODE_CONTINUOUS,
                           LSM303DLHC_TEMP_MODE_ON);
     // Set peak detection parameters: windows size, peak_tempo, threshold */
-    peak_setparam(PEAKACC_TRACE,10, 50, 1.0);
-    peak_setparam(PEAKMAG_TRACE,10, 50, 1.0);
+    peak_setparam(&PEAKACC_TRACE,10, 50, 1.0);
+    peak_setparam(&PEAKMAG_TRACE,10, 50, 1.0);
     // Initialize a openlab timer
     soft_timer_set_handler(&tx_timer, alarm, NULL);
     soft_timer_start(&tx_timer, ACQ_PERIOD, 1);
@@ -79,15 +79,14 @@ int main()
 static void handle_ev(handler_arg_t arg)
 {
   int16_t a[3];
-  //  int16_t g[3]; 
   int16_t m[3];
   int16_t i;
   float af[3], mf[3];
   float accpeak;
   float magpeak;
-  float accnorm, magnorm;
-  static float accscale, accnormk;
-  static float magscale, magnormk;
+  static float accnorm, magnorm;
+  static float accscale, magscale;
+  float accnormk, magnormk;
 
   /* Read accelerometers */ 
   lsm303dlhc_read_acc(a);
@@ -106,29 +105,32 @@ static void handle_ev(handler_arg_t arg)
       }
     /* computation */
     accnormk = a[0] * a[0] + a[1] * a[1] + a[2] * a[2];
-    accnormk = sqrt(accnormk);
-    accnorm += accnormk;
+    accnorm += sqrt(accnormk);
     magnormk = m[0] * m[0] + m[1] * m[1] + m[2] * m[2];
-    magnormk = sqrt(magnormk);
-    magnorm += magnormk;
+    magnorm += sqrt(magnormk);
     /* last index */
     if (glob_counters.index == CALIB_PERIOD) {
       accnorm = accnorm / CALIB_PERIOD;
       accscale = GRAVITY / accnorm;
-      magnorm = magnorm / CALIB_PERIOD;
-      magscale = 1.0 / magnorm;
+      magscale = CALIB_PERIOD / magnorm;
+      printf("CALIB Acc = %f %f\n",accnorm, accscale);
+      printf("CALIB Mag = %f %f\n",magnorm, magscale);
     }
     glob_counters.index++;
   } /* After calibration */
   else {
     /* Conversion */
     for (i=0; i < 3; i++) {
-      af[i] = a[i] * ACC_RES * accscale; 
+      af[i] = a[i] * accscale; 
       mf[i] = m[i] * magscale;
     } 
     /* Peaks detection after calibration*/ 
-    peak_detect(PEAKACC_TRACE, glob_counters.index, af, &accpeak); 
-    peak_detect(PEAKMAG_TRACE, glob_counters.index, mf, &magpeak);
+
+    //accpeak = 0.0;
+    magpeak = 0.0;
+
+    peak_detect(&PEAKACC_TRACE, glob_counters.index, af, &accpeak); 
+    peak_detect(&PEAKMAG_TRACE, glob_counters.index, mf, &magpeak);
 
     glob_counters.index++;
     /* Printing */
@@ -141,13 +143,13 @@ static void handle_ev(handler_arg_t arg)
     if (glob_counters.lindex == TX_PERIOD) {
       printf("Acc;%f;%f;%f\n", af[0], af[1], af[2]);
       printf("Mag;%f;%f;%f\n", mf[0], mf[1], mf[2]);
-      printf("Mag1;%d;%d;%d;%f\n", m[0], m[1], m[2], magscale);
       glob_counters.lindex=0;
     }
     else {
       glob_counters.lindex++;
     }
   }
+
 }
 
 static void alarm(handler_arg_t arg) {

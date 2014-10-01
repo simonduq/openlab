@@ -1,13 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-""" plot_imu.py
-
-plot_imu
-
+""" plot_sensors.py <filename> <node_id> ...
+plot sensors  values from <node_id> printed by smart_tiles firmware 
+saved in filename (by serial_aggregator)
 """
-
 import sys
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -91,13 +90,12 @@ def imu_plot(data, title):
     plt.plot(data['time'], data['X'])
     plt.plot(data['time'], data['Y'])
     plt.plot(data['time'], data['Z'])
-    plt.ylabel('Acceleration (G)')
     plt.xlabel('Sample Time (sec)')
 
     return
 
 
-def imu_all_plot(data, title, ylabel, nodes):
+def imu_all_plot(data, title, ylabel, nodes, sensor_type):
     """ Plot iot-lab imu data
 
     Parameters:
@@ -121,8 +119,8 @@ def imu_all_plot(data, title, ylabel, nodes):
             node_plot = plt.subplot(nbplots, 1, i)
             node_plot.grid()
             plt.title(title + nodes[i-1])
-            datanode = imu_extract(data, nodes[i-1], 'Acc')
-            peaknode = imu_extract(data, nodes[i-1], 'Peak')
+            datanode = imu_extract(data, nodes[i-1], sensor_type)
+            peaknode = imu_extract(data, nodes[i-1], sensor_type+'Peak')
             print nodes[i-1], len(datanode)
             norm = np.sqrt(datanode['X']**2 + datanode['Y']**2
                            + datanode['Z']**2)
@@ -134,25 +132,38 @@ def imu_all_plot(data, title, ylabel, nodes):
     return
 
 
-def test0(index):
-    """ test 0
+def usage():
+    """Usage command print
     """
-    data = imu_load(FILE)
-    datanode = imu_extract(data, NODES[index], sensor_type='Acc')
-    imu_plot(datanode, "Accelerometers " + NODES[index])
-
-
-def test1():
-    """ test 1
-    """
-    data = imu_load(FILE)
-    imu_all_plot(data, "Accelerometers ", "Acceleration (G)", NODES)
-    plt.show()
+    print "Usage"
+    print __doc__
 
 
 if __name__ == "__main__":
-    test0(0)
-    test0(1)
-    test0(2)
-    test0(3)
-    test1()
+
+    if len(sys.argv) <= 2:
+        usage()
+    else:
+        filename = sys.argv[1]
+        # Verif the file existence
+        if not os.path.isfile(filename):
+            usage()
+            sys.exit(1)
+        # Nodes list
+        nodes =[]
+        for arg in sys.argv[2:]: 
+            nodes.append('m3-'+arg)
+    
+        # extract data from file
+        data = imu_load(filename)
+        # Plot all sensors acc sensors
+        for node in nodes:
+            datanode = imu_extract(data, node, sensor_type='Acc')
+            imu_plot(datanode, "Accelerometers " + node)
+            datanode = imu_extract(data, node, sensor_type='Mag')
+            imu_plot(datanode, "Magnetometers " + node)
+        # Plot all norm accelerometers on a same windows
+        imu_all_plot(data, "Accelerometers ", "Norm Acceleration (G)", nodes, 'Acc')  
+        imu_all_plot(data, "Magnetometers ", "Norm ", nodes, 'Mag') 
+        plt.show()
+

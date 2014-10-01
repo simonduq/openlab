@@ -115,6 +115,7 @@ static void handle_ev(handler_arg_t arg)
       printf("Gyr;%f;%f;%f\n", gyr[0], gyr[1], gyr[2]);
       /* Print pitch angle */
       printf("Ang;%f\n", pitch*180/M_PI);
+      printf("DBG = %f %f %f\n",biais, pitch,(gyr[0] - biais) * 0.005 );
       glob_counters.lindex=0;
     }
     else {
