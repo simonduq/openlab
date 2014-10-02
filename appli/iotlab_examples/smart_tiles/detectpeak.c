@@ -22,7 +22,7 @@ void peak_setparam(count_peak_config_t *trace, short int window_size, short int 
 }
 
 
-void peak_detect(count_peak_config_t *trace, int k, float sig[3], float *rpeak)
+void peak_detect(count_peak_config_t *trace, int k, float sig[3], float rpeak[2])
 {
   float norm,  moy, dmoy, peak;
   short int sign; 
@@ -36,8 +36,6 @@ void peak_detect(count_peak_config_t *trace, int k, float sig[3], float *rpeak)
   /* 
    1 - Moving Average 
   */
-  //printf("->%d %d %d\n",k,k%trace->window_size, trace->window_size); 
- 
   if (k==0) {
     trace->sum = norm;
     moy = norm;
@@ -77,6 +75,7 @@ void peak_detect(count_peak_config_t *trace, int k, float sig[3], float *rpeak)
   /* Compute the switch of the sign with a signal threshold */
   if ( (trace->sign == 1) & (sign == -1) & (moy > trace->threshold) 
        & ( k > (trace->k + trace->peak_tempo) ) ) {
+    //    printf("TEMPO;%d;%d;%d\n",k, trace->k, trace->peak_tempo);
     peak = moy; 
     trace->count ++;
     trace->k = k;
@@ -85,12 +84,10 @@ void peak_detect(count_peak_config_t *trace, int k, float sig[3], float *rpeak)
     peak = 0.0;
 
   /* return value */
-  *rpeak = peak;
+  // printf("MOY %f %f %f\n",norm, trace->sum, moy);
+  rpeak[0] = moy;
+  rpeak[1] = peak;
 
-  /* DEBUG
-  if ( peak > 0)
-    printf("PEAK %d %d %f %f \n",k, step, moy, dmoy);
-  */
 
  /* Store old values */
   trace->norm[k%trace->window_size] = norm; 

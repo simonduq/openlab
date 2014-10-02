@@ -63,7 +63,7 @@ static void hardware_init()
                           LSM303DLHC_TEMP_MODE_ON);
     // Set peak detection parameters: windows size, peak_tempo, threshold */
     peak_setparam(&PEAKACC_TRACE,10, 50, 1.0);
-    peak_setparam(&PEAKMAG_TRACE,10, 50, 1.0);
+    peak_setparam(&PEAKMAG_TRACE,100, 100, 1.0);
     // Initialize a openlab timer
     soft_timer_set_handler(&tx_timer, alarm, NULL);
     soft_timer_start(&tx_timer, ACQ_PERIOD, 1);
@@ -82,8 +82,8 @@ static void handle_ev(handler_arg_t arg)
   int16_t m[3];
   int16_t i;
   float af[3], mf[3];
-  float accpeak;
-  float magpeak;
+  float accpeak[2];
+  float magpeak[2];
   static float accnorm, magnorm;
   static float accscale, magscale;
   float accnormk, magnormk;
@@ -95,7 +95,7 @@ static void handle_ev(handler_arg_t arg)
   /* Sensors calibration during CALIB_PERIOD*/
   if (glob_counters.index <= CALIB_PERIOD) {
     /* Scale Accelero and magneto*/
-    accscale = GRAVITY;
+    accscale = 1.0;
     magscale = 1.0;
     /* first index */
     if (glob_counters.index == 0)
@@ -110,8 +110,7 @@ static void handle_ev(handler_arg_t arg)
     magnorm += sqrt(magnormk);
     /* last index */
     if (glob_counters.index == CALIB_PERIOD) {
-      accnorm = accnorm / CALIB_PERIOD;
-      accscale = GRAVITY / accnorm;
+      accscale = CALIB_PERIOD / accnorm;
       magscale = CALIB_PERIOD / magnorm;
       printf("CALIB Acc = %f %f\n",accnorm, accscale);
       printf("CALIB Mag = %f %f\n",magnorm, magscale);
@@ -125,24 +124,27 @@ static void handle_ev(handler_arg_t arg)
       mf[i] = m[i] * magscale;
     } 
     /* Peaks detection after calibration*/ 
-
-    //accpeak = 0.0;
-    magpeak = 0.0;
-
-    peak_detect(&PEAKACC_TRACE, glob_counters.index, af, &accpeak); 
-    peak_detect(&PEAKMAG_TRACE, glob_counters.index, mf, &magpeak);
+    peak_detect(&PEAKACC_TRACE, glob_counters.index, af, accpeak); 
+    peak_detect(&PEAKMAG_TRACE, glob_counters.index, mf, magpeak);
 
     glob_counters.index++;
     /* Printing */
-    if (accpeak > 0.0) {
-      printf("AccPeak;0.0;0.0;%f\n", accpeak);
+    if (accpeak[1] > 0.0) {
+      printf("AccPeak;%f;0.0;0.0\n", accpeak[1]);
     }
-    if (magpeak > 0.0) {
-      printf("MagPeak;0.0;0.0;%f\n", magpeak);
+    if (magpeak[1] > 0.0) {
+      printf("MagPeak;%f;0.0;0.0\n", magpeak[1]);
     }
+    printf("Acc;%f;%f;%f\n", af[0], af[1], af[2]);
+    printf("Mag;%f;%f;%f\n", mf[0], mf[1], mf[2]);
     if (glob_counters.lindex == TX_PERIOD) {
+      /*
       printf("Acc;%f;%f;%f\n", af[0], af[1], af[2]);
       printf("Mag;%f;%f;%f\n", mf[0], mf[1], mf[2]);
+      
+      printf("Acc;%f;0.0;0.0\n", accpeak[0]);
+      printf("Mag;%f;0.0;0.0\n", magpeak[0]);
+      */
       glob_counters.lindex=0;
     }
     else {

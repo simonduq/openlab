@@ -12,10 +12,6 @@ import matplotlib.pyplot as plt
 
 FIELDS = {'time': 0, 'name': 1, 'type': 2, 'X': 3, 'Y': 4, 'Z': 5}
 
-FILE = 'data/top30.txt'
-NODES = ['m3-29', 'm3-30', 'm3-31', 'm3-32']
-
-
 def imu_load(filename):
     """ Load iot-lab imu file
 
@@ -125,7 +121,7 @@ def imu_all_plot(data, title, ylabel, nodes, sensor_type):
             norm = np.sqrt(datanode['X']**2 + datanode['Y']**2
                            + datanode['Z']**2)
             node_plot.plot(datanode['time'], norm)
-            node_plot.plot(peaknode['time'], peaknode['Z'], 'ro')
+            node_plot.plot(peaknode['time'], peaknode['X'], 'ro')
             plt.ylabel(ylabel)
         plt.xlabel('Sample Time (sec)')
 

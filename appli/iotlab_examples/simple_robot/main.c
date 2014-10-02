@@ -54,6 +54,11 @@ static void hardware_init()
 			  LSM303DLHC_ACC_RATE_400HZ,	
 			  LSM303DLHC_ACC_SCALE_2G,	
 			  LSM303DLHC_ACC_UPDATE_ON_READ);
+    // LSM303DLHC magneto sensor initialisation
+    lsm303dlhc_mag_config(LSM303DLHC_MAG_RATE_220HZ,
+                          LSM303DLHC_MAG_SCALE_2_5GAUSS, 
+			  LSM303DLHC_MAG_MODE_CONTINUOUS,
+                          LSM303DLHC_TEMP_MODE_ON);
     // L3G4200D gyro sensor initialisation
     l3g4200d_powerdown();
     l3g4200d_gyr_config(L3G4200D_200HZ, L3G4200D_250DPS, true);
@@ -72,11 +77,14 @@ int main()
 static void handle_ev(handler_arg_t arg)
 {
   int16_t rawacc[3];
+  int16_t rawmag[3];
   int16_t rawgyr[3];
   int16_t i;
   float acc[3];
   float gyr[3];
+  float mag[3];
   static float pitch;
+  float pitch_deg;
   static float biais;
 
 
@@ -84,7 +92,8 @@ static void handle_ev(handler_arg_t arg)
   lsm303dlhc_read_acc(rawacc);
   /* Read gyrometers */
   l3g4200d_read_rot_speed(rawgyr);
-
+  /* Read magnetometers */ 
+  lsm303dlhc_read_mag(rawmag);
   /* Gyrometer pitch biais estimation during CALIB_PERIOD*/
   if (glob_counters.index <= CALIB_PERIOD) {
     /* first index */
@@ -104,18 +113,22 @@ static void handle_ev(handler_arg_t arg)
     for (i=0; i < 3; i++) {
       acc[i] = rawacc[i] * ACC_RES;
       gyr[i] = rawgyr[i] * GYR_RES;
+      /* TBD mag. calibration */
+      mag[i] = rawgyr[i] * 1.0;
     }
 
     /* Compute pitch value, see ACQ_PERIOD */
     pitch = pitch + (gyr[0] - biais) * 0.005 ;
+    pitch_deg = pitch*180/M_PI;
 
     if (glob_counters.lindex == TX_PERIOD) {
-      /* Print accelerometers and gyrometers values */
+      /* Print IMU values : accelerometers, gyrometers and magnetometers */
       printf("Acc;%f;%f;%f\n", acc[0], acc[1], acc[2]);
       printf("Gyr;%f;%f;%f\n", gyr[0], gyr[1], gyr[2]);
+      printf("Mag;%f;%f;%f\n", mag[0], mag[1], mag[2]);
       /* Print pitch angle */
-      printf("Ang;%f\n", pitch*180/M_PI);
-      printf("DBG = %f %f %f\n",biais, pitch,(gyr[0] - biais) * 0.005 );
+      printf("Ang;%f\n", pitch_deg);
+      //printf("DBG = %f %f %f\n",biais, pitch,(gyr[0] - biais) * 0.005 );
       glob_counters.lindex=0;
     }
     else {
