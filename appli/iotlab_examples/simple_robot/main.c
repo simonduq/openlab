@@ -84,7 +84,7 @@ static void handle_ev(handler_arg_t arg)
   float gyr[3];
   float mag[3];
   static float pitch;
-  float pitch_deg;
+  int pitch_deg;
   static float biais;
 
 
@@ -103,10 +103,11 @@ static void handle_ev(handler_arg_t arg)
 	pitch = 0.0;
       }
     /* estimation */
-    biais += gyr[0];
+    biais += gyr[2];
     /* last index */
     if (glob_counters.index == CALIB_PERIOD) {
       biais = biais / CALIB_PERIOD;
+      printf("Clb;%f\n",biais);
     }
   } /* After calibration */
   else {
@@ -114,12 +115,13 @@ static void handle_ev(handler_arg_t arg)
       acc[i] = rawacc[i] * ACC_RES;
       gyr[i] = rawgyr[i] * GYR_RES;
       /* TBD mag. calibration */
-      mag[i] = rawgyr[i] * 1.0;
+      mag[i] = rawmag[i] * 1.0;
     }
 
     /* Compute pitch value, see ACQ_PERIOD */
-    pitch = pitch + (gyr[0] - biais) * 0.005 ;
-    pitch_deg = pitch*180/M_PI;
+    pitch = pitch + (gyr[2] - biais) * 0.005 ;
+    pitch_deg = (int) (pitch*180/M_PI);
+    pitch_deg = pitch_deg % 360;
 
     if (glob_counters.lindex == TX_PERIOD) {
       /* Print IMU values : accelerometers, gyrometers and magnetometers */
@@ -127,8 +129,8 @@ static void handle_ev(handler_arg_t arg)
       printf("Gyr;%f;%f;%f\n", gyr[0], gyr[1], gyr[2]);
       printf("Mag;%f;%f;%f\n", mag[0], mag[1], mag[2]);
       /* Print pitch angle */
-      printf("Ang;%f\n", pitch_deg);
-      //printf("DBG = %f %f %f\n",biais, pitch,(gyr[0] - biais) * 0.005 );
+      printf("Ang;%d\n", pitch_deg);
+      //printf("DBG = %f %f %f\n",biais, pitch,(gyr[2] - biais) * 0.005 );
       glob_counters.lindex=0;
     }
     else {
