@@ -4,6 +4,8 @@ add_subdirectory(serial_helo)
 add_subdirectory(nvram)
 add_subdirectory(simple_robot)
 
+add_subdirectory(print_uids)
+
 if(${PLATFORM_HAS_CSMA})
 add_subdirectory(tutorial)
 endif(${PLATFORM_HAS_CSMA})

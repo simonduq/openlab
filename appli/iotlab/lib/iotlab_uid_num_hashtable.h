@@ -1,25 +1,25 @@
 /*
- * Generated from ./generate_uid_dict.py
+ * Generated from ./scripts/generate_uid_dict.py
  */
 
 #include <stdint.h>
+#include <stddef.h>
 
 #define CC1101 0x1
 #define CC2420 0x2
 #define M3 0x3
 #define A8 0x8
 
-struct node_id_hash {
-    uint16_t hash;
+struct node_entry {
+    uint16_t uid;
     uint32_t node;
 };
 
 struct node {
-    uint8_t node_type;
-    uint32_t node_num;
+    uint8_t type;
+    uint32_t num;
 };
 
-const struct node_id_hash * const nodes_uid_hash_table[16];
-
+extern const struct node_entry const nodes_uid_dict[287];
 
 struct node node_from_uid(uint16_t uid);
