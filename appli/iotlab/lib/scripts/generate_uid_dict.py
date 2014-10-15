@@ -12,9 +12,11 @@ import textwrap
 import logging
 import os
 CURRENT_DIRECTORY = os.path.dirname(os.path.realpath(__file__))
-logging.basicConfig(level=logging.DEBUG, format="%(levelname)s : %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(levelname)s : %(message)s")
 
-SOURCE_FILES_NAME = "%s/../iotlab_uid_num_hashtable" % CURRENT_DIRECTORY
+
+LIB_FILE_NAME = "iotlab_uid_num_hashtable"
+SOURCE_FILE_PATH = "%s/../" % CURRENT_DIRECTORY
 
 
 def extract_json(json_str):
@@ -69,7 +71,11 @@ def extract_nodes_uids(nodes_dict):
             logging.error("UID: %s : %s", uid, url)
             continue
         # Only one node with the same uid
-        assert uid not in radio_dict, ("Non uniq uid: %r %r" % (uid, url))
+        if uid in radio_dict:
+            logging.error("Non uniq uid: %r %r: original == %r",
+                          uid, url, radio_dict[uid])
+            logging.error("Dropping %r", url)
+            continue
 
         #
         # Valid, add to dict
@@ -107,8 +113,9 @@ def print_hash_table(radio_type, archi_tables):
         logging.debug(assoc)
 
 
-def generate_a_c_hash_table(radio_type, archi_tables, out_file_name):
-    """ Generate a C hash table in 'out_file_name' .c and .h files """
+def generate_a_c_hash_table(radio_type, archi_tables, lib_file_name):
+    """ Generate a C hash table in SOURCE_FILE_PATH/ with
+    'lib_file_name' .c and .h files """
 
     radio_table = archi_tables[radio_type]
 
@@ -140,7 +147,7 @@ def generate_a_c_hash_table(radio_type, archi_tables, out_file_name):
     struct node node_from_uid(uint16_t uid);
     ''' % (__file__, len(radio_table))
 
-    with open(out_file_name + '.h', 'w') as header:
+    with open(SOURCE_FILE_PATH + lib_file_name + '.h', 'w') as header:
         header.write(textwrap.dedent(header_str))
 
     body_str = textwrap.dedent('''\
@@ -149,7 +156,7 @@ def generate_a_c_hash_table(radio_type, archi_tables, out_file_name):
      */
     ''' % __file__)
 
-    body_str += '#include "%s.h"\n\n' % out_file_name
+    body_str += '#include "%s.h"\n\n' % lib_file_name
 
     body_str += 'const struct node_entry const nodes_uid_dict[] = {\n'
     for uid, (archi, num) in radio_table:
@@ -157,7 +164,7 @@ def generate_a_c_hash_table(radio_type, archi_tables, out_file_name):
         body_str += '    { 0x%s, %s },\n' % (uid, node_value)
 
     body_str += '};\n\n'
-    with open(out_file_name + '.c', 'w') as source:
+    with open(SOURCE_FILE_PATH + lib_file_name + '.c', 'w') as source:
         source.write(body_str)
 
 
@@ -175,7 +182,7 @@ def _main():  # pragma: no cover
     print ''
     print_hash_table('at86rf231', archi_tables)
 
-    generate_a_c_hash_table('at86rf231', archi_tables, SOURCE_FILES_NAME)
+    generate_a_c_hash_table('at86rf231', archi_tables, LIB_FILE_NAME)
 
 
 if __name__ == '__main__':  # pragma: no cover

@@ -1,7 +1,7 @@
 /*
  * Generated from ./scripts/generate_uid_dict.py
  */
-#include "/home/harter/work/iot-lab/parts/openlab/appli/iotlab/lib/scripts/../iotlab_uid_num_hashtable.h"
+#include "iotlab_uid_num_hashtable.h"
 
 const struct node_entry const nodes_uid_dict[] = {
     { 0x0562, M3 << 24 | 37 },
