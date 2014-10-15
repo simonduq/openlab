@@ -17,6 +17,7 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s : %(message)s")
 
 LIB_FILE_NAME = "iotlab_uid_num_hashtable"
 SOURCE_FILE_PATH = "%s/../" % CURRENT_DIRECTORY
+CURRENT_FILE_REL_PATH = os.path.relpath(__file__, SOURCE_FILE_PATH)
 
 
 def extract_json(json_str):
@@ -145,7 +146,7 @@ def generate_a_c_hash_table(radio_type, archi_tables, lib_file_name):
     extern const struct node_entry const nodes_uid_dict[%u];
 
     struct node node_from_uid(uint16_t uid);
-    ''' % (__file__, len(radio_table))
+    ''' % (CURRENT_FILE_REL_PATH, len(radio_table))
 
     with open(SOURCE_FILE_PATH + lib_file_name + '.h', 'w') as header:
         header.write(textwrap.dedent(header_str))
@@ -154,7 +155,7 @@ def generate_a_c_hash_table(radio_type, archi_tables, lib_file_name):
     /*
      * Generated from %s
      */
-    ''' % __file__)
+    ''' % CURRENT_FILE_REL_PATH)
 
     body_str += '#include "%s.h"\n\n' % lib_file_name
 

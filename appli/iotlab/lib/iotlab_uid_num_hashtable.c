@@ -1,5 +1,5 @@
 /*
- * Generated from ./scripts/generate_uid_dict.py
+ * Generated from scripts/generate_uid_dict.py
  */
 #include "iotlab_uid_num_hashtable.h"
 
