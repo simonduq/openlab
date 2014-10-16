@@ -20,6 +20,6 @@ struct node {
     uint32_t num;
 };
 
-extern const struct node_entry const nodes_uid_dict[287];
+extern const struct node_entry const nodes_uid_dict[509];
 
 struct node node_from_uid(uint16_t uid);
