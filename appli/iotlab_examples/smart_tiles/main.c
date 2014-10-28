@@ -12,6 +12,8 @@
 #include "event.h"
 #include "detectpeak.h"
 
+extern void radio_recv_init();
+
 // timer alarm function
 static void alarm(handler_arg_t arg);
 static soft_timer_t tx_timer;
@@ -67,6 +69,8 @@ static void hardware_init()
     // Initialize a openlab timer
     soft_timer_set_handler(&tx_timer, alarm, NULL);
     soft_timer_start(&tx_timer, ACQ_PERIOD, 1);
+    // start radio receiver
+    radio_recv_init();
 }
 
 int main()
