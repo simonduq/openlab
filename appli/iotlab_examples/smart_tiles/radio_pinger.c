@@ -37,7 +37,8 @@ static void hardware_init()
 	event_init();
 	soft_timer_init();
 
-	phy_set_power(platform_phy, PHY_POWER_m30dBm);
+	if (phy_set_power(platform_phy, PHY_POWER_m30dBm))
+		printf("failed to set radio power\n");
 	radio_init(receive_callback);
 
 	soft_timer_set_handler(&tx_timer, radio_pinger, NULL);
