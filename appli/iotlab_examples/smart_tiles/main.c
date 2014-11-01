@@ -63,7 +63,7 @@ static void hardware_init()
                           LSM303DLHC_TEMP_MODE_ON);
     // Set peak detection parameters: windows size, peak_tempo, threshold */
     peak_setparam(&PEAKACC_TRACE,10, 50, 1.0);
-    peak_setparam(&PEAKMAG_TRACE,100, 100, 1.0);
+    peak_setparam(&PEAKMAG_TRACE,100, 100, 1.02);
     // Initialize a openlab timer
     soft_timer_set_handler(&tx_timer, alarm, NULL);
     soft_timer_start(&tx_timer, ACQ_PERIOD, 1);
@@ -135,15 +135,14 @@ static void handle_ev(handler_arg_t arg)
     if (magpeak[1] > 0.0) {
       printf("MagPeak;%f;0.0;0.0\n", magpeak[1]);
     }
+    
     printf("Acc;%f;%f;%f\n", af[0], af[1], af[2]);
     printf("Mag;%f;%f;%f\n", mf[0], mf[1], mf[2]);
+    
+
     if (glob_counters.lindex == TX_PERIOD) {
-      /*
-      printf("Acc;%f;%f;%f\n", af[0], af[1], af[2]);
+      /*  printf("Acc;%f;%f;%f\n", af[0], af[1], af[2]);
       printf("Mag;%f;%f;%f\n", mf[0], mf[1], mf[2]);
-      
-      printf("Acc;%f;0.0;0.0\n", accpeak[0]);
-      printf("Mag;%f;0.0;0.0\n", magpeak[0]);
       */
       glob_counters.lindex=0;
     }

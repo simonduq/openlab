@@ -4,6 +4,13 @@
 """ plot_sensors.py <filename> <node_id> ...
 plot sensors  values from <node_id> printed by smart_tiles firmware 
 saved in filename (by serial_aggregator)
+
+Example of use :
+
+After firmware deployement on m3-29 to m3-32
+mypc> aggr.sh 29 30 31 32 > data.txt
+mypc> python myplot.py data.txt 29 30 31 32
+
 """
 import sys
 import os
@@ -154,12 +161,12 @@ if __name__ == "__main__":
         data = imu_load(filename)
         # Plot all sensors acc sensors
         for node in nodes:
-            datanode = imu_extract(data, node, sensor_type='Acc')
-            imu_plot(datanode, "Accelerometers " + node)
+            #datanode = imu_extract(data, node, sensor_type='Acc')
+            #imu_plot(datanode, "Accelerometers " + node)
             datanode = imu_extract(data, node, sensor_type='Mag')
             imu_plot(datanode, "Magnetometers " + node)
         # Plot all norm accelerometers on a same windows
-        imu_all_plot(data, "Accelerometers ", "Norm Acceleration (G)", nodes, 'Acc')  
+        #imu_all_plot(data, "Accelerometers ", "Norm Acceleration (G)", nodes, 'Acc')  
         imu_all_plot(data, "Magnetometers ", "Norm ", nodes, 'Mag') 
         plt.show()
 
