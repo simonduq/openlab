@@ -1,0 +1,4 @@
+add_executable(robot_broadcaster robot_broadcaster radio)
+add_executable(robot_listener robot_listener radio)
+target_link_libraries(robot_broadcaster platform)
+target_link_libraries(robot_listener platform)

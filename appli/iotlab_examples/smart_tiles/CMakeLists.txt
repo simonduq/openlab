@@ -1,2 +1,4 @@
-add_executable(smart_tiles main detectpeak)
+add_executable(smart_tiles main detectpeak radio_recv radio)
+add_executable(radio_pinger radio_pinger radio)
 target_link_libraries(smart_tiles platform)
+target_link_libraries(radio_pinger platform)
