@@ -17,7 +17,6 @@
 #include "lps331ap.h"
 #include "isl29020.h"
 
-static soft_timer_t tx_timer;
 
 // IMU
 //
@@ -30,7 +29,7 @@ static void alarm(handler_arg_t arg);
 #define TX_PERIOD 200
 
 //event handler
-static void handle_ev(handler_arg_t arg);
+static void handle_ev();
 
 #define ACC_RES (1e-3)    // The resolution is 1 mg for the +/-2g scale
 #define GYR_RES (8.75e-3) // The resolution is 8.75mdps for the +/-250dps scale
@@ -90,12 +89,9 @@ static void imu_init()
     // L3G4200D gyro sensor initialisation
     l3g4200d_powerdown();
     l3g4200d_gyr_config(L3G4200D_200HZ, L3G4200D_250DPS, true);
-    // Initialize a openlab timer
-    soft_timer_set_handler(&tx_timer, alarm, NULL);
-    soft_timer_start(&tx_timer, ACQ_PERIOD, 1);
 }
 
-static void handle_ev(handler_arg_t arg)
+static void handle_ev()
 {
     int16_t rawacc[3];
     int16_t rawmag[3];
@@ -164,11 +160,13 @@ static void handle_ev(handler_arg_t arg)
 }
 
 static void alarm(handler_arg_t arg) {
-    event_post_from_isr(EVENT_QUEUE_APPLI, handle_ev, NULL);
+    handle_ev();
 }
 
 static void hardware_init()
 {
+    static soft_timer_t tx_timer;
+
     platform_init();
     event_init();
     soft_timer_init();
