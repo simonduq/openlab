@@ -35,7 +35,7 @@ static void handle_ev();
 #define GYR_RES (8.75e-3) // The resolution is 8.75mdps for the +/-250dps scale
 #define CALIB_PERIOD 100  // period in sec = CALIB_PERIOD=5 x TX_COMPUTE) / 1000
 
-char imu_buffer[100];
+char imu_buffer[125 - 9];  // minus size taken by radio_send aditional data
 
 /** Global counters structure */
 typedef struct TypCounters {
@@ -126,7 +126,7 @@ static void handle_ev()
             printf("Clb;%f\n",biais);
         }
     } else { /* After calibration */
-        for (i=0; i < 3; i++) {
+        for (i = 0; i < 3; i++) {
             acc[i] = rawacc[i] * ACC_RES;
             gyr[i] = rawgyr[i] * GYR_RES;
             /* TBD mag. calibration */
@@ -143,14 +143,19 @@ static void handle_ev()
             printf("Acc;%f;%f;%f\n", acc[0], acc[1], acc[2]);
             printf("Gyr;%f;%f;%f\n", gyr[0], gyr[1], gyr[2]);
             printf("Mag;%f;%f;%f\n", mag[0], mag[1], mag[2]);
+            printf("Ang;%d\n", pitch_deg);
+            //printf("DBG = %f %f %f\n",biais, pitch,(gyr[2] - biais) * 0.005);
             temp = temperature_sensor();
             lum = light_sensor();
-            sprintf(imu_buffer,"Acc;%f;%f;%f;Gyr;%f;%f;%f;Temp;%f;Light;%f",
-                    acc[0], acc[1], acc[2], gyr[0], gyr[1], gyr[2], temp, lum );
-            radio_send(imu_buffer);
-            /* Print pitch angle */
-            printf("Ang;%d\n", pitch_deg);
-            //printf("DBG = %f %f %f\n",biais, pitch,(gyr[2] - biais) * 0.005 );
+
+            int ret = snprintf(imu_buffer, sizeof(imu_buffer),
+                    "Acc;%f;%f;%f;Gyr;%f;%f;%f;Temp;%f;Light;%f",
+                    acc[0], acc[1], acc[2], gyr[0], gyr[1], gyr[2], temp, lum);
+
+            // send only if data is correctly written
+            if (ret <= sizeof(imu_buffer))
+                radio_send(imu_buffer);
+
             glob_counters.lindex=0;
         } else {
             glob_counters.lindex++;
@@ -161,6 +166,10 @@ static void handle_ev()
 
 static void alarm(handler_arg_t arg) {
     handle_ev();
+    // Only restart timer after finishing handler
+    // When reading light and temperature it takes more time than acq_period
+    // around 8-9 ms
+    soft_timer_start((soft_timer_t *)arg, ACQ_PERIOD, 0);
 }
 
 static void hardware_init()
@@ -171,12 +180,21 @@ static void hardware_init()
     event_init();
     soft_timer_init();
 
+    isl29020_prepare(ISL29020_LIGHT__AMBIENT, ISL29020_RESOLUTION__16bit,
+            ISL29020_RANGE__16000lux);
+    isl29020_sample_continuous();
+
+    lps331ap_powerdown();
+    lps331ap_set_datarate(LPS331AP_P_12_5HZ_T_12_5HZ);
+
+
     phy_set_power(platform_phy, PHY_POWER_0dBm);
     radio_init(receive_callback);
     imu_init();
 
-    soft_timer_set_handler(&tx_timer, alarm, NULL);
-    soft_timer_start(&tx_timer, ACQ_PERIOD, 1);
+    soft_timer_set_handler(&tx_timer, alarm, &tx_timer);
+    // repeat will be done by handler
+    soft_timer_start(&tx_timer, ACQ_PERIOD, 0);
 }
 
 int main()
