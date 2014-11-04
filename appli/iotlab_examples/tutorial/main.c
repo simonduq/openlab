@@ -15,7 +15,7 @@
 #include "mac_csma.h"
 #include "phy.h"
 
-// choose channel CHANNEL_[12-26]
+// choose channel in [11-26]
 #define CHANNEL 11
 #define ADDR_BROADCAST 0xFFFF
 

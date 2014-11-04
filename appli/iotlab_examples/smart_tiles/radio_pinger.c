@@ -15,15 +15,11 @@
 #define PING_MESSAGE "Robot!"
 static soft_timer_t tx_timer;
 
-static void do_ping(handler_arg_t arg)
-{
-	radio_send(PING_MESSAGE);
-	printf("ping!\n");
-}
 
 static void radio_pinger(handler_arg_t arg)
 {
-	event_post_from_isr(EVENT_QUEUE_APPLI, do_ping, NULL);
+	radio_send(PING_MESSAGE);
+	printf("ping!\n");
 }
 
 static void receive_callback(char *from, char* data)

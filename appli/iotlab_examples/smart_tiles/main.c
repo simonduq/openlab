@@ -14,8 +14,6 @@
 
 extern void radio_recv_init();
 
-// timer alarm function
-static void alarm(handler_arg_t arg);
 static soft_timer_t tx_timer;
 /* Period of the sensor acquisition datas */
 #define ACQ_PERIOD soft_timer_ms_to_ticks(5)
@@ -64,10 +62,10 @@ static void hardware_init()
 			  LSM303DLHC_MAG_MODE_CONTINUOUS,
                           LSM303DLHC_TEMP_MODE_ON);
     // Set peak detection parameters: windows size, peak_tempo, threshold */
-    peak_setparam(&PEAKACC_TRACE,10, 50, 1.0);
-    peak_setparam(&PEAKMAG_TRACE,100, 100, 1.02);
+    peak_setparam(&PEAKACC_TRACE,10, 50, 1.01);   // 1.00: too sensitive
+    peak_setparam(&PEAKMAG_TRACE,100, 100, 1.05); // 1.10: must be on tile
     // Initialize a openlab timer
-    soft_timer_set_handler(&tx_timer, alarm, NULL);
+    soft_timer_set_handler(&tx_timer, handle_ev, NULL);
     soft_timer_start(&tx_timer, ACQ_PERIOD, 1);
     // start radio receiver
     radio_recv_init();
@@ -156,8 +154,4 @@ static void handle_ev(handler_arg_t arg)
     }
   }
 
-}
-
-static void alarm(handler_arg_t arg) {
-  event_post_from_isr(EVENT_QUEUE_APPLI, handle_ev, NULL);
 }
