@@ -105,7 +105,7 @@ static void send_big_packet()
 
 
 /* Reception of a radio message */
-void mac_csma_data_indication(uint16_t src_addr,
+void mac_csma_data_received(uint16_t src_addr,
         const uint8_t *data, uint8_t length, int8_t rssi, uint8_t lqi)
 {
     // disable help message after receiving one packet

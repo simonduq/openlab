@@ -17,7 +17,6 @@
 #include "lps331ap.h"
 #include "isl29020.h"
 
-static soft_timer_t tx_timer;
 
 // IMU
 //
@@ -30,20 +29,20 @@ static void alarm(handler_arg_t arg);
 #define TX_PERIOD 200
 
 //event handler
-static void handle_ev(handler_arg_t arg);
+static void handle_ev();
 
 #define ACC_RES (1e-3)    // The resolution is 1 mg for the +/-2g scale
 #define GYR_RES (8.75e-3) // The resolution is 8.75mdps for the +/-250dps scale
 #define CALIB_PERIOD 100  // period in sec = CALIB_PERIOD=5 x TX_COMPUTE) / 1000
 
-char imu_buffer[100];
+char imu_buffer[125 - 9];  // minus size taken by radio_send aditional data
 
 /** Global counters structure */
 typedef struct TypCounters {
- /* index incremented at each criteria computation */
-  uint32_t index;
-  /* local index incremented at each computation between 2 packet sending*/
-  uint16_t lindex;
+    /* index incremented at each criteria computation */
+    uint32_t index;
+    /* local index incremented at each computation between 2 packet sending*/
+    uint16_t lindex;
 } TypCounters;
 
 TypCounters glob_counters = {0, 0};
@@ -51,7 +50,7 @@ TypCounters glob_counters = {0, 0};
 // Functions
 static void receive_callback(char *from, char* data, int rssi, int lqi)
 {
-        printf("broadcast;%s;%d;%d;%s\n", from, rssi, lqi, data);
+    printf("broadcast;%s;%d;%d;%s\n", from, rssi, lqi, data);
 }
 
 static float temperature_sensor()
@@ -79,115 +78,129 @@ static void imu_init()
     // LSM303DLHC accelero sensor initialisation
     lsm303dlhc_powerdown();
     lsm303dlhc_acc_config(
-                          LSM303DLHC_ACC_RATE_400HZ,
-                          LSM303DLHC_ACC_SCALE_2G,
-                          LSM303DLHC_ACC_UPDATE_ON_READ);
+            LSM303DLHC_ACC_RATE_400HZ,
+            LSM303DLHC_ACC_SCALE_2G,
+            LSM303DLHC_ACC_UPDATE_ON_READ);
     // LSM303DLHC magneto sensor initialisation
     lsm303dlhc_mag_config(LSM303DLHC_MAG_RATE_220HZ,
-                          LSM303DLHC_MAG_SCALE_2_5GAUSS,
-                          LSM303DLHC_MAG_MODE_CONTINUOUS,
-                          LSM303DLHC_TEMP_MODE_ON);
+            LSM303DLHC_MAG_SCALE_2_5GAUSS,
+            LSM303DLHC_MAG_MODE_CONTINUOUS,
+            LSM303DLHC_TEMP_MODE_ON);
     // L3G4200D gyro sensor initialisation
     l3g4200d_powerdown();
     l3g4200d_gyr_config(L3G4200D_200HZ, L3G4200D_250DPS, true);
-    // Initialize a openlab timer
-    soft_timer_set_handler(&tx_timer, alarm, NULL);
-    soft_timer_start(&tx_timer, ACQ_PERIOD, 1);
 }
 
-static void handle_ev(handler_arg_t arg)
+static void handle_ev()
 {
-  int16_t rawacc[3];
-  int16_t rawmag[3];
-  int16_t rawgyr[3];
-  int16_t i;
-  float acc[3];
-  float gyr[3];
-  float mag[3];
-  static float pitch;
-  int pitch_deg;
-  static float biais;
-  float temp, lum;
+    int16_t rawacc[3];
+    int16_t rawmag[3];
+    int16_t rawgyr[3];
+    int16_t i;
+    float acc[3];
+    float gyr[3];
+    float mag[3];
+    static float pitch;
+    int pitch_deg;
+    static float biais;
+    float temp, lum;
 
-  /* Read accelerometers */
-  lsm303dlhc_read_acc(rawacc);
-  /* Read gyrometers */
-  l3g4200d_read_rot_speed(rawgyr);
-  /* Read magnetometers */
-  lsm303dlhc_read_mag(rawmag);
-  /* Gyrometer pitch biais estimation during CALIB_PERIOD*/
-  if (glob_counters.index <= CALIB_PERIOD) {
-    /* first index */
-    if (glob_counters.index == 0)
-      {
-        biais = 0.0;
-        pitch = 0.0;
-      }
-    /* estimation */
-    biais += gyr[2];
-    /* last index */
-    if (glob_counters.index == CALIB_PERIOD) {
-      biais = biais / CALIB_PERIOD;
-      printf("Clb;%f\n",biais);
-    }
-  } /* After calibration */
-  else {
-    for (i=0; i < 3; i++) {
-      acc[i] = rawacc[i] * ACC_RES;
-      gyr[i] = rawgyr[i] * GYR_RES;
-      /* TBD mag. calibration */
-      mag[i] = rawmag[i] * 1.0;
-    }
+    /* Read accelerometers */
+    lsm303dlhc_read_acc(rawacc);
+    /* Read gyrometers */
+    l3g4200d_read_rot_speed(rawgyr);
+    /* Read magnetometers */
+    lsm303dlhc_read_mag(rawmag);
+    /* Gyrometer pitch biais estimation during CALIB_PERIOD*/
+    if (glob_counters.index <= CALIB_PERIOD) {
+        /* first index */
+        if (glob_counters.index == 0) {
+            biais = 0.0;
+            pitch = 0.0;
+        }
+        /* estimation */
+        biais += gyr[2];
+        /* last index */
+        if (glob_counters.index == CALIB_PERIOD) {
+            biais = biais / CALIB_PERIOD;
+            printf("Clb;%f\n",biais);
+        }
+    } else { /* After calibration */
+        for (i = 0; i < 3; i++) {
+            acc[i] = rawacc[i] * ACC_RES;
+            gyr[i] = rawgyr[i] * GYR_RES;
+            /* TBD mag. calibration */
+            mag[i] = rawmag[i] * 1.0;
+        }
 
-    /* Compute pitch value, see ACQ_PERIOD */
-    pitch = pitch + (gyr[2] - biais) * 0.005 ;
-    pitch_deg = (int) (pitch*180/M_PI);
-    pitch_deg = pitch_deg % 360;
+        /* Compute pitch value, see ACQ_PERIOD */
+        pitch = pitch + (gyr[2] - biais) * 0.005 ;
+        pitch_deg = (int) (pitch*180/M_PI);
+        pitch_deg = pitch_deg % 360;
 
-    if (glob_counters.lindex == TX_PERIOD) {
-      /* Print IMU values : accelerometers, gyrometers and magnetometers */
-      printf("Acc;%f;%f;%f\n", acc[0], acc[1], acc[2]);
-      printf("Gyr;%f;%f;%f\n", gyr[0], gyr[1], gyr[2]);
-      printf("Mag;%f;%f;%f\n", mag[0], mag[1], mag[2]);
-      temp = temperature_sensor();
-      lum = light_sensor();
-      sprintf(imu_buffer,"Acc;%f;%f;%f;Gyr;%f;%f;%f;Temp;%f;Light;%f", 
-	acc[0], acc[1], acc[2], gyr[0], gyr[1], gyr[2], temp, lum );
-      radio_send(imu_buffer);
-      /* Print pitch angle */
-      printf("Ang;%d\n", pitch_deg);
-      //printf("DBG = %f %f %f\n",biais, pitch,(gyr[2] - biais) * 0.005 );
-      glob_counters.lindex=0;
+        if (glob_counters.lindex == TX_PERIOD) {
+            /* Print IMU values : accelerometers, gyrometers and magnetometers */
+            printf("Acc;%f;%f;%f\n", acc[0], acc[1], acc[2]);
+            printf("Gyr;%f;%f;%f\n", gyr[0], gyr[1], gyr[2]);
+            printf("Mag;%f;%f;%f\n", mag[0], mag[1], mag[2]);
+            printf("Ang;%d\n", pitch_deg);
+            //printf("DBG = %f %f %f\n",biais, pitch,(gyr[2] - biais) * 0.005);
+            temp = temperature_sensor();
+            lum = light_sensor();
+
+            int ret = snprintf(imu_buffer, sizeof(imu_buffer),
+                    "Acc;%f;%f;%f;Gyr;%f;%f;%f;Temp;%f;Light;%f",
+                    acc[0], acc[1], acc[2], gyr[0], gyr[1], gyr[2], temp, lum);
+
+            // send only if data is correctly written
+            if (ret <= sizeof(imu_buffer))
+                radio_send(imu_buffer);
+
+            glob_counters.lindex=0;
+        } else {
+            glob_counters.lindex++;
+        }
     }
-    else {
-      glob_counters.lindex++;
-    }
-  }
-  glob_counters.index++;
+    glob_counters.index++;
 }
 
 static void alarm(handler_arg_t arg) {
-  event_post_from_isr(EVENT_QUEUE_APPLI, handle_ev, NULL);
+    handle_ev();
+    // Only restart timer after finishing handler
+    // When reading light and temperature it takes more time than acq_period
+    // around 8-9 ms
+    soft_timer_start((soft_timer_t *)arg, ACQ_PERIOD, 0);
 }
 
 static void hardware_init()
 {
-	platform_init();
-	event_init();
-	soft_timer_init();
-	
-	phy_set_power(platform_phy, PHY_POWER_0dBm);
-	radio_init(receive_callback);
-	imu_init();
+    static soft_timer_t tx_timer;
 
-	soft_timer_set_handler(&tx_timer, alarm, NULL);
-	soft_timer_start(&tx_timer, ACQ_PERIOD, 1);
+    platform_init();
+    event_init();
+    soft_timer_init();
+
+    isl29020_prepare(ISL29020_LIGHT__AMBIENT, ISL29020_RESOLUTION__16bit,
+            ISL29020_RANGE__16000lux);
+    isl29020_sample_continuous();
+
+    lps331ap_powerdown();
+    lps331ap_set_datarate(LPS331AP_P_12_5HZ_T_12_5HZ);
+
+
+    phy_set_power(platform_phy, PHY_POWER_0dBm);
+    radio_init(receive_callback);
+    imu_init();
+
+    soft_timer_set_handler(&tx_timer, alarm, &tx_timer);
+    // repeat will be done by handler
+    soft_timer_start(&tx_timer, ACQ_PERIOD, 0);
 }
 
 int main()
 {
-	hardware_init();
-	platform_run();
-	return 0;
+    hardware_init();
+    platform_run();
+    return 0;
 }
 
