@@ -62,8 +62,8 @@ static void hardware_init()
 			  LSM303DLHC_MAG_MODE_CONTINUOUS,
                           LSM303DLHC_TEMP_MODE_ON);
     // Set peak detection parameters: windows size, peak_tempo, threshold */
-    peak_setparam(&PEAKACC_TRACE,10, 50, 1.0);
-    peak_setparam(&PEAKMAG_TRACE,100, 100, 1.0);
+    peak_setparam(&PEAKACC_TRACE,10, 50, 1.01);   // 1.00: too sensitive
+    peak_setparam(&PEAKMAG_TRACE,100, 100, 1.05); // 1.10: must be on tile
     // Initialize a openlab timer
     soft_timer_set_handler(&tx_timer, handle_ev, NULL);
     soft_timer_start(&tx_timer, ACQ_PERIOD, 1);
