@@ -19,6 +19,8 @@ typedef	struct count_peak_config {
 
 extern void peak_detect(count_peak_config_t *trace, int k, float sig[3], float peak[2]);
 
+extern void state_detect(count_peak_config_t *trace, int k, float sig[3], float peak[2]);
+
 extern void peak_setparam(count_peak_config_t *trace, short int window_size, short int peak_tempo, float threshold);
 
 #endif

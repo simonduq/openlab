@@ -95,4 +95,53 @@ void peak_detect(count_peak_config_t *trace, int k, float sig[3], float rpeak[2]
   trace->sign = sign;
 }
 
+// Must be used for magnetometers state detection
+// for smart-tiles: peak_setparam(&PEAKMAG_TRACE,50, 200, 0.97)
 
+void state_detect(count_peak_config_t *trace, int k, float sig[3], float rpeak[2])
+{
+  float norm,  moy, peak;
+
+  /*
+    0 - Choose the signal to detect
+   */
+  /*  norm = sig[2]; */
+  norm = sig[0]*sig[0] + sig[1]*sig[1] + sig[2]*sig[2];
+  norm = sqrt(norm);
+  /* 
+   1 - Moving Average 
+  */
+  if (k==0) {
+    trace->sum = norm;
+    moy = norm;
+    trace->count = 0;
+    trace->k = 0;
+  } 
+  else if (k < trace->window_size) {
+    trace->sum = trace->sum + norm;
+    moy = trace->sum / (k+1);
+  }
+  else {
+    trace->sum = trace->sum + norm - trace->norm[k%trace->window_size];
+    moy = trace->sum / trace->window_size;
+  }
+  /*
+   2 - Signal threshold
+  */
+  if ( (moy < trace->threshold) & ( k > (trace->k + trace->peak_tempo)) ) {
+    peak = moy; 
+    trace->count ++;
+    trace->k = k;
+  }
+  else
+    peak = 0.0;
+  
+  /* return value */
+  //printf("MOY %f %f %f\n",norm, trace->sum, moy);
+  rpeak[0] = moy;
+  rpeak[1] = peak;
+
+  /* Store old values */
+  trace->norm[k%trace->window_size] = norm; 
+  trace->moy = moy;
+}

@@ -12,6 +12,9 @@
 #include "event.h"
 #include "detectpeak.h"
 
+#undef  RT_PRINT
+//#define RT_PRINT 1
+
 extern void radio_recv_init();
 
 static soft_timer_t tx_timer;
@@ -138,15 +141,16 @@ static void handle_ev(handler_arg_t arg)
       printf("MagPeak;%f;0.0;0.0\n", magpeak[1]);
     }
 
-#if 0
+#ifdef RT_PRINT
     printf("Acc;%f;%f;%f\n", af[0], af[1], af[2]);
     printf("Mag;%f;%f;%f\n", mf[0], mf[1], mf[2]);
 #endif
 
     if (glob_counters.lindex == TX_PERIOD) {
-      /*  printf("Acc;%f;%f;%f\n", af[0], af[1], af[2]);
+#ifndef RT_PRINT
+      printf("Acc;%f;%f;%f\n", af[0], af[1], af[2]);
       printf("Mag;%f;%f;%f\n", mf[0], mf[1], mf[2]);
-      */
+#endif
       glob_counters.lindex=0;
     }
     else {

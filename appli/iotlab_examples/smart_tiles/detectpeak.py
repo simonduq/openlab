@@ -42,7 +42,7 @@ PEAK_TEMPO = 0
 THRESHOLD = 0.98
 
 
-def test_detectpeak_acc(filename, node):
+def test_detectpeak(filename, node):
     """ Test detectpeak implemented in Python
 
     Returns
@@ -82,7 +82,7 @@ def test_detectpeak_acc(filename, node):
     return "OK"
 
 
-def test_detectpeak(filename, node):
+def test_detectpeak2(filename, node):
     """ Test detectpeak implemented in Python
 
     Returns
@@ -140,8 +140,11 @@ if __name__ == "__main__":
         nodes =[]
         for arg in sys.argv[2:]: 
             nodes.append('m3-'+arg)
-        # Plot all sensors acc sensors
+        # Plot all sensors 
         for node in nodes:
-            test_detectpeak(filename, node)
+            if TYP_SENS == 'Acc':
+                test_detectpeak(filename, node)
+            else:
+                test_detectpeak2(filename, node)
 
         plt.show()
