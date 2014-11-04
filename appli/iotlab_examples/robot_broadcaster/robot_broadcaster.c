@@ -35,7 +35,7 @@ static void handle_ev();
 #define GYR_RES (8.75e-3) // The resolution is 8.75mdps for the +/-250dps scale
 #define CALIB_PERIOD 100  // period in sec = CALIB_PERIOD=5 x TX_COMPUTE) / 1000
 
-char imu_buffer[125 - 9];  // minus size taken by radio_send aditional data
+char send_buffer[125 - 9];  // minus size taken by radio_send aditional data
 
 /** Global counters structure */
 typedef struct TypCounters {
@@ -57,17 +57,17 @@ static float temperature_sensor()
 {
     int16_t raw;
     lps331ap_read_temp(&raw);
-    printf("Chip temperature raw=%x\n", raw);
+    //printf("Chip temperature raw=%x\n", raw);
 
     float temp = 42.5 + (- raw / 480.0);
-    printf("Chip temperature clean=%f\n", temp);
+    //printf("Chip temperature clean=%f\n", temp);
     return temp;
 }
 
 static float light_sensor()
 {
     float value = isl29020_read_sample();
-    printf("Luminosity measure: %f lux\n", value);
+    //printf("Luminosity measure: %f lux\n", value);
     return value;
 }
 
@@ -94,23 +94,23 @@ static void imu_init()
 static void handle_ev()
 {
     int16_t rawacc[3];
-    int16_t rawmag[3];
     int16_t rawgyr[3];
+    //int16_t rawmag[3];
     int16_t i;
     float acc[3];
     float gyr[3];
-    float mag[3];
+    //float mag[3];
     static float pitch;
     int pitch_deg;
     static float biais;
-    float temp, lum;
+    float temp, light;
 
     /* Read accelerometers */
     lsm303dlhc_read_acc(rawacc);
     /* Read gyrometers */
     l3g4200d_read_rot_speed(rawgyr);
     /* Read magnetometers */
-    lsm303dlhc_read_mag(rawmag);
+    //lsm303dlhc_read_mag(rawmag);
     /* Gyrometer pitch biais estimation during CALIB_PERIOD*/
     if (glob_counters.index <= CALIB_PERIOD) {
         /* first index */
@@ -130,7 +130,7 @@ static void handle_ev()
             acc[i] = rawacc[i] * ACC_RES;
             gyr[i] = rawgyr[i] * GYR_RES;
             /* TBD mag. calibration */
-            mag[i] = rawmag[i] * 1.0;
+            //mag[i] = rawmag[i] * 1.0;
         }
 
         /* Compute pitch value, see ACQ_PERIOD */
@@ -139,22 +139,25 @@ static void handle_ev()
         pitch_deg = pitch_deg % 360;
 
         if (glob_counters.lindex == TX_PERIOD) {
-            /* Print IMU values : accelerometers, gyrometers and magnetometers */
-            printf("Acc;%f;%f;%f\n", acc[0], acc[1], acc[2]);
-            printf("Gyr;%f;%f;%f\n", gyr[0], gyr[1], gyr[2]);
-            printf("Mag;%f;%f;%f\n", mag[0], mag[1], mag[2]);
-            printf("Ang;%d\n", pitch_deg);
-            //printf("DBG = %f %f %f\n",biais, pitch,(gyr[2] - biais) * 0.005);
-            temp = temperature_sensor();
-            lum = light_sensor();
+            /* Print sensors values to tx buffer. Sensors are:
+		- IMU values (accelerometers, gyrometers),
+		- temperature 
+		- light 
+            */
+	    /* Acquire temperature */
+	    temp = temperature_sensor();
+	    /* Acquire light */
+            light = light_sensor();
 
-            int ret = snprintf(imu_buffer, sizeof(imu_buffer),
+            int ret = snprintf(send_buffer, sizeof(send_buffer),
                     "Acc;%f;%f;%f;Gyr;%f;%f;%f;Temp;%f;Light;%f",
-                    acc[0], acc[1], acc[2], gyr[0], gyr[1], gyr[2], temp, lum);
+                    acc[0], acc[1], acc[2], gyr[0], gyr[1], gyr[2], temp, light);
+
+	    printf("buffer: %s\n", send_buffer);
 
             // send only if data is correctly written
-            if (ret <= sizeof(imu_buffer))
-                radio_send(imu_buffer);
+            if (ret <= sizeof(send_buffer))
+                radio_send(send_buffer);
 
             glob_counters.lindex=0;
         } else {
