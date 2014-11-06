@@ -1,5 +1,6 @@
 #include <platform.h>
 #include <printf.h>
+#include <time.h>
 
 #include "gps_synced_clock.h"
 
@@ -8,12 +9,9 @@
 #include "afio.h"
 #include "nvic_.h"
 
-static volatile uint32_t seconds;
+#include "iotlab_i2c.h"
 
-static void char_rx(handler_arg_t arg, uint8_t c);
-#define BUF_SIZE 128
-static uint32_t buf_index = 0;
-static char buf[BUF_SIZE];
+static volatile uint32_t seconds;
 
 void gps_synced_clock_get(gps_synced_time_t* result)
 {
@@ -84,11 +82,32 @@ void configure_cascaded_timer(openlab_timer_t timer)
   *timer_get_CR1(_timer) |= TIMER_CR1__CEN;
 }
 
+static void get_control_node_unix_time()
+{
+  struct soft_timer_timeval time;
+  seconds = 0;
+  iotlab_i2c_init();
+
+  printf("Getting control_node time\n");
+  iotlab_get_time(&time);
+
+  // Sleep until next half second
+  uint32_t sleeptime = 1500000 - time.tv_usec;
+  soft_timer_delay_us(sleeptime);
+
+  iotlab_get_time(&time);
+  seconds = time.tv_sec;
+
+  struct tm *local_time = gmtime((time_t *)&time.tv_sec);
+  char time_str[64];
+  strftime(time_str, (sizeof time_str), "%Y-%m-%d %H:%M:%S", local_time);
+  printf("Using Epoch: %u UTC %s\n", time.tv_sec, time_str);
+}
+
+
 void gps_synced_clock_init(void)
 {
   seconds = 0;
-
-  uart_set_rx_handler(uart_print, char_rx, NULL);
 
   // GPS PPS output is wired to GPIO PA3
   gpio_set_input(gpioA, GPIO_PIN_3);
@@ -99,7 +118,7 @@ void gps_synced_clock_init(void)
   nvic_enable_interrupt_line(NVIC_IRQ_LINE_EXTI3);
 
   // set IRQ handler and configure call to RISING signal on PA3
-  exti_set_handler(EXTI_LINE_Px3, PPS_handler,NULL);
+  exti_set_handler(EXTI_LINE_Px3, PPS_handler, NULL);
   exti_enable_interrupt_line(EXTI_LINE_Px3, EXTI_TRIGGER_RISING);
 
   // run TIM2 @ 1MHz
@@ -109,33 +128,6 @@ void gps_synced_clock_init(void)
   timer_enable(TIM_4);
   configure_cascaded_timer(TIM_4);
 
+  // Get time from the control node
+  get_control_node_unix_time();
 }
-
-static void process_frame_irq(char* buffer, unsigned int len)
-{
-  printf("echo :%u Bytes: %s\n", len, buffer);
-
-  if (len > 7) {
-    if (buffer[0] == 'u' && buffer[1] == 't' && buffer[2] == 'c') {
-      seconds = buffer[3] << 24 | buffer[4] << 16 | buffer[5] << 8 |  buffer[6];
-      printf("setting epoch to : %u\n", seconds);
-    }
-  }
-}
-
-static void char_rx(handler_arg_t arg, uint8_t c)
-{
-  if (c == '\n') {
-    buf[buf_index++] = '\n';
-    buf[buf_index] = '\0';
-
-    process_frame_irq(buf, buf_index);
-
-    buf_index = 0;
-  } else {
-    if (buf_index < BUF_SIZE-2) {
-      buf[buf_index++] = c;
-    }
-  }
-}
-
