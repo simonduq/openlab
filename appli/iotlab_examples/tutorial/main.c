@@ -17,6 +17,8 @@
 
 // choose channel in [11-26]
 #define CHANNEL 11
+#define RADIO_POWER PHY_POWER_0dBm
+
 #define ADDR_BROADCAST 0xFFFF
 
 // UART callback function
@@ -180,7 +182,7 @@ static void hardware_init()
 #endif
 
     // Init csma Radio mac layer
-    mac_csma_init(CHANNEL);
+    mac_csma_init(CHANNEL, RADIO_POWER);
 
     // Initialize a openlab timer
     soft_timer_set_handler(&tx_timer, alarm, NULL);

@@ -39,8 +39,9 @@ extern const mac_csma_config_t mac_csma_config;
  * Initialize and start the MAC layer.
  *
  * \param channel the channel to use
+ * \param tx_power the radio transmission power to use
  */
-void mac_csma_init(int channel);
+void mac_csma_init(int channel, phy_power_t tx_power);
 
 /**
  * Send some data to a node

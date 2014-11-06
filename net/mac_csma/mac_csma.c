@@ -57,6 +57,7 @@ static struct
     phy_t phy;
     uint16_t local_addr;
     int channel;
+    phy_power_t tx_power;
 
     enum csma_state state;
 
@@ -77,16 +78,17 @@ static void give()
     xSemaphoreGive(mac.mutex);
 }
 
-void mac_csma_init(int channel)
+void mac_csma_init(int channel, phy_power_t tx_power)
 {
     if (mac.mutex == NULL)
     {
         mac.mutex = xSemaphoreCreateMutex();
     }
 
-    // Store the PHY layer and channel
+    // Store the PHY layer, channel and tx power
     mac.phy = mac_csma_config.phy;
     mac.channel = channel;
+    mac.tx_power = tx_power;
 
     // Get MAC address
     uint16_t addr = (platform_uid ? platform_uid() : 0);
@@ -179,6 +181,7 @@ static void csma_enter_rx(handler_arg_t arg)
 
     phy_idle(mac.phy);
     phy_set_channel(mac.phy, mac.channel);
+    phy_set_power(mac.phy, mac.tx_power);
 
     // Prepare packet and start RX
     phy_prepare_packet(&mac.rx_pkt);
