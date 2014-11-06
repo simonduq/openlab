@@ -18,11 +18,13 @@ static struct {
 
     void (*pre_stop_cmd)();
     void (*post_start_cmd)();
+    uint16_t node_id;
 
 
 } cn_control = {
     .pre_stop_cmd = NULL,
-    .post_start_cmd = NULL
+    .post_start_cmd = NULL,
+    .node_id = 0,
 };
 
 
@@ -32,6 +34,8 @@ static int32_t on_stop(uint8_t cmd_type, packet_t *pkt);
 
 static int32_t set_time(uint8_t cmd_type, packet_t *pkt);
 static void do_set_time(handler_arg_t arg);
+
+static int32_t set_node_id(uint8_t cmd_type, packet_t *pkt);
 
 static soft_timer_t green_led_alarm;
 static int32_t green_led_blink(uint8_t cmd_type, packet_t *pkt);
@@ -61,6 +65,12 @@ void cn_control_start()
     };
     iotlab_serial_register_handler(&handler_set_time);
 
+    // set_node_id
+    static iotlab_serial_handler_t handler_set_node_id = {
+        .cmd_type = SET_NODE_ID,
+        .handler = set_node_id,
+    };
+    iotlab_serial_register_handler(&handler_set_node_id);
 
 
     // green led control
@@ -174,6 +184,22 @@ static void do_set_time(handler_arg_t arg)
 
     iotlab_time_set_time(&set_time_aux.t0, &set_time_aux.unix_time);
 }
+
+
+uint16_t cn_control_node_id()
+{
+    return cn_control.node_id;
+}
+
+static int32_t set_node_id(uint8_t cmd_type, packet_t *pkt)
+{
+    if (2 != pkt->length)
+        return 1;
+
+    memcpy(&cn_control.node_id, pkt->data, pkt->length);
+    return 0;
+}
+
 
 /*
  * green led control

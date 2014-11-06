@@ -8,6 +8,7 @@ enum {
 
 enum {
     IOTLAB_I2C_RX_TIME    = 0x00,   // len 8
+    IOTLAB_I2C_RX_NODE_ID = 0x01,   // len 2
 
     IOTLAB_I2C_TX_EVENT   = 0xF0,  // len 2
 };

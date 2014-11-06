@@ -6,6 +6,7 @@
 #include "iotlab_i2c/iotlab_i2c_.h"
 
 #include "cn_i2c.h"
+#include "cn_control.h"
 
 #include "debug.h"
 
@@ -32,6 +33,21 @@ static struct iotlab_i2c_handler rx_time_handler = {
     .next        = NULL,
 };
 
+static void rx_node_id(struct iotlab_i2c_handler_arg *arg)
+{
+    // Put saved timestamp in buffer
+    uint16_t node_id = cn_control_node_id();
+    memcpy(arg->payload, &node_id, sizeof(uint16_t));
+    log_info("Send node_uid: %04x", node_id);
+}
+static struct iotlab_i2c_handler rx_node_id_handler = {
+    .header      = IOTLAB_I2C_RX_NODE_ID,  // RX for open node // TX for CN
+    .type        = IOTLAB_I2C_SLAVE_TX,
+    .payload_len = sizeof(uint16_t),
+    .handler     = (handler_t)rx_node_id,
+    .next        = NULL,
+};
+
 static void tx_event(struct iotlab_i2c_handler_arg *arg)
 {
     uint16_t event;
@@ -52,6 +68,7 @@ void cn_i2c_start()
 {
     // register handlers
     iotlab_i2c_slave_register_handler(&rx_time_handler);
+    iotlab_i2c_slave_register_handler(&rx_node_id_handler);
     iotlab_i2c_slave_register_handler(&tx_event_handler);
 
     iotlab_i2c_slave_register_timestamp_fct(get_timestamp);

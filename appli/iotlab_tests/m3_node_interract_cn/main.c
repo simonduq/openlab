@@ -31,6 +31,15 @@ static void get_time()
     printf("Date: UTC %s.%06u\n", time_str, time.tv_usec);
 }
 
+static void get_id()
+{
+    uint16_t node_id;
+    if (iotlab_get_node_id(&node_id))
+        printf("Error while getting node_id\n");
+    else
+        printf("Node id: %04x\n", node_id);
+}
+
 static void send_event()
 {
     static unsigned i = 0;
@@ -50,6 +59,7 @@ static void print_usage()
     printf("Type command\n");
     printf("\th:\tprint this help\n");
     printf("\tt:\tget control node time\n");
+    printf("\tn:\tget node id\n");
     printf("\te:\tsend an event to control node\n");
 }
 
@@ -78,6 +88,9 @@ static void handle_cmd(handler_arg_t arg)
             break;
         case 'e':
             send_event();
+            break;
+        case 'n':
+            get_id();
             break;
         case '\n':
             printf("\n");

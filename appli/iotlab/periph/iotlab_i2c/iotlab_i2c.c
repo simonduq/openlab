@@ -23,6 +23,13 @@ int iotlab_get_time(struct soft_timer_timeval *time)
             (uint8_t *)time, 8);
 }
 
+int iotlab_get_node_id(uint16_t *node_id)
+{
+    uint8_t cmd = IOTLAB_I2C_RX_NODE_ID;
+    return i2c_tx_rx(iotlab_i2c.i2c, iotlab_i2c.addr, &cmd, 1,
+            (uint8_t *)node_id, 2);
+}
+
 int iotlab_send_event(uint16_t value)
 {
     uint8_t buf[3] = {[0] = IOTLAB_I2C_TX_EVENT};
