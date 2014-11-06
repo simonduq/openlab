@@ -71,9 +71,10 @@ void cn_consumption_start()
     fiteco_lib_gwt_current_monitor_stop();
 
     // Set configure handler
-    static iotlab_serial_handler_t handler_config_consumption;
-    handler_config_consumption.cmd_type = CONFIG_CONSUMPTION;
-    handler_config_consumption.handler = config_consumption_measures;
+    static iotlab_serial_handler_t handler_config_consumption = {
+        .cmd_type = CONFIG_CONSUMPTION,
+        .handler = config_consumption_measures,
+    };
     iotlab_serial_register_handler(&handler_config_consumption);
 }
 

@@ -79,30 +79,35 @@ static struct
 void cn_radio_start()
 {
     // Set the handlers
-    static iotlab_serial_handler_t handler_off;
-    handler_off.cmd_type = CONFIG_RADIO_STOP;
-    handler_off.handler = radio_off;
+    static iotlab_serial_handler_t handler_off = {
+        .cmd_type = CONFIG_RADIO_STOP,
+        .handler = radio_off,
+    };
     iotlab_serial_register_handler(&handler_off);
 
-    static iotlab_serial_handler_t handler_polling;
-    handler_polling.cmd_type = CONFIG_RADIO_MEAS;
-    handler_polling.handler = radio_polling;
+    static iotlab_serial_handler_t handler_polling = {
+        .cmd_type = CONFIG_RADIO_MEAS,
+        .handler = radio_polling,
+    };
     iotlab_serial_register_handler(&handler_polling);
 
-    static iotlab_serial_handler_t handler_sniffer;
-    handler_sniffer.cmd_type = CONFIG_RADIO_SNIFFER;
-    handler_sniffer.handler = radio_sniffer;
+    static iotlab_serial_handler_t handler_sniffer = {
+        .cmd_type = CONFIG_RADIO_SNIFFER,
+        .handler = radio_sniffer,
+    };
     iotlab_serial_register_handler(&handler_sniffer);
 
 #if 0
-    static iotlab_serial_handler_t handler_injection;
-    handler_injection.cmd_type = CONFIG_RADIO_INJECTION;
-    handler_injection.handler = radio_injection;
+    static iotlab_serial_handler_t handler_injection = {
+        .cmd_type = CONFIG_RADIO_INJECTION,
+        .handler = radio_injection,
+    };
     iotlab_serial_register_handler(&handler_injection);
 
-    static iotlab_serial_handler_t handler_jamming;
-    handler_jamming.cmd_type = CONFIG_RADIO_NOISE;
-    handler_jamming.handler = radio_jamming;
+    static iotlab_serial_handler_t handler_jamming = {
+        .cmd_type = CONFIG_RADIO_NOISE,
+        .handler = radio_jamming,
+    };
     iotlab_serial_register_handler(&handler_jamming);
 #endif
 }

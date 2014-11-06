@@ -31,5 +31,5 @@ if(${PLATFORM_HAS_INA226})
         iotlab_time
         iotlab_leds_util
         )
-add_subdirectory(test_cn)
+# add_subdirectory(test_cn)
 endif(${PLATFORM_HAS_INA226})

@@ -41,35 +41,38 @@ static int32_t green_led_on(uint8_t cmd_type, packet_t *pkt);
 void cn_control_start()
 {
     // Configure and register all handlers
-    static iotlab_serial_handler_t handler_start;
-    static iotlab_serial_handler_t handler_stop;
 
-    handler_start.cmd_type = OPEN_NODE_START;
-    handler_start.handler = on_start;
+    static iotlab_serial_handler_t handler_start = {
+        .cmd_type = OPEN_NODE_START,
+        .handler = on_start,
+    };
     iotlab_serial_register_handler(&handler_start);
-
-    handler_stop.cmd_type = OPEN_NODE_STOP;
-    handler_stop.handler = on_stop;
+    static iotlab_serial_handler_t handler_stop = {
+        .cmd_type = OPEN_NODE_STOP,
+        .handler = on_stop,
+    };
     iotlab_serial_register_handler(&handler_stop);
 
 
     // set_time
-    static iotlab_serial_handler_t handler_set_time;
-    handler_set_time.cmd_type = SET_TIME;
-    handler_set_time.handler = set_time;
+    static iotlab_serial_handler_t handler_set_time = {
+        .cmd_type = SET_TIME,
+        .handler = set_time,
+    };
     iotlab_serial_register_handler(&handler_set_time);
 
 
+
     // green led control
-    static iotlab_serial_handler_t handler_green_led_blink;
-    static iotlab_serial_handler_t handler_green_led_on;
-
-    handler_green_led_blink.cmd_type = GREEN_LED_BLINK;
-    handler_green_led_blink.handler = green_led_blink;
+    static iotlab_serial_handler_t handler_green_led_blink = {
+        .cmd_type = GREEN_LED_BLINK,
+        .handler = green_led_blink,
+    };
     iotlab_serial_register_handler(&handler_green_led_blink);
-
-    handler_green_led_on.cmd_type = GREEN_LED_ON;
-    handler_green_led_on.handler = green_led_on;
+    static iotlab_serial_handler_t handler_green_led_on = {
+        .cmd_type = GREEN_LED_ON,
+        .handler = green_led_on,
+    };
     iotlab_serial_register_handler(&handler_green_led_on);
 }
 
@@ -131,7 +134,7 @@ static struct {
 } set_time_aux;
 
 
-int32_t set_time(uint8_t cmd_type, packet_t *pkt)
+static int32_t set_time(uint8_t cmd_type, packet_t *pkt)
 {
     if (8 != pkt->length)
         return 1;

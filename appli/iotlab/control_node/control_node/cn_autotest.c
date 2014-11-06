@@ -13,21 +13,23 @@ static int32_t ping_pong(uint8_t cmd_type, packet_t *pkt);
 
 void cn_autotest_start()
 {
-    static iotlab_serial_handler_t handler_pingpong;
-    static iotlab_serial_handler_t handler_gpio;
-    static iotlab_serial_handler_t handler_i2c2;
-
     // Configure and register all handlers
-    handler_pingpong.cmd_type = TEST_RADIO_PING_PONG;
-    handler_pingpong.handler = ping_pong;
+    static iotlab_serial_handler_t handler_pingpong = {
+        .cmd_type = TEST_RADIO_PING_PONG,
+        .handler = ping_pong,
+    };
     iotlab_serial_register_handler(&handler_pingpong);
 
-    handler_gpio.cmd_type = TEST_GPIO;
-    handler_gpio.handler = gpio;
+    static iotlab_serial_handler_t handler_gpio = {
+        .cmd_type = TEST_GPIO,
+        .handler = gpio,
+    };
     iotlab_serial_register_handler(&handler_gpio);
 
-    handler_i2c2.cmd_type = TEST_I2C2;
-    handler_i2c2.handler = tst_i2c2;
+    static iotlab_serial_handler_t handler_i2c2 = {
+        .cmd_type = TEST_I2C2,
+        .handler = tst_i2c2,
+    };
     iotlab_serial_register_handler(&handler_i2c2);
 }
 
