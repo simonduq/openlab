@@ -1,5 +1,4 @@
 #include <string.h>
-//#include <arpa/inet.h>
 
 #include "debug.h"
 #include "zep_sniffer_format.h"
@@ -26,7 +25,7 @@ static const struct {
     const uint8_t preamble_2;
     const uint8_t zep_version;
     const uint8_t packet_type;
-} zep_header = {'E', 'X', '2', ZEP_V2_TYPE_DATA};
+} zep_header = {'E', 'X', '\x02', ZEP_V2_TYPE_DATA};
 static const uint8_t lqi_crc_mode = ZEP_V2_MODE_LQI;
 static void append_data(uint8_t *dst, size_t *index, const uint8_t *src, size_t len);
 

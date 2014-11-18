@@ -6,7 +6,7 @@
 #define LOG_LEVEL LOG_LEVEL_INFO
 #include "debug.h"
 
-/* [CA] the following was copied and adapted from 
+/* [CA] the following was copied and adapted from
    openlab/appli/iotlab_tests/foren6_sniffer/foren6_sniffer.c
    Itself was: */
 /*
@@ -21,7 +21,7 @@
 
 
 
-  
+
 //
 //   From packet-zep.c in wireshark:
 //   ZEP v2 Header will have the following format (if type=1/Data):
@@ -152,7 +152,7 @@ static void sniff_rx(phy_status_t status)
 
     // reserved
     for (i=0 ;i<10; i++)
-        data[index++] = 0; 
+        data[index++] = 0;
 
     // len
     const uint8_t len   = rx_pkt->length;
