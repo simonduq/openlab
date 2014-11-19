@@ -16,16 +16,16 @@ Running a demo
 
 - 2 a8 nodes
   - 1 sniffer node (M3 on a8)
-  - 1 emmiter node (M3)
+  - 1 emitter node (M3)
 
 sniffer node needs python script serial2loopback.py on A8
 
-0. build emmiter and sniffer firmwares
-1. flash emmiter node (a8-3)
+0. build emitter and sniffer firmwares
+1. flash emitter node (a8-3)
 2. flash sniffer node (a8-2)
 3. run ./serial2loopback.py
 4. run tcpdump -vvv -i lo
-5. send packet on emmiter node
+5. send packet on emitter node
 6. check tcpdump output to see zep packet
 ```
 
