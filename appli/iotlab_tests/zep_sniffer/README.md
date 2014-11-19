@@ -30,7 +30,7 @@ sniffer node needs python script serial2loopback.py on A8
 ```
 
 cd build.a8
-make tutorial_m3 zep_sniffer
+make tutorial_a8_m3 zep_sniffer
 
 scp bin/zep_sniffer.elf a8-2:
 scp bin/tutorial_m3.elf a8-3:
