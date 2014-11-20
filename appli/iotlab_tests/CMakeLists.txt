@@ -8,3 +8,5 @@ add_subdirectory(m3_node_interract_cn)
 
 add_subdirectory(foren6_sniffer)
 add_subdirectory(zep_sniffer)
+
+add_subdirectory(distributed_computing)

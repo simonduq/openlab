@@ -1,0 +1,2 @@
+add_executable(distributed_computing main computing)
+target_link_libraries(distributed_computing platform mac_csma)
