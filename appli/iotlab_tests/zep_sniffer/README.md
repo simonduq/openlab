@@ -1,24 +1,25 @@
-ZEP SNIFFER and GPS SYNCED timestamps
-=====================================
+ZEP SNIFFER with GPS SYNCED timestamps
+======================================
 
 
 Overview
 --------
 
 4 components:
-- sniffer outputing zep
+- radio sniffer outputing zep on serial line
 - gps timestamping lib
 - `control_node_i2c` lib to get current time
-- serial2loopback.py client script
+- serial2loopback.py script wrapping zep as udp
 
 Running a demo
 --------------
 
-- 2 a8 nodes
-  - 1 sniffer node (M3 on a8)
-  - 1 emitter node (M3)
+grab two A8 nodes:
+- 1 sniffer node (M3 and A8)
+- 1 emitter node (M3 only required)
 
-sniffer node needs python script serial2loopback.py on A8
+sniffer node needs script serial2loopback.py on A8
+nodes need to be in range radio-wize
 
 0. build emitter and sniffer firmwares
 1. flash emitter node (a8-3)
@@ -31,20 +32,20 @@ sniffer node needs python script serial2loopback.py on A8
 
 (cd ../../../build.a8 && make tutorial_a8_m3 zep_sniffer)
 
-scp ../../../build.a8/bin/zep_sniffer.elf a8-2:
-scp ../../../build.a8/bin/tutorial_a8_m3.elf a8-3:
-scp serial2loopback.py a8-2:
+scp ../../../build.a8/bin/zep_sniffer.elf node-a8-2:
+scp ../../../build.a8/bin/tutorial_a8_m3.elf node-a8-3:
+scp serial2loopback.py node-a8-2:
 
 in a terminal, setup sniffer node:
 
-ssh a8-2
+ssh node-a8-2
 flash_a8_m3 zep_sniffer.elf
 ./serial2loopback.py &
 tcpdump -vvv -i lo
 
 in another terminal, send a packet from emitter:
 
-ssh a8-3
+ssh node-a8-3
 flash_a8_m3 tutorial_a8_m3.elf
 miniterm.py --echo /dev/ttyA8_M3 500000
 <type return to stop help screen>
@@ -54,9 +55,9 @@ check the raw tcpdump output
 
 
 To inspect sniffer packets using wireshark:
-ssh a8-2 tcpdump -vvv -i lo -w dump.pcap
+ssh node-a8-2 tcpdump -vvv -i lo -w dump.pcap
 ^C
-scp a8-2:dump.pcap .
+scp node-a8-2:dump.pcap .
 wireshark dump.pcap
 
 see timestamp, sequence number (UDP packets)
