@@ -2,26 +2,22 @@
 #define COMPUTING_H
 #include <stdint.h>
 #include <math.h>
+#include "config.h"
 
-
-#define MAX_NUM_VALUES 32
-#define MAX_NUM_NEIGHBOURS 64
-#define MIN_RSSI -92
-
-extern uint8_t num_values;
 extern uint8_t compute_number;
+struct values {
+    double v[NUM_VALUES];
+};
 
 struct received_values {
     uint32_t valid;
     uint32_t num_neighbours;
-    double values[MAX_NUM_VALUES];
+    struct values values;
 };
 
 
-extern double my_values[MAX_NUM_VALUES];
+extern struct values my_values;
 
-extern uint32_t num_neighbours;
-extern uint16_t neighbours[MAX_NUM_NEIGHBOURS];
 extern struct received_values neighbours_values[MAX_NUM_NEIGHBOURS];
 
 
@@ -31,6 +27,11 @@ double compute_neighbours_value(double my_value, uint32_t n_neighbours,
 
 double compute_received_value(double my_value, double neigh_value);
 uint32_t compute_final_value();
+
+
+
+// General functions managing the multiples values
+void compute_received_values(struct received_values *neigh_values);
 
 
 #endif//COMPUTING_H

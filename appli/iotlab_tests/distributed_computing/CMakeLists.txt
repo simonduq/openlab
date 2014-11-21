@@ -1,2 +1,2 @@
-add_executable(distributed_computing main computing)
+add_executable(distributed_computing main computing radio_network)
 target_link_libraries(distributed_computing platform mac_csma)
