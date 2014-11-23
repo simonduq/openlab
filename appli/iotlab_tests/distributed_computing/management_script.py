@@ -8,6 +8,7 @@ import re
 import json
 import time
 import signal
+import subprocess
 
 import serial_aggregator
 import iotlabcli
@@ -44,6 +45,66 @@ def opts_parser():
 
     return parser
 
+class NodeResults(object):
+
+    def __init__(self, outfile):
+        self.outfile = outfile
+        self.neighbours = {}
+
+    def handle_line(self, identifier, line):
+        """ Print one line prefixed by id in format: """
+        if line.startswith(('DEBUG', 'INFO', 'ERROR')):
+            return
+
+        if 'Neighbours' in line:
+            # A569;Neighbours;6;A869;A172;C280;9869;B679;A269
+            values = line.split(';')
+            node = values[0]
+            neighbours = values[3:]
+            self.neighbours[node] = neighbours
+            return
+
+        self.outfile.write(line + '\n')
+
+
+    def write_neighbours_graph(self):
+        out_png = '%s.png' % self.outfile.name
+        cmd = ['dot', '-T', 'png', '-o', out_png]
+        dot_process = subprocess.Popen(cmd, stdin=subprocess.PIPE)
+        dot_process.communicate(self.neighbours_graph())
+        print "Neighbours graph written to %s" % out_png
+
+    def neighbours_graph(self):
+        links = self.neighbours_links()
+        res = ''
+        res += 'digraph G {\n'
+        res += '    center=""\n'
+        res += '    concentrate=true\n'
+        res += '    graph [ color=black ]\n'
+        for (node, neigh) in links['double']:
+            res += '    "%s" -> "%s"[color=black]\n' % (node, neigh)
+            res += '    "%s" -> "%s"[color=black]\n' % (neigh, node)
+        for (node, neigh) in links['simple']:
+            res += '    "%s" -> "%s"[color=red]\n' % (node, neigh)
+        res += '}\n'
+        return res
+
+    def neighbours_links(self):
+        simple_links = set()
+        double_links = set()
+        for node, neighbours in self.neighbours.items():
+            # detect double and one sided links
+            for neigh in neighbours:
+                link = (node, neigh)
+                rev_link = (neigh, node)
+                # put the link in 'double_links' if reverse was already present
+                if rev_link not in simple_links:
+                    simple_links.add(link)
+                else:
+                    simple_links.remove(rev_link)
+                    double_links.add(link)
+        return {'simple': simple_links, 'double': double_links}
+
 
 
 def main():
@@ -64,17 +125,9 @@ def main():
         exit(1)
 
     outfile = open(opts.outfile, 'w')
-    def handle_received_line(identifier, line):
-        """ Print one line prefixed by id in format: """
-        if line.startswith('DEBUG'):
-            pass
-        elif line.startswith('INFO'):
-            pass
-        else:
-            outfile.write(line + '\n');
-
+    results = NodeResults(outfile)
     aggregator = serial_aggregator.NodeAggregator(
-        nodes_list, print_lines=True, line_handler=handle_received_line)
+        nodes_list, print_lines=True, line_handler=results.handle_line)
     aggregator.start()
     try:
         algorithm_management.syncronous_mode(aggregator, opts.num_loop)
@@ -82,6 +135,7 @@ def main():
     finally:
         aggregator.stop()
         outfile.close()
+        results.write_neighbours_graph()
 
 
 if __name__ == "__main__":

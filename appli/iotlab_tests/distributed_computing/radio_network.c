@@ -14,6 +14,13 @@ static struct {
     uint32_t communication_tx_power;
 } rn_config;
 
+enum packet_type {
+    PKT_GRAPH = 0,
+    PKT_NEIGH = 1,
+    PKT_VALUES = 2,
+};
+
+
 #define ADDR_BROADCAST 0xFFFF
 
 void network_init(uint32_t channel, uint32_t discovery_tx_power,
@@ -38,48 +45,137 @@ void network_reset()
 static void send(uint16_t addr, void *packet, size_t index)
 {
     uint16_t ret;
-    ret = mac_csma_data_send(addr, packet, index);
-    if (ret != 0)
-        DEBUG("Packet sent to %04x\n", addr);
-    else
-        DEBUG("Packet sent to %04x failed\n", addr);
-    soft_timer_ms_to_ticks(10);
+    int i;
+    for (i = 0; i < 5; i++) {
+        ret = mac_csma_data_send(addr, packet, index);
+        if (ret != 0) {
+            DEBUG("Packet sent to %04x, try %u\n", addr, i);
+            soft_timer_ms_to_ticks(10);
+            break;
+        } else {
+            ERROR("Packet sent to %04x failed, try %u\n",
+                    addr, i);
+            soft_timer_ms_to_ticks(20);
+        }
+    }
 }
 
-static void send_graph_pkt(handler_arg_t arg_addr)
+/*
+ * Generic neighbours functions
+ */
+void network_neighbours_print()
 {
-    uint16_t addr = (uint32_t)arg_addr;
-    static uint8_t packet[1];
-    packet[0] = PKT_GRAPH;
-    send(addr, packet, 1);
+    int i;
+    MSG("Neighbours;%u", num_neighbours);
+    for (i = 0; i < MAX_NUM_NEIGHBOURS; i++) {
+        if (neighbours[i])
+            printf(";%04x", neighbours[i]);
+        else
+            break; // no more neighbours
+    }
+    printf("\n");
 }
 
-
-void network_neighbours_discover()
-{
-    mac_csma_init(rn_config.channel, rn_config.discovery_tx_power);
-    event_post(EVENT_QUEUE_NETWORK, send_graph_pkt,
-            (handler_arg_t)ADDR_BROADCAST);
-}
-
-static void do_network_neighbours_acknowledge(handler_arg_t arg);
-void network_neighbours_acknowledge()
-{
-    mac_csma_init(rn_config.channel, rn_config.communication_tx_power);
-    event_post(EVENT_QUEUE_NETWORK, do_network_neighbours_acknowledge, NULL);
-}
-
-static void do_network_neighbours_acknowledge(handler_arg_t arg)
+static int network_neighbour_id(uint16_t src_addr)
 {
     int i;
     for (i = 0; i < MAX_NUM_NEIGHBOURS; i++) {
         uint16_t neighbour_addr = neighbours[i];
-        if (neighbour_addr == 0)
+        if (neighbour_addr == src_addr)
+            return i;
+        else if (neighbour_addr == 0)
+            return -1;
+    }
+    return -1;
+}
+
+
+void network_set_low_tx_power()
+{
+    mac_csma_init(rn_config.channel, rn_config.discovery_tx_power);
+}
+void network_set_high_tx_power()
+{
+    mac_csma_init(rn_config.channel, rn_config.communication_tx_power);
+}
+
+/*
+ * Neighbours discovery
+ */
+void network_neighbours_discover()
+{
+    uint8_t pkt = PKT_GRAPH;
+    send(ADDR_BROADCAST, &pkt, 1);
+}
+
+static void network_neighbours_add(uint16_t src_addr, int8_t rssi)
+{
+    if (rssi < MIN_RSSI) {
+        DEBUG("DROP neighbour %04x. rssi: %d\n", src_addr, rssi);
+        return;
+    } else {
+        DEBUG("ADD  neighbour %04x. rssi: %d\n", src_addr, rssi);
+    }
+
+    int i;
+    for (i = 0; i < MAX_NUM_NEIGHBOURS; i++) {
+        uint16_t neighbour_addr = neighbours[i];
+        if (neighbour_addr == 0) {
+            neighbours[i] = src_addr;
+            num_neighbours++;
             break;
-        send_graph_pkt((handler_arg_t)(uint32_t)neighbour_addr);
+        } else if (neighbour_addr == src_addr) {
+            break;
+        } else {
+            continue;
+        }
+
     }
 }
 
+
+/*
+ * Validate who are your neighbours
+ */
+struct neighbours_pkt {
+    uint8_t type;
+    uint16_t neighbours[MAX_NUM_NEIGHBOURS];
+};
+
+void network_neighbours_acknowledge()
+{
+    struct neighbours_pkt pkt;
+
+    memset(&pkt, 0, sizeof(pkt));
+    pkt.type = PKT_NEIGH;
+    memcpy(&pkt.neighbours, neighbours, sizeof(neighbours));
+    send(ADDR_BROADCAST, &pkt, sizeof(pkt));
+}
+
+static void network_neighbours_validate(uint16_t src_addr,
+        const uint8_t *data, size_t length)
+{
+    if (sizeof(struct neighbours_pkt) != length)
+        ERROR("Invalid neighbours pkt len\n");
+    struct neighbours_pkt pkt;
+    memcpy(&pkt, data, sizeof(struct neighbours_pkt));
+
+    const uint16_t my_id = iotlab_uid();
+
+    int i;
+    // Add 'src_addr' has a neighbour if I'm his neighbourg
+    for (i = 0; i < MAX_NUM_NEIGHBOURS; i++) {
+        const uint16_t cur_id = pkt.neighbours[i];
+        if (cur_id == my_id)
+            network_neighbours_add(src_addr, INT8_MAX);
+        else if (cur_id == 0)
+            break; // no more neighbours in pkt
+    }
+}
+
+/*
+ * Values management
+ */
 struct values_pkt {
     uint8_t type;
     uint8_t should_compute;
@@ -102,62 +198,10 @@ void network_send_values(uint8_t should_compute, struct values *values)
     send(ADDR_BROADCAST, &pkt, sizeof(struct values_pkt));
 }
 
-void network_neighbours_print()
-{
-    int i;
-    MSG("Neighbours;%u", num_neighbours);
-    for (i = 0; i < MAX_NUM_NEIGHBOURS; i++) {
-        if (neighbours[i])
-            printf(";%04x", neighbours[i]);
-        else
-            break; // no more neighbours
-    }
-    printf("\n");
-}
-
-static void network_neighbours_add(uint16_t src_addr, int8_t rssi)
-{
-    if (rssi < MIN_RSSI) {
-        INFO("DROP neighbour %04x. rssi: %d\n", src_addr, rssi);
-        return;
-    } else {
-        INFO("ADD  neighbour %04x. rssi: %d\n", src_addr, rssi);
-    }
-
-    int i;
-    for (i = 0; i < MAX_NUM_NEIGHBOURS; i++) {
-        uint16_t neighbour_addr = neighbours[i];
-        if (neighbour_addr == 0) {
-            neighbours[i] = src_addr;
-            num_neighbours++;
-            break;
-        } else if (neighbour_addr == src_addr) {
-            break;
-        } else {
-            continue;
-        }
-
-    }
-}
-
-static int network_neighbour_id(uint16_t src_addr)
-{
-    int i;
-    for (i = 0; i < MAX_NUM_NEIGHBOURS; i++) {
-        uint16_t neighbour_addr = neighbours[i];
-        if (neighbour_addr == src_addr)
-            return i;
-        else if (neighbour_addr == 0)
-            return -1;
-    }
-    return -1;
-}
-
-
 static void handle_value(uint16_t src_addr, const uint8_t *data, size_t length)
 {
     if (sizeof(struct values_pkt) != length)
-        INFO("ERROR in pkt length\n");
+        ERROR("Invalid Values pkt len\n");
 
     int index = network_neighbour_id(src_addr);
     if (index == -1) {
@@ -180,6 +224,9 @@ static void handle_value(uint16_t src_addr, const uint8_t *data, size_t length)
 }
 
 
+/*
+ * Packet reception
+ */
 void mac_csma_data_received(uint16_t src_addr,
         const uint8_t *data, uint8_t length, int8_t rssi, uint8_t lqi)
 {
@@ -187,11 +234,11 @@ void mac_csma_data_received(uint16_t src_addr,
     DEBUG("pkt received from %04x\n", src_addr);
 
     switch (pkt_type) {
-    case (PKT_ACK):
-        network_neighbours_add(src_addr, INT8_MAX);
-        break;
     case (PKT_GRAPH):
         network_neighbours_add(src_addr, rssi);
+        break;
+    case (PKT_NEIGH):
+        network_neighbours_validate(src_addr, data, length);
         break;
     case (PKT_VALUES):
         handle_value(src_addr, data, length);

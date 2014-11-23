@@ -93,6 +93,13 @@ static void print_usage()
 static void handle_cmd(handler_arg_t arg)
 {
     switch ((char) (uint32_t) arg) {
+        case 't':
+            network_set_low_tx_power();
+            break;
+        case 'T':
+            network_set_high_tx_power();
+            break;
+
         case 'g':
             network_neighbours_discover();
             break;
