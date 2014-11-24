@@ -6,19 +6,18 @@
 #include "phy.h"
 
 
-#define MAC_PKT_LEN (PHY_MAX_TX_LENGTH - 4)
+// choose channel in [11-26]
+#define CHANNEL 12
 
 #define NUM_VALUES           2
-#define MAX_NUM_NEIGHBOURS  ((MAC_PKT_LEN -2)/ sizeof(uint16_t))
-//#define MIN_RSSI           -70
 #define MIN_RSSI           -70
 
 
-
-// choose channel in [11-26]
-#define CHANNEL 12
 #define GRAPH_RADIO_POWER PHY_POWER_m17dBm
 #define RADIO_POWER PHY_POWER_3dBm
+
+#define MAC_PKT_LEN (PHY_MAX_TX_LENGTH - 4)
+#define MAX_NUM_NEIGHBOURS  ((MAC_PKT_LEN -2)/ sizeof(uint16_t))
 
 
 #define MSG(fmt, ...) printf("%04x;" fmt, iotlab_uid(), ##__VA_ARGS__)

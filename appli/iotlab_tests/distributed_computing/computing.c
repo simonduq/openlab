@@ -1,13 +1,6 @@
 #include "computing.h"
 #include "random.h"
 
-uint8_t compute_number = 0;
-
-struct values my_values = {.v={NAN}};
-
-struct received_values neighbours_values[MAX_NUM_NEIGHBOURS] = {{0}};
-
-
 double init_value()
 {
     double value;
@@ -15,7 +8,8 @@ double init_value()
     return value;
 }
 
-double compute_neighbours_value(double my_value, uint32_t n_neighbours,
+// Syncronous mode
+double compute_value_from_neighbours(double my_value, uint32_t n_neighbours,
         struct received_values *neighbors_values, uint8_t value_num)
 {
 
@@ -41,12 +35,12 @@ double compute_neighbours_value(double my_value, uint32_t n_neighbours,
 }
 
 // when running in poisson mode
-double compute_received_value(double my_value, double neigh_value)
+double compute_value_from_gossip(double my_value, double neigh_value)
 {
     return fmax(my_value, neigh_value);
 }
 
-
+// When needed to calculate one int result in gossip mode
 uint32_t compute_final_value()
 {
 
@@ -56,16 +50,22 @@ uint32_t compute_final_value()
 }
 
 
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+
+uint8_t compute_number = 0;
+struct values my_values = {.v={NAN}};
+struct received_values neighbours_values[MAX_NUM_NEIGHBOURS] = {{0}};
 
 /*
  * General functions managing multiples values
  */
-void compute_received_values(struct received_values *neigh_values)
+void compute_all_values_from_gossip(struct received_values *neigh_values)
 {
     int i;
     compute_number++;
     for (i = 0; i < NUM_VALUES; i++) {
-        my_values.v[i] = compute_received_value(
+        my_values.v[i] = compute_value_from_gossip(
                 my_values.v[i], neigh_values->values.v[i]);
     }
 }

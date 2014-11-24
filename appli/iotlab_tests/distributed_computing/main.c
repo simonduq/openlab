@@ -47,7 +47,7 @@ static void compute_all_values()
             num_neighbours++;
     }
     for (i = 0; i < NUM_VALUES; i++) {
-        my_values.v[i] = compute_neighbours_value(
+        my_values.v[i] = compute_value_from_neighbours(
                 my_values.v[i], num_neighbours, neighbours_values, i);
     }
 
@@ -74,6 +74,9 @@ static void print_usage()
     printf("\n\nIoT-LAB Simple Demo program\n");
     printf("Type command\n");
     printf("\th:\tprint this help\n");
+    printf("\n");
+    printf("\tt:\tSet low tx power\n");
+    printf("\tT:\tSet high tx power\n");
     printf("\n");
     printf("\ti:\tReset neighbours and init sensor value\n");
     printf("\n");

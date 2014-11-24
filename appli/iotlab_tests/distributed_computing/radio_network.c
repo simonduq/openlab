@@ -220,7 +220,7 @@ static void handle_value(uint16_t src_addr, const uint8_t *data, size_t length)
 
     // Gossip mode, compute after each measures received
     if (pkt.should_compute)
-        compute_received_values(neigh_values);
+        compute_all_values_from_gossip(neigh_values);
 }
 
 
