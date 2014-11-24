@@ -4,10 +4,7 @@
 """ Get the iotlab-uip for all experiment nodes """
 
 import sys
-import re
-import json
 import time
-import signal
 import subprocess
 
 import serial_aggregator
@@ -47,9 +44,11 @@ def opts_parser():
 
 class NodeResults(object):
 
-    def __init__(self, outfile):
-        self.outfile = outfile
+    def __init__(self, outfilename):
+        self.outfilename = outfilename
         self.neighbours = {}
+
+        self.node_measures = {}
 
     def handle_line(self, identifier, line):
         """ Print one line prefixed by id in format: """
@@ -64,11 +63,33 @@ class NodeResults(object):
             self.neighbours[node] = neighbours
             return
 
-        self.outfile.write(line + '\n')
+        if 'Values' in line:
+            # A869;Values;100;1.9330742E9;2.0307378E9
+            items = line.split(';')
+            node = items[0]
+            num_compute = int(items[2])
+            values = [str(float(val)) for val in items[3:]]
 
+            values_list = self.node_measures.setdefault(node, [])
+            values_d = {
+                'node_num_compute': num_compute,
+                'values': values
+            }
+            values_list.append(values_d)
+            return
+
+    def write_results(self):
+        for node, values in self.node_measures.items():
+            name = '%s_%s.csv' % (self.outfilename, node)
+            print "Write values to %s" % name
+            with open(name, 'w') as measures:
+                for val_d in values:
+                    line = '%s,%s\n' % (
+                        val_d['node_num_compute'], ','.join(val_d['values']))
+                    measures.write(line)
 
     def write_neighbours_graph(self):
-        out_png = '%s.png' % self.outfile.name
+        out_png = '%s_graph.png' % self.outfilename
         cmd = ['dot', '-T', 'png', '-o', out_png]
         dot_process = subprocess.Popen(cmd, stdin=subprocess.PIPE)
         dot_process.communicate(self.neighbours_graph())
@@ -124,8 +145,7 @@ def main():
         sys.stderr.write("%s\n" % err)
         exit(1)
 
-    outfile = open(opts.outfile, 'w')
-    results = NodeResults(outfile)
+    results = NodeResults(opts.outfile)
     aggregator = serial_aggregator.NodeAggregator(
         nodes_list, print_lines=True, line_handler=results.handle_line)
     aggregator.start()
@@ -134,8 +154,8 @@ def main():
         time.sleep(3)
     finally:
         aggregator.stop()
-        outfile.close()
         results.write_neighbours_graph()
+        results.write_results()
 
 
 if __name__ == "__main__":
