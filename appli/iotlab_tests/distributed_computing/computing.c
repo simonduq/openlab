@@ -1,5 +1,7 @@
+#include <math.h>
 #include "computing.h"
 #include "random.h"
+#include <stdlib.h>
 
 double init_value()
 {
@@ -7,7 +9,7 @@ double init_value()
     value = (double) random_rand32();
 
     // Value between 0 and 1
-    // value /= (double)UINT32_MAX;
+    // value /= (double)RAND_MAX;
     return value;
 }
 
