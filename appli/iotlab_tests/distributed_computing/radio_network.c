@@ -42,22 +42,42 @@ void network_reset()
     mac_csma_init(rn_config.channel, rn_config.communication_tx_power);
 }
 
-static void send(uint16_t addr, void *packet, size_t index)
+struct msg_send
 {
-    uint16_t ret;
-    int i;
-    for (i = 0; i < 5; i++) {
-        ret = mac_csma_data_send(addr, packet, index);
-        if (ret != 0) {
-            DEBUG("Packet sent to %04x, try %u\n", addr, i);
-            soft_timer_ms_to_ticks(10);
-            break;
-        } else {
-            ERROR("Packet sent to %04x failed, try %u\n",
-                    addr, i);
-            soft_timer_ms_to_ticks(20);
-        }
+    int try;
+    uint16_t addr;
+    uint8_t pkt[MAC_PKT_LEN];
+    size_t length;
+};
+
+
+static void do_send(handler_arg_t arg)
+{
+    struct msg_send *send_cfg = (struct msg_send *)arg;
+    int ret;
+
+    ret = mac_csma_data_send(send_cfg->addr, send_cfg->pkt, send_cfg->length);
+    if (ret != 0) {
+        DEBUG("Sent to %04x try %u\n", send_cfg->addr, send_cfg->try);
+    } else {
+        ERROR("Send to %04x failed, try %u. Retrying\n",
+                send_cfg->addr, send_cfg->try);
+        if (send_cfg->try++ < 5)
+            event_post(EVENT_QUEUE_APPLI, do_send, arg);
+        //soft_timer_ms_to_ticks(20);
     }
+
+}
+
+static void send(uint16_t addr, void *packet, size_t length)
+{
+    static struct msg_send send_cfg;
+    send_cfg.try = 0;
+    send_cfg.addr = addr;
+    send_cfg.length = length;
+    memcpy(&send_cfg.pkt, packet, length);
+
+    event_post(EVENT_QUEUE_APPLI, do_send, &send_cfg);
 }
 
 /*
