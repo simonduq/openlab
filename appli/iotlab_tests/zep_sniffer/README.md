@@ -14,51 +14,76 @@ Overview
 Running a demo
 --------------
 
-grab two A8 nodes:
-- 1 sniffer node (M3 and A8)
-- 1 emitter node (M3 only required)
+0. grab two A8 nodes in rocquencourt - all have GPS:
+   - 1 sniffer node (M3 on A8 and A8 with GPS required)
+   - 1 emitter node (M3 only required)
 
-sniffer node needs script serial2loopback.py on A8
 nodes need to be in range radio-wize
 
-0. build emitter and sniffer firmwares
-1. flash emitter node (a8-3)
-2. flash sniffer node (a8-2)
-3. run ./serial2loopback.py
-4. run tcpdump -vvv -i lo
-5. send packet from emitter node
-6. check sniffer node's tcpdump output to see zep packet
+1. build M3 firmware files and copy to nodes
+2. copy serial2loopback.py to sniffer node
+3. flash sniffer and emitter M3's
+4. run ./serial2loopback.py on sniffer node
+5. run tcpdump -vvv -i lo on sniffer node
+6. send packet from emitter node
+7. check sniffer node's tcpdump output to see zep packet
+
+Full trace of demo
+------------------
 ```
+ssh rocquencourt.iot-lab.info
+experiment-cli submit -d 10 -l rocquencourt,a8,2+3
 
-(cd ../../../build.a8 && make tutorial_a8_m3 zep_sniffer)
+(use auth-cli if this is a first time init)
 
-scp ../../../build.a8/bin/zep_sniffer.elf node-a8-2:
-scp ../../../build.a8/bin/tutorial_a8_m3.elf node-a8-3:
-scp serial2loopback.py node-a8-2:
+git clone https://github.com/iot-lab/openlab.git
+cd openlab/ && mkdir build.a8
+cd build.a8/ && cmake .. -DPLATFORM=iotlab-a8-m3
+make tutorial_a8_m3 zep_sniffer
 
-in a terminal, setup sniffer node:
+scp bin/zep_sniffer.elf root@node-a8-2:
+scp bin/tutorial_a8_m3.elf root@node-a8-3:
+scp ../appli/iotlab_tests/zep_sniffer/serial2loopback.py root@node-a8-2:
 
-ssh node-a8-2
+setup sniffer node:
+
+ssh root@node-a8-2
 flash_a8_m3 zep_sniffer.elf
 ./serial2loopback.py &
 tcpdump -vvv -i lo
 
 in another terminal, send a packet from emitter:
 
-ssh node-a8-3
+ssh rocquencourt.iot-lab.info
+ssh root@node-a8-3
 flash_a8_m3 tutorial_a8_m3.elf
 miniterm.py --echo /dev/ttyA8_M3 500000
 <type return to stop help screen>
 <type 's' to send radio packet>
+<type crtl-] to exit>
 
 check the raw tcpdump output
 
 
-To inspect sniffer packets using wireshark:
-ssh node-a8-2 tcpdump -vvv -i lo -w dump.pcap
-^C
-scp node-a8-2:dump.pcap .
-wireshark dump.pcap
+To inspect sniffer packets using wireshark from your PC:
+
+make sure you have wireshark installed on your PC
+make sure you have ~/.ssh/config configured as follows:
+
+Host node-a8-*.rocquencourt.iot-lab.info
+  User root
+  ProxyCommand ssh fit-roc -W %h:%p
+  StrictHostKeyChecking no
+
+
+in another terminal:
+
+ssh node-a8-2.rocquencourt.iot-lab.info tcpdump -vvv -i lo -w - | wireshark -i -
+
+
+back to the "emitter" terminal:
+
+send enough packets for wireshark to kick in
 
 see timestamp, sequence number (UDP packets)
 ```
