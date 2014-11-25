@@ -18,9 +18,9 @@
  */
 
 /*
- * example_tdma_coord.c
+ * example_tdma_coord_static.c
  *
- * \brief Example of TDMA coordinator
+ * \brief Example of TDMA coordinator with static slotframe
  *
  * \date Jan 09, 2013
  * \author: Damien Hedde <damien.hedde.at.hikob.com>
@@ -38,17 +38,43 @@
  * coordinator configuration:
  * + network ID 0x6666
  * + channel 21
- * + 10 slots of 10ms each
+ * + 25 slots of 25ms each
+ * + following slotframe definition
  */
-static mac_tdma_coord_config_t cfg = {
+static uint16_t cfg_sf[25] = {
+    0x0000, // will be overiden below with our address
+    0xffff, // the bcast slot
+    0x0000, // empty slot
+    0x0001, // a node with addr 0x1
+    0x0002, // a node with addr 0x2
+    0x0003, // a node with addr 0x3
+    0x0004, // a node with addr 0x4
+    0x0005, // a node with addr 0x5
+    0x0000, // empty slot
+    0x0006, // a node with addr 0x6
+    0x0007, // a node with addr 0x7
+    0x0008, // a node with addr 0x8
+    0x0009, // a node with addr 0x9
+    0x000a, // a node with addr 0xa
+    0x0000, // empty slot
+    0x000b, // a node with addr 0xb
+    0x000c, // a node with addr 0xc
+    0x000d, // a node with addr 0xd
+    0x000e, // a node with addr 0xe
+    0x000f, // a node with addr 0xf
+    // remaining slots will be empty
+};
+static const mac_tdma_coord_config_t cfg = {
     /* network id */
     .panid = 0x6666,
     /* phy channel */
     .channel = 21,
     /* slot duration in tdma time unit (default 1unit = 100us) */
-    .slot_duration = 100,
-    /* number of slots (the coordinator can handle up to count-2 nodes) */
-    .slot_count = 10,
+    .slot_duration = 250,
+    /* number of slots */
+    .slot_count = 25,
+    /* slots-frame description */
+    .slotsframe = cfg_sf,
 };
 
 static soft_timer_t timer;
@@ -64,6 +90,9 @@ int main()
 
     /* init tdma */
     mac_tdma_init();
+
+    /* set our address in the first slot of slot frame */
+    cfg_sf[0] = mac_tdma_get_address();
 
     /* start coordinator */
     mac_tdma_start_coord(&cfg);

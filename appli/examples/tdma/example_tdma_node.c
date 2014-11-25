@@ -34,6 +34,21 @@
 
 #include "debug.h"
 
+/*
+ * node configuration:
+ * + network ID 0x6666
+ * + channel 21
+ * + requested bandwidth (to the coordinator) 20 packets/second
+ */
+static mac_tdma_node_config_t cfg = {
+    /* network id */
+    .panid = 0x6666,
+    /* bandwidth in pkt/s */
+    .bandwidth = 20,
+    /* phy channel */
+    .channel = 21,
+};
+
 static soft_timer_t timer;
 static uint8_t index;
 
@@ -48,8 +63,8 @@ int main()
     /* init tdma */
     mac_tdma_init();
 
-    /* start node to look for network on channel 21 with panid 0x6666 */
-    mac_tdma_start_node(21, 0x6666);
+    /* start node */
+    mac_tdma_start_node(&cfg);
 
     /* register data packet handler */
     mac_tdma_set_recv_handler(pkt_received);
