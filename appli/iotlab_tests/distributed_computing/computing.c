@@ -5,6 +5,9 @@ double init_value()
 {
     double value;
     value = (double) random_rand32();
+
+    // Value between 0 and 1
+    // value /= (double)UINT32_MAX;
     return value;
 }
 
