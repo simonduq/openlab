@@ -39,16 +39,16 @@ experiment-cli submit -d 10 -l rocquencourt,a8,2+3
 git clone https://github.com/iot-lab/openlab.git
 cd openlab/ && mkdir build.a8
 cd build.a8/ && cmake .. -DPLATFORM=iotlab-a8-m3
-make tutorial_a8_m3 zep_sniffer
+make tutorial_a8_m3 gps_synced_sniffer
 
-scp bin/zep_sniffer.elf root@node-a8-2:
+scp bin/gps_synced_sniffer.elf root@node-a8-2:
 scp bin/tutorial_a8_m3.elf root@node-a8-3:
-scp ../appli/iotlab_tests/zep_sniffer/serial2loopback.py root@node-a8-2:
+scp ../appli/iotlab_examples/gps_synced_sniffer/serial2loopback.py root@node-a8-2:
 
 setup sniffer node:
 
 ssh root@node-a8-2
-flash_a8_m3 zep_sniffer.elf
+flash_a8_m3 gps_synced_sniffer.elf
 ./serial2loopback.py &
 tcpdump -vvv -i lo
 
