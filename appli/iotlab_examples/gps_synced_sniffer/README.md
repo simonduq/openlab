@@ -80,10 +80,13 @@ in another terminal:
 
 ssh node-a8-2.rocquencourt.iot-lab.info tcpdump -vvv -i lo -w - | wireshark -i -
 
+click "start" in the wireshark interface.
+
 
 back to the "emitter" terminal:
 
-send enough packets for wireshark to kick in
+send enough packets for wireshark to kick in (approx 18 small packets)
 
-see timestamp, sequence number (UDP packets)
+wireshark shows timestamp, sequence number, messages data for received packets
+in ZEP format (Zigbee Encapsulation Protocol)
 ```
