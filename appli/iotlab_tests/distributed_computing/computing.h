@@ -4,7 +4,7 @@
 #include <math.h>
 #include "config.h"
 
-extern uint8_t compute_number;
+extern uint32_t compute_number;
 struct values {
     double v[NUM_VALUES];
 };

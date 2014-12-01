@@ -55,7 +55,7 @@ uint32_t compute_final_value()
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 
-uint8_t compute_number = 0;
+uint32_t compute_number = 0;
 struct values my_values = {.v={NAN}};
 struct received_values neighbours_values[MAX_NUM_NEIGHBOURS] = {{0}};
 

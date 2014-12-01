@@ -32,6 +32,9 @@ def opts_parser():
         '-l', '--list', type=node_parser.nodes_list_from_str,
         dest='nodes_list', help='nodes list, may be given multiple times')
 
+    nodes_group.add_argument('-a', '--algo', default='syncronous',
+                             choices=ALGOS.keys(), help='Algorithm to run')
+
     nodes_group.add_argument(
         '-n', '--num-loop', type=int, required=True,
         dest='num_loop', help='number_of_loops_to_run')
@@ -52,6 +55,7 @@ class NodeResults(object):
 
     def handle_line(self, identifier, line):
         """ Print one line prefixed by id in format: """
+        _ = identifier
         if line.startswith(('DEBUG', 'INFO', 'ERROR')):
             return
 
@@ -78,7 +82,7 @@ class NodeResults(object):
             values_list.append(values_d)
             return
 
-    def write_results(self):
+    def write_results(self, use_node_compute=True):
         all_name = '%s_all.csv' % self.outfilename
         all_measures = open(all_name, 'w')
         print "Write all values to %s" % all_name
@@ -87,11 +91,18 @@ class NodeResults(object):
             name = '%s_%s.csv' % (self.outfilename, node)
             print "Write values to %s" % name
             measures = open(name, 'w')
-            for val_d in values:
+            for i, val_d in enumerate(values):
+                # use remote compute number or local compute number == num line
+                compute_num = val_d['num_compute'] if use_node_compute else i
+
+                # create the lines
                 csv_vals = ','.join(val_d['values'])
-                line = '%s,%s\n' % (val_d['num_compute'], csv_vals)
-                measures.write(line)
-                all_measures.write('%s,%s' % (node, line))
+                line = '%s,%s' % (compute_num, csv_vals)
+                all_line = '%s,%s,%s' % (node, compute_num, csv_vals)
+
+                measures.write(line + '\n')
+                all_measures.write(all_line + '\n')
+
             measures.close()
         all_measures.close()
 
@@ -138,7 +149,11 @@ class NodeResults(object):
                     double_links.add(link)
         return {'simple': simple_links, 'double': double_links}
 
-
+ALGOS = {
+    'syncronous': algorithm_management.syncronous_mode,
+    'gossip': algorithm_management.gossip_mode,
+    'num_nodes': algorithm_management.find_num_node_gossip_mode,
+}
 
 def main():
     """ Reads nodes from ressource json in stdin and
@@ -153,22 +168,28 @@ def main():
         api = iotlabcli.Api(username, password)
         nodes_list = serial_aggregator.get_nodes(
             api, opts.experiment_id, opts.nodes_list, with_a8=True)
-    except RuntimeError as err:
+        print "Using algorith: %r" % opts.algo
+        algorithm = ALGOS[opts.algo]
+    except (ValueError, RuntimeError) as err:
         sys.stderr.write("%s\n" % err)
         exit(1)
 
+    # Connect to the nodes
     results = NodeResults(opts.outfile)
     aggregator = serial_aggregator.NodeAggregator(
         nodes_list, print_lines=True, line_handler=results.handle_line)
     aggregator.start()
     time.sleep(2)
+
+    # Run the algorithm
     try:
-        algorithm_management.syncronous_mode(aggregator, opts.num_loop)
+        algorithm(aggregator, opts.num_loop)
         time.sleep(3)
     finally:
         aggregator.stop()
         results.write_neighbours_graph()
-        results.write_results()
+        results.write_results(opts.algo == 'syncronous')
+
 
 
 if __name__ == "__main__":
