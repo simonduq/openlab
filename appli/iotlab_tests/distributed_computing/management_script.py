@@ -154,6 +154,7 @@ def main():
     aggregator = serial_aggregator.NodeAggregator(
         nodes_list, print_lines=True, line_handler=results.handle_line)
     aggregator.start()
+    time.sleep(2)
     try:
         algorithm_management.syncronous_mode(aggregator, opts.num_loop)
         time.sleep(3)

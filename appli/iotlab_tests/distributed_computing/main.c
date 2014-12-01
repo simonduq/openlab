@@ -151,6 +151,8 @@ int main()
     uart_set_rx_handler(uart_print, char_rx, NULL);
     // Radio communication init
     network_init(CHANNEL, GRAPH_RADIO_POWER, RADIO_POWER);
+    // init values at start
+    init_values();
 
     platform_run();
     return 0;
