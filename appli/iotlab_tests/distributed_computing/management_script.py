@@ -72,21 +72,28 @@ class NodeResults(object):
 
             values_list = self.node_measures.setdefault(node, [])
             values_d = {
-                'node_num_compute': num_compute,
+                'num_compute': num_compute,
                 'values': values
             }
             values_list.append(values_d)
             return
 
     def write_results(self):
+        all_name = '%s_all.csv' % self.outfilename
+        all_measures = open(all_name, 'w')
+        print "Write all values to %s" % all_name
+
         for node, values in self.node_measures.items():
             name = '%s_%s.csv' % (self.outfilename, node)
             print "Write values to %s" % name
-            with open(name, 'w') as measures:
-                for val_d in values:
-                    line = '%s,%s\n' % (
-                        val_d['node_num_compute'], ','.join(val_d['values']))
-                    measures.write(line)
+            measures = open(name, 'w')
+            for val_d in values:
+                csv_vals = ','.join(val_d['values'])
+                line = '%s,%s\n' % (val_d['num_compute'], csv_vals)
+                measures.write(line)
+                all_measures.write('%s,%s' % (node, line))
+            measures.close()
+        all_measures.close()
 
     def write_neighbours_graph(self):
         neighb_graph = self.neighbours_graph()
