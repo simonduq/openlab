@@ -18,6 +18,10 @@ ZepPort = 17754
 sd = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 mote = serial.Serial(port=NODE_PORT, baudrate=500000)  #XXX: port
 
+# provide a destination for UDP packets to avoid IP stack ICMP error messages
+udp_srv = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+udp_srv.bind(("", ZepPort))
+
 Magic = "EX\x02"
 
 data = ""
