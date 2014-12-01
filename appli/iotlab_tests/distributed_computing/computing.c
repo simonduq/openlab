@@ -36,7 +36,7 @@ double compute_value_from_neighbours(double my_value, uint32_t my_degree,
     return new_value;
 }
 
-// when running in poisson mode
+// when running in gossip mode
 double compute_value_from_gossip(double my_value, double neigh_value)
 {
     return fmax(my_value, neigh_value);
