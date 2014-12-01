@@ -89,10 +89,15 @@ class NodeResults(object):
                     measures.write(line)
 
     def write_neighbours_graph(self):
+        neighb_graph = self.neighbours_graph()
+        out_dot = '%s_graph.dot' % self.outfilename
+        with open(out_dot, 'w') as dot_f:
+            dot_f.write(neighb_graph)
+        print "Neighbours dot-graph written to %s" % out_dot
+
         out_png = '%s_graph.png' % self.outfilename
-        cmd = ['dot', '-T', 'png', '-o', out_png]
-        dot_process = subprocess.Popen(cmd, stdin=subprocess.PIPE)
-        dot_process.communicate(self.neighbours_graph())
+        cmd = ['dot', '-T', 'png', out_dot, '-o', out_png]
+        subprocess.call(cmd)
         print "Neighbours graph written to %s" % out_png
 
     def neighbours_graph(self):

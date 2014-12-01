@@ -6,34 +6,31 @@
 double init_value()
 {
     double value;
-    value = (double) random_rand32();
-
+    value = (double)random_rand32();
     // Value between 0 and 1
-    // value /= (double)RAND_MAX;
+    value /= (double)RAND_MAX;
     return value;
 }
 
 // Syncronous mode
-double compute_value_from_neighbours(double my_value, uint32_t n_neighbours,
-        struct received_values *neighbors_values, uint8_t value_num)
+double compute_value_from_neighbours(double my_value, uint32_t my_degree,
+        struct received_values *neighbours_vals, uint8_t value_num)
 {
 
     double new_value = my_value;
     int i;
 
     for (i = 0; i < MAX_NUM_NEIGHBOURS; i++) {
-        if (!neighbours_values[i].valid)
+        if (!neighbours_vals[i].valid)
             continue;
-
-        uint32_t n_num_neighbours = neighbours_values[i].num_neighbours;
-        double n_value = neighbours_values[i].values.v[value_num];
+        uint32_t neighbour_degree = neighbours_vals[i].num_neighbours;
+        double neighbour_value = neighbours_vals[i].values.v[value_num];
 
         // Add contribution for this neighbour with
-        // n_num_neighbours and n_value
+        // neighbour_degree and neighbour_value
         // new_value += ...;
-        (void) n_value;
-        (void) n_num_neighbours;
-        new_value = fmax(new_value, n_value);
+        (void)neighbour_degree;
+        new_value = fmax(new_value, neighbour_value);
     }
 
     return new_value;
