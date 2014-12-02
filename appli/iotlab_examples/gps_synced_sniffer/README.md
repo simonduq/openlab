@@ -112,3 +112,6 @@ send enough packets for wireshark to kick in (approx 40 small packets)
 
 wireshark shows timestamp, sequence number, messages data for received packets
 in ZEP format (Zigbee Encapsulation Protocol)
+
+Note: if wireshark fails due to GTK errors (happens on gnome-shell/ubuntu 14.04),
+use the following magic fix:  ``export LIBOVERLAY_SCROLLBAR=0``
