@@ -52,6 +52,7 @@ class NodeResults(object):
         self.neighbours = {}
 
         self.node_measures = {}
+        self.node_finale_measures = {}
 
     def handle_line(self, identifier, line):
         """ Print one line prefixed by id in format: """
@@ -82,7 +83,53 @@ class NodeResults(object):
             values_list.append(values_d)
             return
 
+        if 'FinalValue' in line:
+            # A869;FinalValue;100;32
+            items = line.split(';')
+            node = items[0]
+            num_compute = int(items[2])
+            final_value = str(int(items[3]))
+
+            self.node_finale_measures[node] = {
+                'num_compute': num_compute,
+                'value': final_value,
+            }
+            return
+
     def write_results(self, use_node_compute=True):
+        """ Write all the experiment results """
+        self.write_neighbours_graph()
+        self.write_results_values(use_node_compute)
+        self.write_results_final_value()
+
+    def write_results_final_value(self):
+        """ Write the 'final_value' result files if there is some data """
+        if not len(self.node_finale_measures):
+            return  # No final value
+
+        all_name = '%s_final_all.csv' % self.outfilename
+        all_measures = open(all_name, 'w')
+        print "Write all final value to %s" % all_name
+
+        # write data for each node
+        for node, val_d in self.node_finale_measures.items():
+
+            name = '%s_final_%s.csv' % (self.outfilename, node)
+            print "Write final value to %s" % name
+
+            # create the lines
+            line = '%s' % (val_d['value'])
+            all_line = '%s,%s' % (node, val_d['value'])
+
+            # write datas
+            with open(name, 'w') as measures:
+                measures.write(line + '\n')
+            all_measures.write(all_line + '\n')
+        all_measures.close()
+
+
+    def write_results_values(self, use_node_compute=True):
+        """ Write the results to files """
         all_name = '%s_all.csv' % self.outfilename
         all_measures = open(all_name, 'w')
         print "Write all values to %s" % all_name
@@ -187,7 +234,6 @@ def main():
         time.sleep(3)
     finally:
         aggregator.stop()
-        results.write_neighbours_graph()
         results.write_results(opts.algo == 'syncronous')
 
 

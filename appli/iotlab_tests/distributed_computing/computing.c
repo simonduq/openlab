@@ -45,10 +45,14 @@ double compute_value_from_gossip(double my_value, double neigh_value)
 // When needed to calculate one int result in gossip mode
 uint32_t compute_final_value()
 {
-
-    // calculate expected number of nodes here using
-    // 'my_values' and 'num_values'
-    return 0;
+    double result = 0.0;
+    int i;
+    for (i = 0; i < NUM_VALUES; i++) {
+        // Replace this function to calculate expected number of nodes
+        // 'ln' function is available using 'log()' C function
+        result += my_values.v[i];
+    }
+    return (uint32_t) result;  // floor(result) in int
 }
 
 
