@@ -14,7 +14,7 @@ detection) or radio on IoT-LAB node tiles.
 
 - Tutorial : [Submit an experiment with M3 nodes using the web portal](https://www.iot-lab.info/tutorials/submit-an-experiment-with-web-portal-and-m3-nodes)
 - Tutorial : [Get and compile a M3 Firmware code](https://www.iot-lab.info/tutorials/get-compile-a-m3-firmware-code/)
-- Tutorial : [Experiment CLI client](https://www.iot-lab.info/tutorials/experiment-cli-client/))
+- Tutorial : [Experiment CLI client](https://www.iot-lab.info/tutorials/experiment-cli-client/)
 - Tutorial : [Nodes Serial Link Aggregation](https://www.iot-lab.info/tutorials/nodes-serial-link-aggregation/)
 
 
@@ -22,12 +22,12 @@ detection) or radio on IoT-LAB node tiles.
 
 There is two firmwares on this repository:
 - smart_tiles 
-    - smart_tiles.c: periodic sensors acquisition, detection and print values on serial link
-    - detectpeak.c/h: peak and state detection algorithm used by smart_tiles.c
-    - radio_recv.c: packet receive callback used by smart_tile
+    - ``smart_tiles.c``: periodic sensors acquisition, detection and print values on serial link
+    - ``detectpeak.c/h``: peak and state detection algorithm used by smart_tiles.c
+    - ``radio_recv.c``: packet receive callback used by smart_tile
 - radio_pinger to be worn by robot or human
-    - radio_pinger.c: send a ping message "Robot!" every 0.5 sec
-    - radio.c/h: send packet used by radio_pinger.c
+    - ``radio_pinger.c``: send a ping message "Robot!" every 0.5 sec
+    - ``radio.c/h``: send packet used by radio_pinger.c
 
 ## Running
 
@@ -67,19 +67,19 @@ The format of a line is :
 gateway timestamps;id-node;SensorType;value1;value2;value3;
 ```
 
-Where SensorType is sensor value, printed each second:
-- Acc (Accelerometer) with value1/2/3 : acceleration in on X/Y/Z
-- Mag (Magnetometer) with value1/2/3 : magnetic field on X/Y/Z
-- Gyr (Gyrometer) with value1/2/3 : speed rotation on X/Y/Z
+Where SensorType is a sensor value, printed each second:
+- ``Acc`` (Accelerometer) with value1/2/3 : acceleration in on X/Y/Z
+- ``Mag`` (Magnetometer) with value1/2/3 : magnetic field on X/Y/Z
+- ``Gyr`` (Gyrometer) with value1/2/3 : speed rotation on X/Y/Z
 
 Or information printed when a detection is done:
-- AccPeak is an acceleration peak detection : value1 = algo peak output, value2/3= 0.0
-- MagPeak is a magnetometer state change detection : value1 = algo state change output, value2/3= 0.0
+- ``AccPeak`` is an acceleration peak detection : value1 = algo peak output, value2/3= 0.0
+- ``MagPeak`` is a magnetometer state change detection : value1 = algo state change output, value2/3= 0.0
 
 When a packet radio is received, the message printed is :
-''Radio recv: from=<node_id> data="Robot!"\n"''
+``Radio recv: from=<node_id> data="Robot!"\n"``
 
-The output can be saved on a file and plotted using ''plot_sensors.py''
+The output can be saved on a file and plotted using ``plot_sensors.py``
 
 ```
 plot sensors  values from <node_id> printed by smart_tiles firmware 
@@ -94,7 +94,7 @@ mypc> python myplot.py data.txt 29 30 31 32
 
 #### radio_pinger 
 
-To be worn by robot or human and send every 0.5 second a radio string message.
+The node must be worn by robot (iot-lab node) or human (agile-fox for example) and send every 0.5 second a radio string message.
 Then, this mobile node can be detected by the nodes with smart_tiles firmware.
 
 ## Smart Tiles Demo
