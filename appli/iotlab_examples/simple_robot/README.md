@@ -2,7 +2,7 @@
 
 ## Overview 
 
-This example shows how to use a mobile node located on a robot. A mobile node is a node embedded on a robot (Turtlebot 2 or Wifibot) with predefined trajectories. The code is here: 
+This example shows how to use a mobile node embedded on a robot (Turtlebot 2 or Wifibot) with predefined trajectories. The code is here: 
 
 https://github.com/iot-lab/openlab/tree/master/appli/iotlab_examples/simple_robot
 
@@ -17,7 +17,7 @@ https://www.iot-lab.info/tutorials/submit-an-experiment-with-a-mobile-m3-nodes-u
 
 ## Code
 
-- ``main.c``: periodic IMU sensors acquisition (accelerometer, magnetometer, gyrometer° and print values on serial link every 1 second.
+- ``main.c``: periodic IMU sensors acquisition (accelerometer, magnetometer, gyrometer) and print values on serial link every 1 second.
     
 ## Running
 
@@ -33,7 +33,7 @@ https://www.iot-lab.info/tutorials/submit-an-experiment-with-a-mobile-m3-nodes-u
 #### Deploy firmware on nodes
 
 The firmware deployment can be carried out conventionally using web-portal
-on a mobile node (see ([tutorial](https://www.iot-lab.info/tutorials/submit-an-experiment-with-a-mobile-m3-nodes-using-the-web-portal/).
+on a mobile node see ([tutorial](https://www.iot-lab.info/tutorials/submit-an-experiment-with-a-mobile-m3-nodes-using-the-web-portal/)).
 
 #### simple_robot
 
@@ -74,7 +74,7 @@ Where SensorType is a sensor value, printed each second:
 - ``Ang`` (Robot angle tilt) with value1 in degree
 
 
-The output can be saved on a file (e.g. ``robot.txt``) and plotted
+The output can be saved on a file (e.g. ``nc 20000 m3-381 > robot.txt``) and plotted
 using ``python plot_imu.py robot.txt``
 
 
