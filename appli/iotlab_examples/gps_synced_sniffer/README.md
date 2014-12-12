@@ -12,7 +12,7 @@ Some A8 open-nodes are equiped with a GPS module allowing a precise time synchro
 
 ## Prerequisites
 
-- Tutorial : [Submit an experiment with A8 nodes using the web portal](https://www.iot-lab.info/tutorials/submit-an-experiment-with-web-portal-and-m3-nodes/)
+- Tutorial : [Submit an experiment with A8 nodes using the web portal](https://www.iot-lab.info/tutorials/submit-an-experiment-with-a8-nodes-using-the-web-portal/)
 - Tutorial : [Get and compile a M3 Firmware code](https://www.iot-lab.info/tutorials/get-compile-a-m3-firmware-code/)
 
 ## Overview
