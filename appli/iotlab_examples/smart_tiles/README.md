@@ -15,7 +15,7 @@ detection) or radio on IoT-LAB node tiles.
 - Tutorial : [Submit an experiment with M3 nodes using the web portal](https://www.iot-lab.info/tutorials/submit-an-experiment-with-web-portal-and-m3-nodes)
 - Tutorial : [Get and compile a M3 Firmware code](https://www.iot-lab.info/tutorials/get-compile-a-m3-firmware-code/)
 - Tutorial : [Experiment CLI client](https://www.iot-lab.info/tutorials/experiment-cli-client/))
-- Tutorial :[Nodes Serial Link Aggregation](https://www.iot-lab.info/tutorials/nodes-serial-link-aggregation/)
+- Tutorial : [Nodes Serial Link Aggregation](https://www.iot-lab.info/tutorials/nodes-serial-link-aggregation/)
 
 
 ## Code
@@ -32,12 +32,13 @@ There is two firmwares on this repository:
 ## Running
 
 #### Build Firmware 
-'''
-$ git clone https://github.com/iot-lab/openlab.git
-$ cd openlab/ && mkdir build.m3
-$ cd build.m3/ && cmake .. -DPLATFORM=iotlab-m3
-$ make smart_tiles radio_pinger
-'''
+
+```
+ $ git clone https://github.com/iot-lab/openlab.git
+ $ cd openlab/ && mkdir build.m3
+ $ cd build.m3/ && cmake .. -DPLATFORM=iotlab-m3
+ $ make smart_tiles radio_pinger
+```
 
 #### Deploy firmware on nodes
 
@@ -52,19 +53,19 @@ You can also deploy more easily the firmware using the dedicated web application
 When the deployement is ok, you can connect to the nodes serial link using serial aggregator (see [tutorial](https://www.iot-lab.info/tutorials/nodes-serial-link-aggregation/))
 
 Then, you can observe the serial aggregator output :
-'''
+```
 ...
 1413815115.101462;m3-30;Acc;-1.21046655E-1;6.746863E-2;-9.7928727E-1
 1413815115.101995;m3-26;AccPeak;1.0002241;0.0;0.0
 1413815115.102325;m3-26;Acc;-8.020561E-2;3.8617518E-2;-9.911829E-1
 1413815115.102878;m3-27;Acc;-7.8868106E-2;9.983304E-3;-9.8335546E-1
 ...
-'''
+```
 
 The format of a line is :
-'''
+```
 gateway timestamps;id-node;SensorType;value1;value2;value3;
-'''
+```
 
 Where SensorType is sensor value, printed each second:
 - Acc (Accelerometer) with value1/2/3 : acceleration in on X/Y/Z
@@ -80,7 +81,7 @@ When a packet radio is received, the message printed is :
 
 The output can be saved on a file and plotted using ''plot_sensors.py''
 
-'''
+```
 plot sensors  values from <node_id> printed by smart_tiles firmware 
 saved in filename (by serial_aggregator)
 
@@ -89,7 +90,7 @@ Example of use :
 After firmware deployement on m3-29 to m3-32
 mypc> aggr.sh 29 30 31 32 > data.txt
 mypc> python myplot.py data.txt 29 30 31 32
-'''
+```
 
 #### radio_pinger 
 
