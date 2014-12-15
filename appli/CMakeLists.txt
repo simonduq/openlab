@@ -23,17 +23,8 @@ add_subdirectory(tests)
 # Add the example directory
 add_subdirectory(examples)
 
-# Add the fiteco directory
-add_subdirectory(fiteco)
-
 # Add the nancy directory
-add_subdirectory(newt)
-
-# Add the imu_mouse directory
-add_subdirectory(imu_mouse)
-
-# Add the sniffer directory
-add_subdirectory(sniffer)
+add_subdirectory(newt_examples)
 
 # IoT-LAB specific directories
 add_subdirectory(iotlab)

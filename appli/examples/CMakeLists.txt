@@ -49,3 +49,9 @@ add_subdirectory(fat32)
 
 # Add the tdma directory
 add_subdirectory(tdma)
+
+# Add the sniffer directory
+add_subdirectory(sniffer)
+
+# Add the imu_mouse directory
+add_subdirectory(imu_mouse)

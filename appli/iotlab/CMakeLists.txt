@@ -15,4 +15,8 @@ add_subdirectory(autotest_common)
 add_subdirectory(lib)
 add_subdirectory(periph)
 
+# Add the fiteco directory
+add_subdirectory(fiteco_test)
+
+
 endif (PLATFORM MATCHES "iotlab-.*")
