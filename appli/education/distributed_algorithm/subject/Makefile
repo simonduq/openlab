@@ -1,4 +1,4 @@
-NAME = pw-description
+NAME = tp-description
 all: $(NAME).pdf clean
 
 %.pdf: %.aux
