@@ -1,4 +1,5 @@
 if("${PLATFORM}" STREQUAL "agile-fox")
 add_subdirectory(synchro_out)
 add_subdirectory(synchro_in)
+add_subdirectory(pedometer)
 endif("${PLATFORM}" STREQUAL "agile-fox")
