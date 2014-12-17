@@ -6,11 +6,11 @@ Overview
 --------
 
 This code is an example of use of the TDMA MAC protocol
-[librairy](https://github.com/iot-lab/openlab/tree/master/net/mac_tdma)
+[library](https://github.com/iot-lab/openlab/tree/master/net/mac_tdma)
 
 TDMA for Time Division Multiple Access allows several nodes to share
 the same frequency channel by dividing the signal into different time
-slots. A node coordinator generating network beacons that provide a
+slots. A node coordinator generates network beacons that provide a
 timing indication for client nodes to access the channel.
 
 Prerequisites
@@ -24,7 +24,7 @@ Prerequisites
 Code
 ----
 
-In the code, you can find two type of coordinator node :
+In the code, you can find two types of coordinator node :
   * ``example_tdma_coord.c`` : a dynamic affectation of the slotframe for the client nodes
   * ``example_tdma_coord_static.c`` : a static affectation node of the slotframe specifying the node client adress. 
 
@@ -34,13 +34,13 @@ For the client, there is :
 
 #### The scenario example consists of :
 
-  * the coordinator node sends periodically (SOFT_TIMER_FREQUENCY) a
+  * The coordinator node sends periodically SOFT_TIMER_FREQUENCY a
     counter index and prints on serial line the begin of sending and
-    the status of sending (``Send packet/Packet sending result``)
+    the status of sending : ``Send packet..?/Packet sending result...``
 
-  * each client nodes do the same at a lower period (5 * SOFT_TIMER_FREQUENCY)
+  * Each client node does the same at a lower period (5 * SOFT_TIMER_FREQUENCY)
 
-  * Nodes print when they receipt a radio message. With the example
+  * Nodes print when they receipt a radio message. For the example
     with the user-callback on slot, client nodes print a message when
     their slot is active.
 
@@ -51,19 +51,19 @@ This is a trace for a scenario, using dynamic coordinator
 ``example_tdma_coord.elf`` and the node client without callback
 ``example_tdma_node.elf``.
 
-In this example, we book nodes of grenoble : m3-33, m3-34 and m3-36 without
+In this example, we book nodes of grenoble : *m3-33*, *m3-34* and *m3-36* without
 assigning firmware.
 
-First, we assign :
+Then, we assign :
 
-  * to m3-35 the ``example_tdma_coord.elf`` firmware which becomes the
+  * to *m3-35* the ``example_tdma_coord.elf`` firmware which becomes the
    TDMA coordinator node
  
-  * to m3-34 the ``example_tdma_node.elf`` firmware which becomes a
+  * to *m3-34* the ``example_tdma_node.elf`` firmware which becomes a
     TDMA client node
 
-You can observe nodes (m3-35 address: 0xA581 and m3-35 address:
-0x3968) printing from your PC by :
+You can observe nodes (*m3-35 address: 0xA581 and m3-35 address:
+0x3968*) printing from your PC by :
 
 ```
 my_computer$ ssh <login>@grenoble.iot-lab.info "serial_aggregator"
@@ -73,6 +73,7 @@ After the initialisation period, you can see the two nodes exchanging
 messages as expected :
 
 ```
+...
 418749540.351909;m3-35;Send packet 66
 1418749540.357089;m3-35;Packet sending result 0
 1418749540.359868;m3-34;Packet received from 0xA581 : 66
@@ -85,13 +86,15 @@ messages as expected :
 1418749542.350077;m3-35;Send packet 68
 1418749542.358595;m3-35;Packet sending result 0
 1418749542.358796;m3-34;Packet received from 0xA581 : 68
+...
 ```
 
-You can add dynamically the m3-33 (address: 0xB482) node by flashing
+You can add dynamically the *m3-33* (*address: 0xB482*) node by flashing
 it with ``example_tdma_node.elf``. Then you can see the node matching
 and the slotframe affectation
 
 ```
+...
 418749747.914711;m3-33;[in event_init() INFO] Priority of event task #1: 7/7
 1418749747.916756;m3-33;
 1418749747.916874;m3-33;
@@ -132,11 +135,13 @@ and the slotframe affectation
 1418749751.331909;m3-35;Send packet 21
 1418749751.383904;m3-34;[in tdma_slot_update_frame_start() INFO] Shifted frame of -1 ticks
 1418749751.480750;m3-35;Packet sending result 0
+...
 ```
 
-Then the communication and the m3-33 node is added in the network:
+Then the communication and the *m3-33 node* is added in the network:
 
 ```
+...
 1418749759.159805;m3-35;Packet received from 0xB482 : 1
 1418749759.160049;m3-33;Packet sending result 0
 1418749759.323784;m3-35;Send packet 29
@@ -148,5 +153,6 @@ Then the communication and the m3-33 node is added in the network:
 1418749760.383791;m3-35;Packet sending result 0
 1418749760.383791;m3-33;Packet received from 0xA581 : 30
 1418749761.326551;m3-35;Send packet 31
+...
 ```
 
