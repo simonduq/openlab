@@ -76,7 +76,7 @@ int main()
 
     /* programm periodic timer to send packet */
     soft_timer_set_handler(&timer, pkt_tick, NULL);
-    soft_timer_start(&timer, SOFT_TIMER_FREQUENCY * 5, 1);
+    soft_timer_start(&timer, soft_timer_s_to_ticks(5), 1);
 
     /* shutdown leds */
     leds_off(0xf);
