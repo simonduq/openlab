@@ -1,52 +1,24 @@
 #include <string.h>
 #include "platform.h"
 
+#include "iotlab_uid.h"
 #include "gps_synced_clock.h"
 #include "zep_sniffer_format.h"
 
 #define LOG_LEVEL LOG_LEVEL_INFO
 #include "debug.h"
 
-/* [CA] the following was copied and adapted from
-   openlab/appli/iotlab_tests/foren6_sniffer/foren6_sniffer.c
-   Itself was: */
 /*
- *
  * Copied and adapted from:
  *     https://github.com/cetic/contiki/blob/sniffer/examples/sniffer/sniffer.c
  *
+ * Dropped all the serial configuration of the channel
  */
 
 
-// Dropped all the serial configuration of the channel
-
-
-
-
-//
-//   From packet-zep.c in wireshark:
-//   ZEP v2 Header will have the following format (if type=1/Data):
-//   |Preamble|Version| Type |Channel ID|Device ID|CRC/LQI Mode|LQI Val|NTP Timestamp|Sequence#|Reserved|Length|
-//   |2 bytes |1 byte |1 byte|  1 byte  | 2 bytes |   1 byte   |1 byte |   8 bytes   | 4 bytes |10 bytes|1 byte|
-//
-
-
-
-#define MAGIC_LEN 3
-#define ZEP_VERSION 2
-
-
-/*
- * RFC 5905                   NTPv4 Specification                 June 2010
- */
-/* 1970 - 1900 in seconds */
-#define JAN_1970        2208988800UL
-/* 2^32 as an int */
-#define FRAC       (((uint64_t)1) << 32)
-
-static const uint8_t magic[] = { 'E', 'X', ZEP_VERSION };
 static void sniff_rx(phy_status_t status);
 static uint8_t current_channel = 0;
+static uint16_t device_id = 0;
 
 static void timestamp_handler(uint32_t* seconds, uint32_t* subseconds)
 {
@@ -65,12 +37,12 @@ void init_sniffer(uint8_t channel)
     register_timestamp_handler(timestamp_handler);
     current_channel = channel;
     sniff_rx(~0);  // call without a valid status to start rx
+
+    device_id = iotlab_uid();
 }
 
 static void sniff_rx(phy_status_t status)
 {
-
-    static uint16_t device_id = 0; // TODO handle later
 
     /*
      * Two packets handling
