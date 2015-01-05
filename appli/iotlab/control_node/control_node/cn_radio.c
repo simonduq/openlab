@@ -3,7 +3,10 @@
 
 #include "constants.h"
 #include "cn_radio.h"
+#include "cn_control.h"
 #include "iotlab_serial.h"
+#include "iotlab_time.h"
+#include "zep_sniffer_format.h"
 
 
 #include "phy.h"
@@ -12,7 +15,8 @@
 
 #include "platform.h"
 #include "debug.h"
-#include "iotlab_time.h"
+
+#include "iotlab_leds.h"
 
 
 static int32_t radio_off(uint8_t cmd_type, packet_t *pkt);
@@ -315,6 +319,7 @@ static int32_t radio_sniffer(uint8_t cmd_type, packet_t *pkt)
      *      * channels                  [4B]
      *      * time per channel (ms)     [2B]
      */
+
     if (pkt->length != 6)
         return 1;
 
@@ -393,51 +398,29 @@ static void sniff_handle_rx_appli_queue(handler_arg_t arg)
 {
     phy_status_t status = (phy_status_t)arg;
 
-    // Get current packet and Switch packets
+    // Get current packet and switch packets
     phy_packet_t *rx_pkt = &radio.sniff.pkt_buf[radio.sniff.pkt_index];
     radio.sniff.pkt_index = (radio.sniff.pkt_index + 1) % 2;
-
     sniff_rx();
 
-    packet_t *serial_pkt = NULL;
+    if (status != PHY_SUCCESS)
+        return;
 
-    switch (status) {
-    case (PHY_RX_CRC_ERROR):
-    case (PHY_SUCCESS):
-        serial_pkt = iotlab_serial_packet_alloc();
-    default:
-        break;
-    }
-
-    // Send packet to serial
+    packet_t *serial_pkt = iotlab_serial_packet_alloc();
     if (serial_pkt == NULL)
         return;
-    serial_pkt->length  = 0;
 
-    uint8_t channel = (uint8_t) radio.current_channel;
-    uint8_t crc_ok = (status == PHY_SUCCESS);
+
+    // TODO register time handler for phy_rx to do this in phy layer
     struct soft_timer_timeval timestamp;
-    // For a max len packet 125 I saw ~4000 us so 16b are ok
-    uint16_t rx_time_len = (uint16_t) (
-            (1000000 * ((uint32_t) (rx_pkt->eop_time - rx_pkt->timestamp))) /
-            32768);
     iotlab_time_extend_relative(&timestamp, rx_pkt->timestamp);
+    rx_pkt->timestamp_alt.msb = timestamp.tv_sec;
 
-    // timestamp, rx_time_len, channel, rssi, lqi, crc_ok,
-    //     [pkt_length, payload]
-    iotlab_serial_append_data(serial_pkt, &timestamp,    sizeof(timestamp));
-    iotlab_serial_append_data(serial_pkt, &rx_time_len,  sizeof(rx_time_len));
-    iotlab_serial_append_data(serial_pkt, &channel,      sizeof(uint8_t));
-    iotlab_serial_append_data(serial_pkt, &rx_pkt->rssi, sizeof(uint8_t));
-    iotlab_serial_append_data(serial_pkt, &rx_pkt->lqi,  sizeof(uint8_t));
-    iotlab_serial_append_data(serial_pkt, &crc_ok,       sizeof(uint8_t));
+    rx_pkt->timestamp_alt.lsb = timestamp.tv_usec;
 
-    if (!crc_ok)
-        rx_pkt->length = 0;
-
-    // Add payload if packet correct
-    iotlab_serial_append_data(serial_pkt, &rx_pkt->length, sizeof(uint8_t));
-    iotlab_serial_append_data(serial_pkt, rx_pkt->data,    rx_pkt->length);
+    // Save packet as zep
+    serial_pkt->length = to_zep(serial_pkt->data, rx_pkt,
+            radio.current_channel, cn_control_node_id());
 
     if (iotlab_serial_send_frame(RADIO_SNIFFER_FRAME, serial_pkt))
         packet_free(serial_pkt);

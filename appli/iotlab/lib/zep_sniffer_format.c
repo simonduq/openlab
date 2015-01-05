@@ -56,7 +56,7 @@ size_t to_zep(uint8_t *dst, phy_packet_t *pkt, uint8_t channel,
     uint16_t ne_device_id   = __builtin_bswap16(device_id);
     uint32_t ne_seqno       = __builtin_bswap32(++packet_counter);
     uint32_t ne_t_msb       = __builtin_bswap32(timestamp_nt >> 32);
-    uint32_t ne_t_lsb       = __builtin_bswap32(timestamp_nt | 0xFFFFFFFF);
+    uint32_t ne_t_lsb       = __builtin_bswap32(timestamp_nt & 0xffffffff);
     // TODO: use the 'eop_time_alt' values for this also
     uint16_t rx_time_len = (uint16_t) (
             (1000000 * ((uint32_t) (pkt->eop_time - pkt->timestamp))) / 32768);

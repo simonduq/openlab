@@ -6,7 +6,7 @@ open-nodes. The code is located here:
 
 https://github.com/iot-lab/openlab/tree/master/appli/iotlab_examples/gps_synced_sniffer
 
-Some A8 open-nodes are equiped with a GPS module allowing a precise time synchronization. The hardware architecture is presented here https://github.com/iot-lab/iot-lab/wiki/Hardware_A8-GPS. 
+Some A8 open-nodes are equiped with a GPS module allowing a precise time synchronization. The hardware architecture is presented here https://github.com/iot-lab/iot-lab/wiki/Hardware_A8-GPS.
 
 **This type of node with GPS is mandatory for this example**.
 
@@ -31,64 +31,65 @@ The software is divided in 4 components:
 - 1 emitter node (M3 only required)
 nodes need to be in range radio-wize
 
-```
-ssh rocquencourt.iot-lab.info
-<login>@rocquencourt:~$ experiment-cli submit -d 15 -l rocquencourt,a8,2+3
-```
+
+    ssh rocquencourt.iot-lab.info
+    <login>@rocquencourt:~$ experiment-cli submit -d 15 -l rocquencourt,a8,2+3
+
+
 Note: use auth-cli if this is a first time init
 
-#### 2. Build M3 firmware files 
-```
-<login>@rocquencourt:~$ git clone https://github.com/iot-lab/openlab.git
-<login>@rocquencourt:~$ cd openlab/ && mkdir build.a8
-<login>@rocquencourt:~$ cd build.a8/ && cmake .. -DPLATFORM=iotlab-a8-m3
-<login>@rocquencourt:~$ make tutorial_a8_m3 gps_synced_sniffer
-```
+#### 2. Build M3 firmware files
+
+
+    <login>@rocquencourt:~$ git clone https://github.com/iot-lab/openlab.git
+    <login>@rocquencourt:~$ cd openlab/ && mkdir build.a8
+    <login>@rocquencourt:~/openlab/$ cd build.a8/ && cmake .. -DPLATFORM=iotlab-a8-m3
+    <login>@rocquencourt:~/openlab/build.a8/$ make tutorial_a8_m3 gps_synced_sniffer
 
 #### 3. Check that both nodes have booted
-```
-<login>@rocquencourt:~$ ping node-a8-2
-<login>@rocquencourt:~$ ping node-a8-3
-```
 
-#### 4. Copy firmwares and scripts on A8 nodes 
-```
-<login>@rocquencourt:~/openlab/build.a8$ cp bin/gps_synced_sniffer.elf ~/A8/
-<login>@rocquencourt:~/openlab/build.a8$ cp bin/tutorial_a8_m3.elf ~/A8/
-<login>@rocquencourt:~/openlab/build.a8$ cp ../appli/iotlab_examples/gps_synced_sniffer/serial2loopback.py ~/A8/
-```
+
+    <login>@rocquencourt:~$ ping node-a8-2
+    <login>@rocquencourt:~$ ping node-a8-3
+
+
+#### 4. Copy firmwares and scripts on A8 nodes
+
+
+    <login>@rocquencourt:~/openlab/build.a8$ cp bin/gps_synced_sniffer.elf ~/A8/
+    <login>@rocquencourt:~/openlab/build.a8$ cp bin/tutorial_a8_m3.elf ~/A8/
+    <login>@rocquencourt:~/openlab/build.a8$ cp ../appli/iotlab_examples/gps_synced_sniffer/serial2loopback.py ~/A8/
+
 
 #### 5. Setup sniffer node
-```
-ssh rocquencourt.iot-lab.info
-ssh root@node-a8-2
-root@node-a8-2:~# flash_a8_m3 ~/A8/gps_synced_sniffer.elf
-root@node-a8-2:~# ~/A8/serial2loopback.py & 
-root@node-a8-2:~# tcpdump -vvv -i lo
-```
+
+    ssh rocquencourt.iot-lab.info
+    ssh root@node-a8-2
+    root@node-a8-2:~# flash_a8_m3 ~/A8/gps_synced_sniffer.elf
+    root@node-a8-2:~# ~/A8/serial2loopback.py &
+    root@node-a8-2:~# tcpdump -vvv -i lo
 
 #### 6. Send a packet from emitter
-```
-ssh rocquencourt.iot-lab.info
-ssh root@node-a8-3
-root@node-a8-3:~# flash_a8_m3 ~/A8/tutorial_a8_m3.elf
-root@node-a8-3:~# miniterm.py --echo /dev/ttyA8_M3 500000
-<type return to stop help screen>
-<type 's' to send radio packet>
-<type crtl-] to exit>
-```
+
+    ssh rocquencourt.iot-lab.info
+    ssh root@node-a8-3
+    root@node-a8-3:~# flash_a8_m3 ~/A8/tutorial_a8_m3.elf
+    root@node-a8-3:~# miniterm.py --echo /dev/ttyA8_M3 500000
+    <type return to stop help screen>
+    <type 's' to send radio packet>
+    <type crtl-] to exit>
 
 #### 7. Check the raw tcpdump output
-```
-root@node-a8-2:~# tcpdump -vvv -KA -i lo
-tcpdump: listening on lo, link-type EN10MB (Ethernet), capture size 65535 bytes
-.+17:51:10.808502 IP (tos 0x0, ttl 64, id 0, offset 0, flags [DF], proto UDP (17), length 82)
-    localhost.localdomain.49020 > localhost.localdomain.17754: UDP, length 54
-E..R..@.@.<..........|EZ.>.QEX........)..CJ..................Q..Hello World!: 4...
-.+17:53:58.547894 IP (tos 0x0, ttl 64, id 0, offset 0, flags [DF], proto UDP (17), length 82)
-    localhost.localdomain.49020 > localhost.localdomain.17754: UDP, length 54
-E..R..@.@.<..........|EZ.>.QEX........)...M.3................Q..Hello World!: 5...
-```
+
+
+    root@node-a8-2:~# tcpdump -vvv -KA -i lo
+    tcpdump: listening on lo, link-type EN10MB (Ethernet), capture size 65535 bytes
+    .+17:51:10.808502 IP (tos 0x0, ttl 64, id 0, offset 0, flags [DF], proto UDP (17), length 82)
+        localhost.localdomain.49020 > localhost.localdomain.17754: UDP, length 54
+    E..R..@.@.<..........|EZ.>.QEX........)..CJ..................Q..Hello World!: 4...
+    .+17:53:58.547894 IP (tos 0x0, ttl 64, id 0, offset 0, flags [DF], proto UDP (17), length 82)
+        localhost.localdomain.49020 > localhost.localdomain.17754: UDP, length 54
+    E..R..@.@.<..........|EZ.>.QEX........)...M.3................Q..Hello World!: 5...
 
 Note 1: the ".+" in the tcpdump trace above are generated by serial2loopback.py.
 
@@ -101,19 +102,18 @@ Note 2: serial2loopback.py declares a (silent) UDP listener on port 17754 so as 
   command on A8 node
 - make sure you have ~/.ssh/config configured as follows:
 
-```
-Host node-a8-*.rocquencourt.iot-lab.info
-  User root
-  ProxyCommand ssh rocquencourt.iot-lab.info -W %h:%p
-  StrictHostKeyChecking no
-```
+    Host node-a8-*.rocquencourt.iot-lab.info
+      User root
+      ProxyCommand ssh rocquencourt.iot-lab.info -W %h:%p
+      StrictHostKeyChecking no
 
 then, in another terminal, on your PC:
 
 **Start remote tcpdump and pipe output to local wireshark**
-```
-ssh node-a8-2.rocquencourt.iot-lab.info tcpdump -U -i lo -w - | wireshark -k -i -
-```
+
+
+    ssh node-a8-2.rocquencourt.iot-lab.info tcpdump -U -i lo -w - | wireshark -k -i -
+
 
 - click "start" in the wireshark interface.
 
