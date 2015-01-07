@@ -13,6 +13,7 @@ the same frequency channel by dividing the signal into different time
 slots. A node coordinator generates network beacons that provide a
 timing indication for client nodes to access the channel.
 
+
 Prerequisites
 -------------
 
@@ -21,8 +22,22 @@ Prerequisites
 - Tutorial : [Experiment CLI client](https://www.iot-lab.info/tutorials/experiment-cli-client/)
 - Tutorial : [Nodes Serial Link Aggregation](https://www.iot-lab.info/tutorials/nodes-serial-link-aggregation/)
 
+
+Implementation 
+---- 
+
+In this implementation, a set of N client nodes share a network
+(panid) on the same radio channel, but each client only uses the
+channel during predetermined slots. A frame consists of M slots one
+for each client nodes. A slot is reserved to the node coordinator and
+one for the broadcast. Frames are repeated continuously.
+
+maximium number of frame    = MAC_TDMA_MAX_FRAMES 10
+maximum size of slots-frame = TDMA_MAX_SLOTS 50
+slot time unit = TDMA_SLOT_DURATION_FACTOR_US 100u 
+
 Code
-----
+---- 
 
 In the code, you can find two types of coordinator node :
   * ``example_tdma_coord.c`` : a dynamic affectation of the slotframe for the client nodes

@@ -32,7 +32,7 @@ add_subdirectory(iotlab_examples)
 add_subdirectory(iotlab_tests)
 
 # Sensbio specific directories
-add_subdirectory(sensbio_examples)
+add_subdirectory(sensbio)
 
 # Education Practical Works examples
 add_subdirectory(education)
