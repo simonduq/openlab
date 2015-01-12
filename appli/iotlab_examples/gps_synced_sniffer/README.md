@@ -28,12 +28,10 @@ The software is divided in 4 components:
 
 #### 1 . Grab two A8 nodes in rocquencourt - all have GPS
 - 1 sniffer node (M3 on A8 and A8 with GPS required)
-- 1 emitter node (M3 only required)
-nodes need to be in range radio-wize
+- 1 emitter node (M3 only required) nodes need to be in range radio-wize
 
-
-    ssh rocquencourt.iot-lab.info
-    <login>@rocquencourt:~$ experiment-cli submit -d 15 -l rocquencourt,a8,2+3
+        ssh rocquencourt.iot-lab.info
+        <login>@rocquencourt:~$ experiment-cli submit -d 15 -l rocquencourt,a8,2+3
 
 
 Note: use auth-cli if this is a first time init
