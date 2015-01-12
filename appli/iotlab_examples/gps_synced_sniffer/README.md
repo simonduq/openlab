@@ -102,10 +102,10 @@ Note 2: serial2loopback.py declares a (silent) UDP listener on port 17754 so as 
   command on A8 node
 - make sure you have ~/.ssh/config configured as follows:
 
-    Host node-a8-*.rocquencourt.iot-lab.info
-      User root
-      ProxyCommand ssh rocquencourt.iot-lab.info -W %h:%p
-      StrictHostKeyChecking no
+        Host node-a8-*.rocquencourt.iot-lab.info
+          User root
+          ProxyCommand ssh rocquencourt.iot-lab.info -W %h:%p
+          StrictHostKeyChecking no
 
 then, in another terminal, on your PC:
 
