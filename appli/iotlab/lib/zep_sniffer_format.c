@@ -26,7 +26,7 @@ static const struct {
     const uint8_t zep_version;
     const uint8_t packet_type;
 } zep_header = {'E', 'X', '\x02', ZEP_V2_TYPE_DATA};
-static const uint8_t lqi_crc_mode = ZEP_V2_MODE_LQI;
+static const uint8_t lqi_crc_mode = ZEP_V2_MODE_CRC;
 static void append_data(uint8_t *dst, size_t *index, const uint8_t *src, size_t len);
 
 /*
@@ -62,11 +62,9 @@ size_t to_zep(uint8_t *dst, phy_packet_t *pkt, uint8_t channel,
             (1000000 * ((uint32_t) (pkt->eop_time - pkt->timestamp))) / 32768);
     uint16_t ne_rx_time_len = __builtin_bswap16(rx_time_len);
 
-    // Cedric added two bytes after the packet:
-    // https://github.com/adjih/exp-iotlab/blob/master/tools/SnifferHelper.py
-    // I think for a 'CRC' so I'm doing the same
-    uint8_t length = pkt->length + 2;  // add space for a crc (fake crc in fact)
-    uint8_t fake_crc[2] = {0xFF, 0xFF};
+    // Payload + FCS bytes
+    // length+2 to get the 'FCS' bytes
+    uint8_t length = pkt->length + 2;
 
     // We use reserved_space to put some data
     //  * rx_time_len on 2 bytes in us unsigned
@@ -94,8 +92,7 @@ size_t to_zep(uint8_t *dst, phy_packet_t *pkt, uint8_t channel,
 
     // simulate 802.15.4 packet with our 'phy_packet'
     append_data(dst, &index,            &length,       sizeof(uint8_t));
-    append_data(dst, &index,            pkt->raw_data, pkt->length);
-    append_data(dst, &index,            fake_crc,      sizeof(fake_crc));
+    append_data(dst, &index,            pkt->raw_data, length);
 
     return index;
 }
