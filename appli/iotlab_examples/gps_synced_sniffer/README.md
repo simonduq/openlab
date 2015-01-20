@@ -8,7 +8,7 @@ https://github.com/iot-lab/openlab/tree/master/appli/iotlab_examples/gps_synced_
 
 Some A8 open-nodes are equiped with a GPS module allowing a precise time synchronization. The hardware architecture is presented here https://github.com/iot-lab/iot-lab/wiki/Hardware_A8-GPS.
 
-**This type of node with GPS is mandatory for this example**.
+**This type of node with GPS is mandatory for this example**. If you want to verify the GPS signal see the [FAQ](https://github.com/iot-lab/iot-lab/wiki/Verify-the-GPS-signal-on-a8-node).
 
 ## Prerequisites
 
