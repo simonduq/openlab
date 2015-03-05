@@ -63,7 +63,7 @@ def extract_nodes_uids(nodes_dict):
         # validate uids
         #
 
-        if uid == 'unknown':
+        if uid in [' ', 'none']:
             logging.warning("UID: %s : %s", uid, url)
             continue  # invalid uid, unused node
         int_uid = int(uid, 16)
