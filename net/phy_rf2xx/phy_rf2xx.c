@@ -35,6 +35,7 @@
 #include "soft_timer_delay.h"
 
 #include "printf.h"
+#define LOG_LEVEL LOG_LEVEL_DEBUG
 #include "debug.h"
 
 /* Private Variables */
@@ -44,6 +45,13 @@ static timestamp_handler_cb_t phy_timestamp_handler;
 /** Convert Power from PHY power to RF231 power */
 static int convert_power(phy_power_t power);
 
+// Default null handler
+static void null_handler(phy_status_t status) { (void)status; }
+
+// Phy wakeup from sleep and idle
+static int phy_wake_from_sleep(phy_rf2xx_t *phy);
+
+
 // Interrupt handlers
 static void dig2_capture_handler(handler_arg_t arg, uint16_t timer_value);
 static void rx_start_handler(handler_arg_t arg, uint16_t timer_value);
@@ -51,6 +59,7 @@ static void rx_timeout_handler(handler_arg_t arg, uint16_t timer_value);
 static void tx_start_handler(handler_arg_t arg, uint16_t timer_value);
 static void irq_handler(handler_arg_t arg);
 static void fifo_read_done_handler(handler_arg_t arg);
+static void sniff_fifo_read_done_handler(handler_arg_t arg);
 
 // API implementations (mutex must be taken)
 static void reset(phy_rf2xx_t *_phy);
@@ -60,11 +69,16 @@ static void idle(phy_rf2xx_t *_phy);
 // Functions posted (must include protection)
 static void handle_irq(handler_arg_t arg);
 static void handle_rx_end(handler_arg_t arg);
+static void handle_sniff_end(handler_arg_t arg);
 static void handle_rx_timeout(handler_arg_t arg);
 static void start_rx(handler_arg_t arg);
 
+
 // Handy function (mutex must be taken)
 static phy_status_t handle_rx_start(phy_rf2xx_t *_phy);
+
+static void start_sniff(phy_rf2xx_t *_phy);
+static void handle_sniff_start(phy_rf2xx_t *_phy);
 
 #define RF_MAX_WAIT soft_timer_ms_to_ticks(1)
 
@@ -72,7 +86,7 @@ static phy_status_t handle_rx_start(phy_rf2xx_t *_phy);
 #include "FreeRTOS.h"
 #include "semphr.h"
 static xSemaphoreHandle mutex = NULL;
-static inline void seminit() 
+static inline void seminit()
 {
     if (mutex == NULL)
     {
@@ -109,6 +123,7 @@ void phy_rf2xx_init(phy_rf2xx_t *_phy, rf2xx_t radio, openlab_timer_t timer,
 
     // Initialize the packet pointer
     _phy->pkt = NULL;
+    _phy->sniff_pkts = NULL;
 
     // Do a reset
     reset(_phy);
@@ -155,6 +170,22 @@ void phy_idle(phy_t phy)
     give();
 }
 
+
+static int phy_wake_from_sleep(phy_rf2xx_t *phy)
+{
+    switch (phy->state) {
+    case PHY_STATE_SLEEP:
+        rf2xx_wakeup(phy->radio);
+        break;
+    case PHY_STATE_IDLE:
+        break; // Nothing to do
+    default:
+        log_error("Invalid state %u", phy->state);
+        return 1;
+    }
+    return 0;
+}
+
 phy_status_t phy_set_channel(phy_t phy, uint8_t channel)
 {
     take();
@@ -162,22 +193,10 @@ phy_status_t phy_set_channel(phy_t phy, uint8_t channel)
     // Cast to RF2XX PHY
     phy_rf2xx_t *_phy = phy;
 
-    // Check state
-    switch (_phy->state)
-    {
-        case PHY_STATE_SLEEP:
-            // Wakeup
-            rf2xx_wakeup(_phy->radio);
-            break;
-        case PHY_STATE_IDLE:
-            // Nothing to do
-            break;
-        default:
-            log_error("Invalid state %u", _phy->state);
-
-            give();
-            // State is invalid for channel setting, return error
-            return PHY_ERR_INVALID_STATE;
+    if (phy_wake_from_sleep(_phy)) {
+        // State is invalid for channel setting, return error
+        give();
+        return PHY_ERR_INVALID_STATE;
     }
 
     // Check min and max value
@@ -218,23 +237,10 @@ phy_status_t phy_set_power(phy_t phy, phy_power_t power)
     // Cast to RF2XX PHY
     phy_rf2xx_t *_phy = phy;
 
-    // Check state
-    switch (_phy->state)
-    {
-        case PHY_STATE_SLEEP:
-            // Wakeup
-            rf2xx_wakeup(_phy->radio);
-            break;
-        case PHY_STATE_IDLE:
-            // Nothing to do
-            break;
-        default:
-            log_error("Invalid state %u", _phy->state);
-
-            give();
-
-            // State is invalid for channel setting, return error
-            return PHY_ERR_INVALID_STATE;
+    if (phy_wake_from_sleep(_phy)) {
+        // State is invalid for channel setting, return error
+        give();
+        return PHY_ERR_INVALID_STATE;
     }
 
     if (rf2xx_get_type(_phy->radio) == RF2XX_TYPE_2_4GHz)
@@ -269,22 +275,10 @@ static phy_status_t phy_ed_cca_measure(phy_t phy, int32_t *result, int32_t ed)
     // Cast to RF2XX PHY
     phy_rf2xx_t *_phy = phy;
 
-    // Check state
-    switch (_phy->state)
-    {
-        case PHY_STATE_SLEEP:
-            // Wakeup
-            rf2xx_wakeup(_phy->radio);
-            break;
-        case PHY_STATE_IDLE:
-            // Nothing to do
-            break;
-        default:
-            // Invalid state!
-            log_error("Invalid state %u", _phy->state);
-
-            give();
-            return PHY_ERR_INVALID_STATE;
+    if (phy_wake_from_sleep(_phy)) {
+        // State is invalid for channel setting, return error
+        give();
+        return PHY_ERR_INVALID_STATE;
     }
 
     // Disable interrupt
@@ -395,6 +389,7 @@ phy_status_t phy_cca(phy_t phy, int32_t *cca)
 {
     return phy_ed_cca_measure(phy, cca, 0);
 }
+
 phy_status_t phy_rx(phy_t phy, uint32_t rx_time, uint32_t timeout_time,
         phy_packet_t *pkt, phy_handler_t handler)
 {
@@ -410,22 +405,10 @@ phy_status_t phy_rx(phy_t phy, uint32_t rx_time, uint32_t timeout_time,
         HALT();
     }
 
-    // Check state
-    switch (_phy->state)
-    {
-        case PHY_STATE_SLEEP:
-            // Wakeup
-            rf2xx_wakeup(_phy->radio);
-            break;
-        case PHY_STATE_IDLE:
-            // Nothing to do
-            break;
-        default:
-            // Invalid state!
-            log_error("Invalid state %u", _phy->state);
-
-            give();
-            return PHY_ERR_INVALID_STATE;
+    if (phy_wake_from_sleep(_phy)) {
+        // State is invalid for channel setting, return error
+        give();
+        return PHY_ERR_INVALID_STATE;
     }
 
     // Store timeout time
@@ -433,7 +416,7 @@ phy_status_t phy_rx(phy_t phy, uint32_t rx_time, uint32_t timeout_time,
 
     // Store packet pointer and handler
     _phy->pkt = pkt;
-    _phy->handler = handler;
+    _phy->handler = (handler ? handler : null_handler);
 
     // Clear timestamp
     _phy->pkt->timestamp = 0;
@@ -497,6 +480,111 @@ phy_status_t phy_rx(phy_t phy, uint32_t rx_time, uint32_t timeout_time,
     return PHY_SUCCESS;
 }
 
+
+phy_status_t phy_sniff(phy_t phy, xQueueHandle pkts_queue, handler_t handler)
+{
+    take();
+    phy_rf2xx_t *_phy = phy;  // Cast to RF2XX PHY
+
+
+    if (pkts_queue == NULL) {
+        log_error("Packets queue empty");
+        return PHY_ERR_INTERNAL;
+    }
+    if (handler == NULL) {
+        log_error("Handler shouldn't be NULL");
+        return PHY_ERR_INTERNAL;
+    }
+
+
+    if (phy_wake_from_sleep(_phy)) {
+        give();
+        return PHY_ERR_INVALID_STATE;
+    }
+
+    // Get first packet
+    if (xQueueReceive(pkts_queue, &_phy->pkt, 0) != pdTRUE) {
+        give();
+        return PHY_ERR_INTERNAL;
+    }
+
+
+    _phy->sniff_pkts = pkts_queue;
+    _phy->sniff_handler = handler;
+
+    // Clear timestamp
+    _phy->pkt->timestamp  = 0;
+    _phy->pkt->t_rx_start = 0;
+    _phy->pkt->t_rx_end   = 0;
+
+    // disable timer
+    timer_set_channel_compare(_phy->timer, _phy->channel, 0, NULL, NULL);
+
+    _phy->state = PHY_STATE_SNIFF;
+
+    // Block low power
+    platform_prevent_low_power();
+    start_sniff(_phy);
+
+    give();
+
+    return PHY_SUCCESS;
+}
+
+// should be in mutex
+/* Don't care of external PA */
+static void start_sniff(phy_rf2xx_t *_phy)
+{
+    // Disable interrupt
+    rf2xx_irq_disable(_phy->radio);
+
+    // Restart RX: force TRX_OFF
+    rf2xx_set_state(_phy->radio, RF2XX_TRX_STATE__FORCE_TRX_OFF);
+
+    // Reset IRQ to TRX END and RX_START if no DIG2 available
+    // TODO maybe add interruptions
+    rf2xx_reg_write(_phy->radio, RF2XX_REG__IRQ_MASK,
+            RF2XX_IRQ_STATUS_MASK__TRX_END
+                    | (rf2xx_has_dig2(_phy->radio) ? 0 :
+                            RF2XX_IRQ_STATUS_MASK__RX_START));
+
+    uint8_t reg = rf2xx_reg_read(_phy->radio, RF2XX_REG__TRX_CTRL_2);
+    log_debug("RF2XX_REG__TRX_CTRL_2 0x%02x", reg);
+    reg &= ~RF2XX_TRX_CTRL_2_MASK__RX_SAFE_MODE;
+    rf2xx_reg_write(_phy->radio, RF2XX_REG__TRX_CTRL_2, reg);
+    log_debug("RF2XX_REG__TRX_CTRL_2 0x%02x", reg);
+
+    // Read IRQ to clear it
+    rf2xx_reg_read(_phy->radio, RF2XX_REG__IRQ_STATUS);
+
+
+    // Enable IRQ interrupt
+    rf2xx_irq_enable(_phy->radio);
+
+    // Enable DIG2 time-stamping
+    if (rf2xx_has_dig2(_phy->radio))
+        rf2xx_dig2_enable(_phy->radio);
+
+    // Start RX
+    rf2xx_set_state(_phy->radio, RF2XX_TRX_STATE__RX_ON);
+
+    // Loop until RX_ON is entered
+    uint8_t status;
+    uint32_t t_end = soft_timer_time() + RF_MAX_WAIT;
+    do {
+        status = rf2xx_get_status(_phy->radio);
+        // Check for block
+        if (!soft_timer_a_is_before_b(soft_timer_time(), t_end)) {
+            log_error("RF delay expired #3");
+            break;
+        }
+    } while ((status & RF2XX_TRX_STATUS_MASK__TRX_STATUS)
+            != RF2XX_TRX_STATUS__RX_ON);
+}
+
+
+
+
 phy_status_t phy_tx(phy_t phy, uint32_t tx_time, phy_packet_t *pkt,
         phy_handler_t handler)
 {
@@ -523,28 +611,17 @@ phy_status_t phy_tx(phy_t phy, uint32_t tx_time, phy_packet_t *pkt,
         return PHY_ERR_INVALID_LENGTH;
     }
 
-    // Check state
-    switch (_phy->state)
-    {
-        case PHY_STATE_SLEEP:
-            // Wakeup
-            rf2xx_wakeup(_phy->radio);
-            break;
-        case PHY_STATE_IDLE:
-            // Nothing to do
-            break;
-        default:
-            log_error("Invalid state %u", _phy->state);
-
-            give();
-            return PHY_ERR_INVALID_STATE;
+    if (phy_wake_from_sleep(_phy)) {
+        // State is invalid for channel setting, return error
+        give();
+        return PHY_ERR_INVALID_STATE;
     }
 
     // Store packet
     _phy->pkt = pkt;
 
     // Store the handler
-    _phy->handler = handler;
+    _phy->handler = (handler ? handler : null_handler);
 
     // Disable interrupt
     rf2xx_irq_disable(_phy->radio);
@@ -860,21 +937,10 @@ phy_status_t phy_jam(phy_t phy, uint8_t channel, phy_power_t power)
     // Cast to RF2XX PHY
     phy_rf2xx_t *_phy = phy;
 
-    // Check state
-    switch (_phy->state)
-    {
-        case PHY_STATE_SLEEP:
-            // Wakeup
-            rf2xx_wakeup(_phy->radio);
-            break;
-        case PHY_STATE_IDLE:
-            // Nothing to do
-            break;
-        default:
-            log_error("Invalid state %u", _phy->state);
-
-            give();
-            return PHY_ERR_INVALID_STATE;
+    if (phy_wake_from_sleep(_phy)) {
+        // State is invalid for channel setting, return error
+        give();
+        return PHY_ERR_INVALID_STATE;
     }
 
     // Store State
@@ -1161,7 +1227,7 @@ static void sleep(phy_rf2xx_t *_phy)
     rf2xx_sleep(_phy->radio);
 
     // Remove handler and packet
-    _phy->handler = NULL;
+    _phy->handler = null_handler;
     _phy->pkt = NULL;
 
     // Save state
@@ -1188,6 +1254,7 @@ static void idle(phy_rf2xx_t *_phy)
         case PHY_STATE_RX_WAIT:
         case PHY_STATE_TX:
         case PHY_STATE_TX_WAIT:
+        case PHY_STATE_SNIFF:
             platform_release_low_power();
             break;
 
@@ -1381,7 +1448,87 @@ static phy_status_t handle_rx_start(phy_rf2xx_t *_phy)
     return PHY_SUCCESS;
 }
 
+static void handle_sniff_start(phy_rf2xx_t *_phy)
+{
+    // Check state and pkt
+    if (_phy->state != PHY_STATE_SNIFF) {
+        log_error("handle_rx_start but state not RX: %x", _phy->state);
+        HALT();
+    }
+    if (_phy->pkt == NULL) {
+        log_error("handle_rx_start but pkt NULL");
+        HALT();
+    }
+
+    // Check CRC, on ERROR another pkt will be read anyway
+    if (!(rf2xx_reg_read(_phy->radio, RF2XX_REG__PHY_RSSI)
+            & RF2XX_PHY_RSSI_MASK__RX_CRC_VALID)) {
+        log_debug("invalid crc");
+        return;
+    }
+
+    // Read length byte (first byte)
+    _phy->pkt->length = rf2xx_fifo_read_first(_phy->radio);
+
+    // Check valid length (not zero and enough space to store it)
+    if ((_phy->pkt->length == 0) || (_phy->pkt->length > PHY_MAX_RX_LENGTH)) {
+        rf2xx_fifo_read_remaining(_phy->radio, _phy->pkt->data, 0);
+        return;
+    }
+
+    // Store RX start time
+    _phy->pkt->t_rx_start = soft_timer_time();
+
+    // Retrieve remaining of the data asynchronously (+1) to have the LQI
+    uint8_t length = _phy->pkt->length + 1;
+
+    rf2xx_fifo_read_remaining_async(_phy->radio, _phy->pkt->data, length,
+            sniff_fifo_read_done_handler, _phy);
+}
+
+
 // *********************** INPUT handlers (posted from ISR) ************************ //
+
+static void handle_sniff_end(handler_arg_t arg)
+{
+    take();
+
+    // Cast to RF2XX PHY
+    phy_rf2xx_t *_phy = arg;
+    phy_packet_t *pkt = _phy->pkt;
+
+    // Check state and pkt
+    if (_phy->state != PHY_STATE_SNIFF) {
+        log_error("State not RX: %x", _phy->state);
+        give();
+        return;
+    }
+    if (pkt == NULL) {
+        log_error("phy->pkt NULL");
+        HALT();
+    }
+
+    pkt->t_rx_end = soft_timer_time();
+    pkt->rssi = -91 + rf2xx_reg_read(_phy->radio, RF2XX_REG__PHY_ED_LEVEL);
+    xQueueReceive(_phy->sniff_pkts, &_phy->pkt, 0);
+    give();
+    // Allow next RX from now
+
+
+
+    pkt->lqi = pkt->data[pkt->length];
+    pkt->length -= 2;  // Remove status bytes from length
+
+    if ((pkt->t_rx_end - pkt->t_rx_start) > 500) {
+        log_error("Too much time to read packet, len = %u", pkt->length + 1);
+        log_info("rx_end : %u", pkt->t_rx_end - pkt->t_rx_start);
+        HALT();
+    }
+
+    // Call RX handler (can be null_handler)
+    event_post_from_isr(EVENT_QUEUE_NETWORK, _phy->sniff_handler, pkt);
+}
+
 
 static void handle_rx_end(handler_arg_t arg)
 {
@@ -1432,12 +1579,10 @@ static void handle_rx_end(handler_arg_t arg)
 
     give();
 
-    // Call RX handler if any
-    if (_phy->handler)
-    {
-        _phy->handler(PHY_SUCCESS);
-    }
+    // Call RX handler (can be null_handler)
+    _phy->handler(PHY_SUCCESS);
 }
+
 static void handle_rx_timeout(handler_arg_t arg)
 {
     take();
@@ -1461,10 +1606,7 @@ static void handle_rx_timeout(handler_arg_t arg)
     give();
 
     // Notify receiving failed
-    if (_phy->handler)
-    {
-        _phy->handler(PHY_RX_TIMEOUT_ERROR);
-    }
+    _phy->handler(PHY_RX_TIMEOUT_ERROR);  // may be null_handler
 }
 
 static void handle_irq(handler_arg_t arg)
@@ -1499,10 +1641,7 @@ static void handle_irq(handler_arg_t arg)
                 if (status != PHY_SUCCESS)
                 {
                     give();
-                    if (_phy->handler)
-                    {
-                        _phy->handler(status);
-                    }
+                    _phy->handler(status);
                     return;
                 }
             }
@@ -1511,6 +1650,20 @@ static void handle_irq(handler_arg_t arg)
                 // Error
                 log_error("invalid handle_irq %x in RX state (radio state %x)",
                         irq_status, rf2xx_get_status(_phy->radio));
+            }
+            break;
+        case PHY_STATE_SNIFF:
+
+            switch (irq_status) {
+            case RF2XX_IRQ_STATUS_MASK__RX_START:
+                break;  // timestamp saved by dig2
+            case RF2XX_IRQ_STATUS_MASK__TRX_END:
+                handle_sniff_start(_phy);  // don't care of failed
+                break;
+            default:
+                log_error("invalid handle_irq %x in SNIFF state (state %x)",
+                        irq_status, rf2xx_get_status(_phy->radio));
+                break;
             }
             break;
 
@@ -1524,10 +1677,7 @@ static void handle_irq(handler_arg_t arg)
                 give();
 
                 // Notify sending is done if handler is not null
-                if (_phy->handler)
-                {
-                    _phy->handler(PHY_SUCCESS);
-                }
+                _phy->handler(PHY_SUCCESS);
                 return;
             }
             else
@@ -1557,7 +1707,7 @@ static void dig2_capture_handler(handler_arg_t arg, uint16_t timer_value)
     phy_rf2xx_t *_phy = arg;
 
     // Check state
-    if (_phy->state != PHY_STATE_RX)
+    if (_phy->state != PHY_STATE_RX && _phy->state != PHY_STATE_SNIFF)
     {
         log_error("DIG2 but state not RX");
         HALT();
@@ -1649,6 +1799,12 @@ static void irq_handler(handler_arg_t arg)
 
     // Call IRQ handler from event task
     event_post_from_isr(EVENT_QUEUE_NETWORK, handle_irq, arg);
+}
+
+static void sniff_fifo_read_done_handler(handler_arg_t arg)
+{
+    // Call RX end handler from event task
+    event_post_from_isr(EVENT_QUEUE_NETWORK, handle_sniff_end, arg);
 }
 
 static void fifo_read_done_handler(handler_arg_t arg)

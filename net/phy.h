@@ -27,6 +27,8 @@
 #ifndef PHY_H_
 #define PHY_H_
 
+#include "FreeRTOS.h"
+#include "queue.h"
 /**
  * \addtogroup net
  * @{
@@ -464,6 +466,9 @@ phy_status_t phy_jam(phy_t phy, uint8_t channel, phy_power_t power);
  */
 typedef void (*timestamp_handler_cb_t)(uint32_t*, uint32_t*);
 void register_timestamp_handler(timestamp_handler_cb_t timestamp_handler);
+
+
+phy_status_t phy_sniff(phy_t phy, xQueueHandle pkts_queue, handler_t handler);
 
 
 /**

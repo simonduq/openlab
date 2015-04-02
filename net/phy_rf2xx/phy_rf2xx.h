@@ -41,6 +41,7 @@ typedef enum
     PHY_STATE_TX_WAIT = 4,
     PHY_STATE_TX = 5,
     PHY_STATE_JAMMING = 6,
+    PHY_STATE_SNIFF = 7,
 } phy_rf2xx_state_t;
 
 #define PHY_TIMING__TX_OFFSET soft_timer_us_to_ticks(16 + 192 + 9)
@@ -61,11 +62,15 @@ typedef struct
     // Pointers to the packet used in TX or RX
     phy_packet_t *pkt;
 
+    // Packets queue for sniffer
+    xQueueHandle sniff_pkts;
+
     // Running State
     volatile phy_rf2xx_state_t state;
 
     // Handler
     phy_handler_t handler;
+    handler_t sniff_handler;
 
     // RX timeout
     uint32_t rx_timeout;
