@@ -1526,7 +1526,7 @@ static void handle_sniff_end(handler_arg_t arg)
     }
 
     // Call RX handler (can be null_handler)
-    event_post_from_isr(EVENT_QUEUE_NETWORK, _phy->sniff_handler, pkt);
+    event_post_from_isr(EVENT_QUEUE_APPLI, _phy->sniff_handler, pkt);
 }
 
 

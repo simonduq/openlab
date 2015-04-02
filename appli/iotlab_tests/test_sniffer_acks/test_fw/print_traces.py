@@ -32,7 +32,7 @@ def extract_ranges_dict(values_tuple):
     assert (len(values_tuple) % 2) == 0
 
     ranges = {}
-    for i in range(32, 40, 2):
+    for i in range(0, 8, 2):
         start, end = values_tuple[i: i + 2]
         print start, end
 
