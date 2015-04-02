@@ -11,7 +11,7 @@ void print_time(char *prefix, int32_t ticks)
 {
     int32_t t_s = ticks / 32768;
     int32_t t_us = (int32_t)((((int64_t)(ticks % 32768)) * 1000000) / 32768);
-    printf("%s %6d.%06d\n", prefix, t_s, t_us);
+    printf("%s %d.%06d\n", prefix, t_s, t_us);
 }
 
 static xQueueHandle sniff_pkts;
@@ -21,10 +21,18 @@ static void sniff_handler(handler_arg_t arg)
     phy_packet_t *pkt = arg;
     printf("Packet len: %u\n", pkt->length);
 
-    print_time("start    ", pkt->timestamp);
-    print_time("stop     ", pkt->eop_time);
-    print_time("rx_start ", pkt->t_rx_start);
-    print_time("rx_end   ", pkt->t_rx_end);
+    if (pkt->length != 3) {
+
+        print_time("T:pkt_irq_start", pkt->timestamp);
+        print_time("T:pkt_irq_end", pkt->eop_time);
+        print_time("T:pkt_rx_start", pkt->t_rx_start);
+        print_time("T:pkt_rx_end", pkt->t_rx_end);
+    } else {
+        print_time("T:ack_irq_start", pkt->timestamp);
+        print_time("T:ack_irq_end", pkt->eop_time);
+        print_time("T:ack_rx_start", pkt->t_rx_start);
+        print_time("T:ack_rx_end", pkt->t_rx_end);
+    }
 
     print_time("diff     ", pkt->eop_time - pkt->timestamp);
     print_time("diff_read", pkt->t_rx_end - pkt->t_rx_start);
