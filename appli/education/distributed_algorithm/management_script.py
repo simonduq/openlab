@@ -7,10 +7,8 @@ import sys
 import time
 import subprocess
 
-import serial_aggregator
-import iotlabcli
+from iotlabaggregator import serial
 from iotlabcli.parser import common as common_parser
-from iotlabcli.parser import node as node_parser
 
 import algorithm_management
 
@@ -29,7 +27,7 @@ def opts_parser():
                              help='experiment id submission')
 
     nodes_group.add_argument(
-        '-l', '--list', type=node_parser.nodes_list_from_str,
+        '-l', '--list', type=common_parser.nodes_list_from_str,
         dest='nodes_list', help='nodes list, may be given multiple times')
 
     nodes_group.add_argument('-a', '--algo', default='syncronous',
@@ -44,6 +42,7 @@ def opts_parser():
         dest='outfile', help='Files where to output traces')
 
     return parser
+
 
 class NodeResults(object):
 
@@ -127,7 +126,6 @@ class NodeResults(object):
             all_measures.write(all_line + '\n')
         all_measures.close()
 
-
     def write_results_values(self, use_node_compute=True):
         """ Write the results to files """
         all_name = '%s_all.csv' % self.outfilename
@@ -162,8 +160,14 @@ class NodeResults(object):
 
         out_png = '%s_graph.png' % self.outfilename
         cmd = ['dot', '-T', 'png', out_dot, '-o', out_png]
-        subprocess.call(cmd)
-        print "Neighbours graph written to %s" % out_png
+        try:
+            subprocess.call(cmd)
+            print "Neighbours graph written to %s" % out_png
+        except OSError:
+            print "graphviz not installed. Can't generate neighbours graph"
+            print "You can run the following command on your comuter:"
+            print "    dot -T png results_graph.dot -o results_graph.png"
+
 
     def neighbours_graph(self):
         links = self.neighbours_links()
@@ -196,11 +200,13 @@ class NodeResults(object):
                     double_links.add(link)
         return {'simple': simple_links, 'double': double_links}
 
+
 ALGOS = {
     'syncronous': algorithm_management.syncronous_mode,
     'gossip': algorithm_management.gossip_mode,
     'num_nodes': algorithm_management.find_num_node_gossip_mode,
 }
+
 
 def main():
     """ Reads nodes from ressource json in stdin and
@@ -210,11 +216,9 @@ def main():
     opts = parser.parse_args()
 
     try:
-        username, password = iotlabcli.get_user_credentials(
-            opts.username, opts.password)
-        api = iotlabcli.Api(username, password)
-        nodes_list = serial_aggregator.get_nodes(
-            api, opts.experiment_id, opts.nodes_list, with_a8=True)
+
+        opts.with_a8 = False  # HACK for the moment, required by 'select_nodes'
+        nodes_list = serial.SerialAggregator.select_nodes(opts)
         print "Using algorith: %r" % opts.algo
         algorithm = ALGOS[opts.algo]
     except (ValueError, RuntimeError) as err:
@@ -223,19 +227,16 @@ def main():
 
     # Connect to the nodes
     results = NodeResults(opts.outfile)
-    aggregator = serial_aggregator.NodeAggregator(
-        nodes_list, print_lines=True, line_handler=results.handle_line)
-    aggregator.start()
-    time.sleep(2)
-
-    # Run the algorithm
-    try:
+    with serial.SerialAggregator(nodes_list,
+                                 print_lines=True,
+                                 line_handler=results.handle_line)\
+            as aggregator:
+        time.sleep(2)
+        # Run the algorithm
         algorithm(aggregator, opts.num_loop)
         time.sleep(3)
-    finally:
-        aggregator.stop()
-        results.write_results(opts.algo == 'syncronous')
 
+    results.write_results(opts.algo == 'syncronous')
 
 
 if __name__ == "__main__":
