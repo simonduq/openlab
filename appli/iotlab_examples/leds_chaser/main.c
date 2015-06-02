@@ -2,23 +2,21 @@
 
 #define DELAY 0x160000
 
-//Global variables
-int j,i;
-
 /*Time delay */
 static void time_delay(unsigned int d)
 {
-    for (i = 0;i<DELAY;i++){
+    int i;
+    for (i=0;i<DELAY;i++){
         __asm__("nop");
     }
 }
 
 /* Leds change */
-static void led_change(int led_state)
+static void led_change(uint8_t led_state)
 {  
     leds_off(LED_0 | LED_1 | LED_2);
 
-    switch(j)
+    switch(led_state)
     {
         case 0:
         leds_on(LED_2);  // Green led on
@@ -39,14 +37,13 @@ int main()
 {
     /* Init the platform */
     platform_init();
-   
+    
+    uint8_t j = 0;
     while(1)
     {
-        for(j=0;j<4;j++)
-        {
-            led_change(j);
-            time_delay(DELAY);
-        }
+        led_change(j);
+        time_delay(DELAY);
+        j = (j+1) % 4;
     }
 
     return 0;
