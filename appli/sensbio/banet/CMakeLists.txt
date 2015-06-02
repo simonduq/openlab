@@ -17,10 +17,10 @@
 
 if (${PLATFORM_HAS_TDMA})
 
-    add_executable(banet_coord banet_coord)
-    target_link_libraries(banet_coord mac_tdma platform)
+    add_executable(banet_sink banet_sink)
+    target_link_libraries(banet_sink mac_tdma platform)
 
-    add_executable(banet_node banet_node)
-    target_link_libraries(banet_node mac_tdma platform)
+    add_executable(banet_imu banet_imu sensor)
+    target_link_libraries(banet_imu mac_tdma platform)
 
 endif (${PLATFORM_HAS_TDMA})

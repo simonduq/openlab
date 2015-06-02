@@ -26,11 +26,14 @@
  * \author: <roger.pissard.at.inria.fr>
  */
 
+#include <stdint.h>
+#include <string.h>
 #include "platform.h"
 #include "packet.h"
 #include "soft_timer.h"
 
 #include "mac_tdma.h"
+#include "sensor.h"
 
 #include "debug.h"
 
@@ -49,29 +52,34 @@ static mac_tdma_node_config_t cfg = {
     .channel = 21,
 };
 
-static soft_timer_t timer;
-static uint8_t index;
+static uint16_t count;
+static imu_sensor_data_t tx_data;
 
-static void pkt_tick(handler_arg_t arg);
 static void pkt_sent(void *arg, enum tdma_result res);
 static void pkt_received(packet_t *packet, uint16_t src);
+
+static void slot_callback(uint8_t id, uint32_t time);
+static void slot_callback_send(handler_arg_t arg);
+
 
 int main()
 {
     platform_init();
 
+    /* init IMU sensor */
+    init_sensor();
+
     /* init tdma */
     mac_tdma_init();
+
+    /* plug a call when you receive a TDMA slot */
+    mac_tdma_set_slot_callback(slot_callback);
 
     /* start node */
     mac_tdma_start_node(&cfg);
 
     /* register data packet handler */
     mac_tdma_set_recv_handler(pkt_received);
-
-    /* programm periodic timer to send packet */
-    soft_timer_set_handler(&timer, pkt_tick, NULL);
-    soft_timer_start(&timer, soft_timer_s_to_ticks(1), 1);
 
     /* shutdown leds */
     leds_off(0xf);
@@ -80,11 +88,8 @@ int main()
     return 0;
 }
 
-static void pkt_tick(handler_arg_t arg)
+static void pkt_send()
 {
-    // unused
-    (void) arg;
-
     enum tdma_result res;
 
     /* ensure we're connected */
@@ -107,9 +112,12 @@ static void pkt_tick(handler_arg_t arg)
     }
 
     /* fill it */
-    log_printf("Send packet %u\n", index);
-    *(packet->data) = index++;
-    packet->length = 1;
+    log_printf("Send packet %u\n", count);
+    tx_data.seq = count++;
+    read_sensor(&tx_data);
+
+    packet->length = sizeof(tx_data);
+    memcpy(packet->data, (void *) &tx_data,  packet->length);
 
     /* send the packet to the coordinator */
     if ((res = mac_tdma_send(packet, 0, pkt_sent, packet)) != TDMA_OK)
@@ -157,3 +165,18 @@ static void pkt_received(packet_t *packet, uint16_t src)
     packet_free(packet);
 }
 
+static void slot_callback(uint8_t id, uint32_t time)
+{
+    (void) time;
+    event_post(EVENT_QUEUE_APPLI, slot_callback_send, (void *) (uintptr_t) id);
+}
+
+static void slot_callback_send(handler_arg_t arg)
+{
+    unsigned id = (uintptr_t) arg;
+    (void) id;
+    if (id == 0) {
+      log_printf("Slot %u\n", id);
+      pkt_send();
+    }
+}

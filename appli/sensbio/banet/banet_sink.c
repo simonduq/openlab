@@ -18,7 +18,7 @@
 */
 
 /*
- * banet_coord.c
+ * banet_sink.c
  *
  * \brief banet TDMA coordinator
  *
@@ -31,8 +31,11 @@
 #include "soft_timer.h"
 
 #include "mac_tdma.h"
+#include "sensor.h"
 
 #include "debug.h"
+
+#pragma GCC diagnostic ignored "-Wcast-align"
 
 /*
  * coordinator configuration:
@@ -51,11 +54,20 @@ static mac_tdma_coord_config_t cfg = {
     .slot_count = 4,
 };
 
+static soft_timer_t timer;
+uint32_t internal_time = 0;
+
+static void pkt_tick(handler_arg_t arg);
 static void pkt_received(packet_t *packet, uint16_t src);
+
+static imu_sensor_data_t * rx_data;
 
 int main()
 {
     platform_init();
+
+    /* Time initialization */
+    internal_time = 0;
 
     /* init tdma */
     mac_tdma_init();
@@ -65,6 +77,12 @@ int main()
 
     /* register data packet handler */
     mac_tdma_set_recv_handler(pkt_received);
+   
+    /*
+     * programm periodic timer to send packet
+     */
+    soft_timer_set_handler(&timer, pkt_tick, NULL);
+    soft_timer_start(&timer, soft_timer_ms_to_ticks(10), 1);
 
     /* shutdown leds */
     leds_off(0xf);
@@ -72,13 +90,25 @@ int main()
     platform_run();
     return 0;
 }
-
+ 
 
 static void pkt_received(packet_t *packet, uint16_t src)
 {
     // unused
     (void) src;
 
+    if (packet->length ==  sizeof(*rx_data)) {
+      rx_data = (imu_sensor_data_t *) packet->data;
+      log_printf("%04x:%u\t%u\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\r\n", \
+		 src, internal_time, rx_data->seq,		       \
+		 rx_data->acc[0], rx_data->acc[1], rx_data->acc[2], \
+		 rx_data->mag[0], rx_data->mag[1], rx_data->mag[2], \
+		 rx_data->gyr[0], rx_data->gyr[1], rx_data->gyr[2]);
+    }
+    else {
+      log_printf("Unknown Packet received from 0x%04x\n", src);
+    }
+    /*
     if (packet->length == 1)
     {
         log_printf("Packet received from 0x%04x : %u\n", src, *(packet->data));
@@ -87,5 +117,12 @@ static void pkt_received(packet_t *packet, uint16_t src)
     {
         log_printf("Unknown Packet received from 0x%04x\n", src);
     }
+    */
     packet_free(packet);
+}
+
+
+static void pkt_tick(handler_arg_t arg)
+{
+  internal_time ++;
 }
