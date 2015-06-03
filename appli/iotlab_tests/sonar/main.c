@@ -1,9 +1,7 @@
-
-/* Gn.c
- *
+/*
+ *  Sonar
  *  Created on: Mar 4, 2015
- World
- *      Author: iotlab
+ *      Author: Ana Garcia Alcala
  */
 
 #include <platform.h>
@@ -14,35 +12,22 @@
 
 #include "mac_csma.h"
 #include "phy.h"
-#include  "timer.h"
 #include "event.h"
 #include "packer.h"
 #include "unique_id.h"
 #include "FreeRTOS.h"
-#include "semphr.h"
-
-#ifdef IOTLAB_M3
-#include "lps331ap.h"
-#include "isl29020.h"
-#endif
 
 // choose channel in [11-26]
 #define CHANNEL 11
 #define RADIO_POWER PHY_POWER_0dBm
-#define PHY_MAX_TX_LENGTH 16 
+#define PHY_MAX_TX_LENGTH 16
  
 #define ADDR_BROADCAST 0xFFFF
 
 #define SM_IDLE  0
 #define SM_RX    1
 #define SM_TX    2
-volatile uint8_t sm = SM_IDLE;
-
-#if 0
-#define DEBUG(...) printf(__VA_ARGS__)
-#else
-#define DEBUG(...)
-#endif
+uint8_t sm = SM_IDLE;
 
 uint16_t packet_error(void);
 uint16_t packet_sent(void);
@@ -102,6 +87,7 @@ uint16_t packet_error(void) {
 }
 
 uint16_t char_rx(uint8_t c) {
+            printf("INPUT -> %s\n",c);
 
             switch(c) {
                 case 'a':
@@ -140,6 +126,7 @@ uint16_t char_rx(uint8_t c) {
             
             if(c != 'r') {
 				sm = SM_TX;
+                printf("char <> 'r' => SM=%d\n",sm);
 				return 1;
 			}
 			else
@@ -159,9 +146,9 @@ static void char_uart(handler_arg_t arg,uint8_t c)
  event_post_from_isr(EVENT_QUEUE_APPLI,handle_cmd,(handler_arg_t)(uint32_t) c);
 }
 
-static void hardware_init()
-{
-	// Openlab platform init
+
+int main (void) {
+    // Openlab platform init
 	platform_init();
 	event_init();
 
@@ -172,31 +159,8 @@ static void hardware_init()
 
 	// Init csma Radio mac layer
 	mac_csma_init(CHANNEL, RADIO_POWER);
-}
-
-
-
-int main (void) {
-
-
-	hardware_init();
-        platform_run();
-
-    while(1)
-    {
-        phy_idle(platform_phy);
-        
-	if(sm == SM_TX)
-        {
-            static uint8_t msg[64];
-            int len;
-      	    leds_on(LED_1);
-            len = printf((char*)msg,"%.4x",node_id);
-            mac_csma_data_send(ADDR_BROADCAST,msg,len);
-            sm = SM_IDLE;
-        }
-    }
-
-return 0;
+	
+    platform_run();
+    return 0;
 }
 
