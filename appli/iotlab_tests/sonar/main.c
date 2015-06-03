@@ -22,118 +22,104 @@
  
 #define ADDR_BROADCAST 0xFFFF
 
-#define SM_IDLE  0
-#define SM_RX    1
-#define SM_TX    2
-uint8_t sm = SM_IDLE;
-
+static void print_usage();
 static void send_packet();
-uint16_t char_rx(uint8_t c);
 static void handle_cmd(handler_arg_t arg);
 static void char_uart(handler_arg_t arg,uint8_t c);
-uint16_t node_id;
 
 static void send_packet() {
-        uint16_t ret;
-        static uint8_t num = 0;
-        static char packet[PHY_MAX_TX_LENGTH ]; 
-        uint16_t length;
-        snprintf(packet, sizeof(packet), "Hello World!: %u", num++);
-        length = 1 + strlen(packet);
-        ret = mac_csma_data_send(ADDR_BROADCAST,(uint8_t *)packet,length);
-         
-         if (ret != 0)
-          printf("packet sent\n");
-         
-         else
-          printf("Packet sent failed\n");   
-    }
+    uint16_t ret;
+    static char packet[PHY_MAX_TX_LENGTH]; 
+    uint16_t length;
+    snprintf(packet, sizeof(packet), "Hello World!");
+    length = 1 + strlen(packet);
+    ret = mac_csma_data_send(ADDR_BROADCAST,(uint8_t *)packet,length);
+     
+     if (ret != 0)
+        printf("packet sent\n");
+     else
+        printf("packet sent failed\n");   
+}
 
 /* Reception of a radio message */
 void mac_csma_data_received(uint16_t src_addr,const uint8_t *c, uint8_t length, int8_t rssi, uint8_t lqi)
 {
-
-       leds_on(LED_0);
-        packer_uint16_unpack(c,&node_id);
-	printf("%x;%04x;%d\n",src_addr,node_id,rssi);
+    uint16_t node_id;
+    leds_on(LED_0);
+    packer_uint16_unpack(c,&node_id);
+    printf("%x;%04x;%d\n",src_addr,node_id,rssi);
 }	
 
-uint16_t char_rx(uint8_t c) {
- 
-            char data [2]; 
-            data[0] = c;
-            printf("INPUT -> %s\n",data );
-
-            switch(c) {
-                case 'a':
-		 	mac_csma_init(CHANNEL,PHY_POWER_m17dBm);  
-		 	send_packet();
-                        break;
-                case 'b':
-			mac_csma_init(CHANNEL,PHY_POWER_m12dBm);
-			send_packet();       		
-  			break;
-                case 'c':
-		    	mac_csma_init(CHANNEL,PHY_POWER_m7dBm);
-		  	send_packet();
-  		   	break;
-                case 'd':
-	            	mac_csma_init(CHANNEL,PHY_POWER_m3dBm);
-		   	send_packet();
-                    	break;
-                case 'e':
-		    	mac_csma_init(CHANNEL,PHY_POWER_0dBm);
-		     	send_packet();
-                    	break;
-                case 'f':                 
-	            	mac_csma_init(CHANNEL,PHY_POWER_3dBm);
-		     	send_packet();
-			break;
-                case 'g':
-		     	mac_csma_init(CHANNEL,PHY_POWER_0dBm);
- 		     	send_packet();
-	             	break;
-                case 'h':
-		   	mac_csma_init(CHANNEL,PHY_POWER_0dBm);
-		   	send_packet();
-                     	break;
-            }
-            
-            if(c != 'r') {
-		sm = SM_TX;
-		return 1;
-			}
-	    else
-			{
-		leds_off(LED_0|LED_1|LED_2);
-		return 0;
-			}
- 
-}
-
 static void handle_cmd(handler_arg_t arg){
-            char_rx((char) (uint32_t) arg);
+    uint8_t send = 0;
+    phy_power_t power;
+    printf("INPUT -> %s\n", arg);
+
+    switch((char) (uint32_t) arg) {
+        case 'a':
+            power = PHY_POWER_m17dBm;
+            send = 1;
+            break;
+        case 'b':
+            power = PHY_POWER_m12dBm;
+            send = 1;
+            break;
+        case 'c':
+            power = PHY_POWER_m7dBm;
+            send = 1;
+            break;
+        case 'd':
+            power = PHY_POWER_m3dBm;
+            send = 1;
+            break;
+        case 'e':
+            power = PHY_POWER_0dBm;
+            send = 1;
+            break;
+        case 'f':                 
+            power = PHY_POWER_3dBm;
+            send = 1;
+            break;
+        case 'h':
+            print_usage();
+            break;
+    }
+    
+    if(send == 1){
+        mac_csma_init(CHANNEL,power);
+        send_packet();
+    }    
 }
 
 static void char_uart(handler_arg_t arg,uint8_t c)
 {
- event_post_from_isr(EVENT_QUEUE_APPLI,handle_cmd,(handler_arg_t)(uint32_t) c);
+    event_post_from_isr(EVENT_QUEUE_APPLI,handle_cmd,(handler_arg_t)(uint32_t) c);
 }
 
+/*
+ * HELP
+ */
+static void print_usage()
+{
+    printf("\n\nIoT-LAB Simple Demo program\n");
+    printf("Type command\n");
+    printf("\th:\tprint this help\n");
+    printf("\ta:\tsend a radio packet\n");
+}
 
 int main (void) {
-       // Openlab platform init
+    // Openlab platform init
 	platform_init();
 	event_init();
 
 	// Switch off the LEDs
-	leds_off(LED_0 | LED_1 | LED_2);
+	leds_off(LED_0|LED_1|LED_2);
 	// Uart initialisation
 	uart_set_rx_handler(uart_print,char_uart, NULL);
 
 	// Init csma Radio mac layer
 	mac_csma_init(CHANNEL, RADIO_POWER);
-        platform_run();
+    platform_run();
     return 0;
 }
 
