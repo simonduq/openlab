@@ -5,8 +5,6 @@
  */
 
 #include <platform.h>
-#include <stdint.h>
-#include <stdlib.h>
 #include <printf.h>
 #include <string.h>
 
@@ -29,38 +27,24 @@
 #define SM_TX    2
 uint8_t sm = SM_IDLE;
 
-uint16_t packet_error(void);
-uint16_t packet_sent(void);
 static void send_packet();
 uint16_t char_rx(uint8_t c);
 static void handle_cmd(handler_arg_t arg);
 static void char_uart(handler_arg_t arg,uint8_t c);
 uint16_t node_id;
 
-// Global variables
-volatile int16_t data_rx, data_tx; // flags to know when events happened
-uint8_t txframe[32]; // frame to send
-uint8_t rxframe[32]; // received frame
-uint16_t rxfrom, rxlen; // information on received frame
-int16_t rxrssi; // received frame rssi
-
-uint8_t tx_c;
-uint8_t send = 0;
-uint16_t txlength;
-uint8_t table[1];
-
 static void send_packet() {
         uint16_t ret;
         static uint8_t num = 0;
-        static char packet[PHY_MAX_TX_LENGTH - 4]; // 4 for mac layer
+        static char packet[PHY_MAX_TX_LENGTH ]; 
         uint16_t length;
         snprintf(packet, sizeof(packet), "Hello World!: %u", num++);
         length = 1 + strlen(packet);
         ret = mac_csma_data_send(ADDR_BROADCAST,(uint8_t *)packet,length);
-
-      
+         
          if (ret != 0)
           printf("packet sent\n");
+         
          else
           printf("Packet sent failed\n");   
     }
@@ -70,48 +54,39 @@ void mac_csma_data_received(uint16_t src_addr,const uint8_t *c, uint8_t length, 
 {
 
        leds_on(LED_0);
-
         packer_uint16_unpack(c,&node_id);
 	printf("%x;%04x;%d\n",src_addr,node_id,rssi);
-	handle_cmd((handler_arg_t) '\n');
 }	
 
-
-uint16_t packet_sent(void) {
-        return 0;
-    }
-
-uint16_t packet_error(void) {
-        return 0;
-
-}
-
 uint16_t char_rx(uint8_t c) {
-            printf("INPUT -> %s\n",c);
+ 
+            char data [2]; 
+            data[0] = c;
+            printf("INPUT -> %s\n",data );
 
             switch(c) {
                 case 'a':
-		 	mac_csma_init(CHANNEL,PHY_POWER_m30dBm);  
+		 	mac_csma_init(CHANNEL,PHY_POWER_m17dBm);  
 		 	send_packet();
-                 	break;
+                        break;
                 case 'b':
-			mac_csma_init(CHANNEL,PHY_POWER_m25dBm);
+			mac_csma_init(CHANNEL,PHY_POWER_m12dBm);
 			send_packet();       		
   			break;
                 case 'c':
-		    	mac_csma_init(CHANNEL,PHY_POWER_m20dBm);
+		    	mac_csma_init(CHANNEL,PHY_POWER_m7dBm);
 		  	send_packet();
   		   	break;
                 case 'd':
-	            	mac_csma_init(CHANNEL,PHY_POWER_m15dBm);
+	            	mac_csma_init(CHANNEL,PHY_POWER_m3dBm);
 		   	send_packet();
                     	break;
                 case 'e':
-		    	mac_csma_init(CHANNEL,PHY_POWER_m10dBm);
+		    	mac_csma_init(CHANNEL,PHY_POWER_0dBm);
 		     	send_packet();
                     	break;
                 case 'f':                 
-	            	mac_csma_init(CHANNEL,PHY_POWER_m5dBm);
+	            	mac_csma_init(CHANNEL,PHY_POWER_3dBm);
 		     	send_packet();
 			break;
                 case 'g':
@@ -119,20 +94,19 @@ uint16_t char_rx(uint8_t c) {
  		     	send_packet();
 	             	break;
                 case 'h':
-		   	mac_csma_init(CHANNEL,PHY_POWER_5dBm);
+		   	mac_csma_init(CHANNEL,PHY_POWER_0dBm);
 		   	send_packet();
                      	break;
             }
             
             if(c != 'r') {
-				sm = SM_TX;
-                printf("char <> 'r' => SM=%d\n",sm);
-				return 1;
+		sm = SM_TX;
+		return 1;
 			}
-			else
+	    else
 			{
-				leds_off(LED_0|LED_1|LED_2);
-				return 0;
+		leds_off(LED_0|LED_1|LED_2);
+		return 0;
 			}
  
 }
@@ -148,7 +122,7 @@ static void char_uart(handler_arg_t arg,uint8_t c)
 
 
 int main (void) {
-    // Openlab platform init
+       // Openlab platform init
 	platform_init();
 	event_init();
 
@@ -159,8 +133,7 @@ int main (void) {
 
 	// Init csma Radio mac layer
 	mac_csma_init(CHANNEL, RADIO_POWER);
-	
-    platform_run();
+        platform_run();
     return 0;
 }
 
