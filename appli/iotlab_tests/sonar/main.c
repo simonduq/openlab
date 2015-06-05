@@ -35,11 +35,13 @@ static void send_packet() {
     length = 1 + strlen(packet);
     ret = mac_csma_data_send(ADDR_BROADCAST,(uint8_t *)packet,length);
      
-     if (ret != 0)
+     if (ret != 0){
         printf("packet sent\n");
-     else
+        leds_on(LED_0); // Green led on
+     }
+     else{
         printf("packet sent failed\n");   
-}
+}}
 
 /* Reception of a radio message */
 void mac_csma_data_received(uint16_t src_addr,const uint8_t *c, uint8_t length, int8_t rssi, uint8_t lqi)
@@ -48,12 +50,12 @@ void mac_csma_data_received(uint16_t src_addr,const uint8_t *c, uint8_t length, 
     leds_on(LED_0);
     packer_uint16_unpack(c,&node_id);
     printf("%x;%04x;%d\n",src_addr,node_id,rssi);
+    leds_on(LED_1); // Red led on
 }	
 
 static void handle_cmd(handler_arg_t arg){
     uint8_t send = 0;
     phy_power_t power;
-    printf("INPUT -> %s\n", arg);
 
     switch((char) (uint32_t) arg) {
         case 'a':
@@ -101,10 +103,16 @@ static void char_uart(handler_arg_t arg,uint8_t c)
  */
 static void print_usage()
 {
-    printf("\n\nIoT-LAB Simple Demo program\n");
+    printf("\n\nIoT-LAB Sonar test\n");
     printf("Type command\n");
     printf("\th:\tprint this help\n");
-    printf("\ta:\tsend a radio packet\n");
+    printf("\ta:\tsend a broadcast message at -17 dBm \n");
+    printf("\tb:\tsend a broadcast message at -12 dBm \n");
+    printf("\tc:\tsend a broadcast message at -7  dBm \n");
+    printf("\td:\tsend a broadcast message at -3  dBm \n");
+    printf("\te:\tsend a broadcast message at  0  dBm \n");
+    printf("\tf:\tsend a broadcast message at  3  dBm \n");
+
 }
 
 int main (void) {
@@ -114,6 +122,8 @@ int main (void) {
 
 	// Switch off the LEDs
 	leds_off(LED_0|LED_1|LED_2);
+        // Print usage help 
+        print_usage();
 	// Uart initialisation
 	uart_set_rx_handler(uart_print,char_uart, NULL);
 
