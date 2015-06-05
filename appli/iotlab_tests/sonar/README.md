@@ -6,6 +6,7 @@ Illustrates radio propagation.
 Behaviour:
   - When receiving a character in [a-f], sends a broadcast message at a specific power.
   - When receiving the character 'h', print help.
+  - When receiving the charecter 'r', turn off leds.
   - When receiving a broadcast message, prints a report oon its serial link.
 
 ## Power specification

@@ -23,6 +23,7 @@
 #define ADDR_BROADCAST 0xFFFF
 
 static void print_usage();
+static void reset_leds();
 static void send_packet();
 static void handle_cmd(handler_arg_t arg);
 static void char_uart(handler_arg_t arg,uint8_t c);
@@ -52,6 +53,11 @@ void mac_csma_data_received(uint16_t src_addr,const uint8_t *c, uint8_t length, 
     printf("%x;%04x;%d\n",src_addr,node_id,rssi);
     leds_on(LED_1); // Red led on
 }	
+
+static void reset_leds()
+{
+    leds_off(LED_0|LED_1|LED_2);
+}
 
 static void handle_cmd(handler_arg_t arg){
     uint8_t send = 0;
@@ -85,7 +91,10 @@ static void handle_cmd(handler_arg_t arg){
         case 'h':
             print_usage();
             break;
-    }
+        case 'r':
+            reset_leds();
+            break;
+            }
     
     if(send == 1){
         mac_csma_init(CHANNEL,power);
