@@ -121,6 +121,8 @@ static void print_usage()
     printf("\td:\tsend a broadcast message at -3  dBm \n");
     printf("\te:\tsend a broadcast message at  0  dBm \n");
     printf("\tf:\tsend a broadcast message at  3  dBm \n");
+    printf("\th:\thelp print this help \n");
+    printf("\tr:\treset leds \n");
 
 }
 
