@@ -3,14 +3,15 @@ Sonar application
 
 Illustrates radio propagation.
 
-When receiving a character in [a-f], sends a broadcast message at a specific power.
-When receiving the character 'h', print help.
-When receiving a broadcast message, prints a report oon its serial link.
+Behaviour:
+  - When receiving a character in [a-f], sends a broadcast message at a specific power.
+  - When receiving the character 'h', print help.
+  - When receiving a broadcast message, prints a report oon its serial link.
 
 ## Power specification
 |'character'   |  a  |  b  |  c  |  d  |  e  |  f  |
 |--------------|-----|-----|-----|-----|-----|-----|
-| power in dBm | -17 | -12 | -7  | -3  |  0  |  3  |  
+| power in dBm | -17 | -12 | -7  | -3  |  0  |  3  |
 
 ## Serial reporting
 The report message written on the serial link contains:
@@ -19,6 +20,6 @@ The report message written on the serial link contains:
   - RSSI
 
 Example:
-'''
+```
 80ce;b012;12345
-'''
+```

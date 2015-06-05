@@ -122,8 +122,8 @@ int main (void) {
 
 	// Switch off the LEDs
 	leds_off(LED_0|LED_1|LED_2);
-        // Print usage help 
-        print_usage();
+    // Print usage help 
+    print_usage();
 	// Uart initialisation
 	uart_set_rx_handler(uart_print,char_uart, NULL);
 
