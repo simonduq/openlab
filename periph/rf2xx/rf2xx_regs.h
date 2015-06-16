@@ -233,6 +233,26 @@ enum rf2xx_phy_tx_pwr
 
 };
 
+enum rf2xx_phy_rx_threshold
+{
+    RF2XX_PHY_RX_THRESHOLD__m101dBm = 0x0,
+    RF2XX_PHY_RX_THRESHOLD__m90dBm  = 0x1,
+    RF2XX_PHY_RX_THRESHOLD__m87dBm  = 0x2,
+    RF2XX_PHY_RX_THRESHOLD__m84dBm  = 0x3,
+    RF2XX_PHY_RX_THRESHOLD__m81dBm  = 0x4,
+    RF2XX_PHY_RX_THRESHOLD__m78dBm  = 0x5,
+    RF2XX_PHY_RX_THRESHOLD__m75dBm  = 0x6,
+    RF2XX_PHY_RX_THRESHOLD__m72dBm  = 0x7,
+    RF2XX_PHY_RX_THRESHOLD__m69dBm  = 0x8,
+    RF2XX_PHY_RX_THRESHOLD__m66dBm  = 0x9,
+    RF2XX_PHY_RX_THRESHOLD__m63dBm  = 0xa,
+    RF2XX_PHY_RX_THRESHOLD__m60dBm  = 0xb,
+    RF2XX_PHY_RX_THRESHOLD__m57dBm  = 0xc,
+    RF2XX_PHY_RX_THRESHOLD__m54dBm  = 0xd,
+    RF2XX_PHY_RX_THRESHOLD__m51dBm  = 0xe,
+    RF2XX_PHY_RX_THRESHOLD__m48dBm  = 0xf,
+};
+
 enum rf2xx_phy_rssi
 {
     RF2XX_PHY_RSSI_MASK__RX_CRC_VALID = 0x80,
