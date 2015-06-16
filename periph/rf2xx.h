@@ -504,6 +504,18 @@ void rf2xx_sleep(rf2xx_t radio);
 void rf2xx_wakeup(rf2xx_t radio);
 
 /**
+ * Set the radio reception rssi threshold.
+ * Frames with an RSSI level below given value are not received.
+ *
+ * This function should be called when the radio is idle.
+ *
+ * \param radio the radio chip to operate on
+ * \param threshold the rssi level limit
+ */
+void rf2xx_set_rx_rssi_threshold(rf2xx_t radio,
+        enum rf2xx_phy_rx_threshold threshold);
+
+/**
  * @}
  * @}
  */

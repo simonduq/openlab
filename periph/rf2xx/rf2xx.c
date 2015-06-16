@@ -616,3 +616,12 @@ static void transfer_done(handler_arg_t caller)
     }
 }
 
+
+void rf2xx_set_rx_rssi_threshold(rf2xx_t radio,
+        enum rf2xx_phy_rx_threshold threshold)
+{
+    uint8_t reg = rf2xx_reg_read(radio, RF2XX_REG__RX_SYN);
+    reg &= 0xF0;
+    reg |= (0x0F & threshold);
+    rf2xx_reg_write(radio, RF2XX_REG__RX_SYN, reg);
+}
