@@ -4,8 +4,9 @@
  *      Author: Ana Garcia Alcala
  */
 
-#include <platform.h>
+#include "platform.h"
 #include <printf.h>
+
 #include <string.h>
 
 #include "mac_csma.h"
@@ -13,14 +14,15 @@
 #include "event.h"
 #include "packer.h"
 #include "unique_id.h"
+#include "rf2xx.h"
 #include "FreeRTOS.h"
 
 // choose channel in [11-26]
 #define CHANNEL 11
 #define RADIO_POWER PHY_POWER_0dBm
 #define PHY_MAX_TX_LENGTH 16
- 
 #define ADDR_BROADCAST 0xFFFF
+extern rf2xx_t rf231;
 
 static void print_usage();
 static void reset_leds();
@@ -127,20 +129,26 @@ static void print_usage()
 }
 
 int main (void) {
-    // Openlab platform init
+    	
+	// Openlab platform init
 	platform_init();
 	event_init();
-
+	
 	// Switch off the LEDs
 	leds_off(LED_0|LED_1|LED_2);
-    // Print usage help 
-    print_usage();
-	// Uart initialisation
-	uart_set_rx_handler(uart_print,char_uart, NULL);
+    	// Print usage help 
+    	print_usage();
+   	 // Uart initialisation
+    	uart_set_rx_handler(uart_print,char_uart, NULL);
 
-	// Init csma Radio mac layer
-	mac_csma_init(CHANNEL, RADIO_POWER);
-    platform_run();
+   	// Init csma Radio mac layer
+    	mac_csma_init(CHANNEL, RADIO_POWER);
+    	
+	phy_idle(platform_phy);
+	rf2xx_set_rx_rssi_threshold(rf231,RF2XX_PHY_RX_THRESHOLD__m57dBm);
+
+    	platform_run();
+    
     return 0;
 }
 
