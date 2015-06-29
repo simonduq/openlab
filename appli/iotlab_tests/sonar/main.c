@@ -136,18 +136,18 @@ int main (void) {
 	
 	// Switch off the LEDs
 	leds_off(LED_0|LED_1|LED_2);
-    	// Print usage help 
-    	print_usage();
-   	 // Uart initialisation
-    	uart_set_rx_handler(uart_print,char_uart, NULL);
+   	// Print usage help 
+   	print_usage();
+   	// Uart initialisation
+    uart_set_rx_handler(uart_print,char_uart, NULL);
 
    	// Init csma Radio mac layer
-    	mac_csma_init(CHANNEL, RADIO_POWER);
-    	
+    mac_csma_init(CHANNEL, RADIO_POWER);
+    // Set RSSI threshold	
 	phy_idle(platform_phy);
 	rf2xx_set_rx_rssi_threshold(rf231,RF2XX_PHY_RX_THRESHOLD__m57dBm);
 
-    	platform_run();
+    platform_run();
     
     return 0;
 }
