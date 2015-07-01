@@ -52,8 +52,8 @@ void fiteco_lib_gwt_set_config(const fiteco_lib_gwt_config_t* config)
     gpio_set_output(gwt.config->battery_charge_gpio,
             gwt.config->battery_charge_pin);
 
-    // Set default mode
-    fiteco_lib_gwt_opennode_power_select(FITECO_GWT_OPENNODE_POWER__MAIN);
+    // Set default mode, not powered
+    fiteco_lib_gwt_opennode_power_select(FITECO_GWT_OPENNODE_POWER__OFF);
     fiteco_lib_gwt_battery_charge_enable();
 }
 
