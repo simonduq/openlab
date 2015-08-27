@@ -10,6 +10,7 @@
 #include "scanf.h"
 
 #include "platform.h"
+#include "shell.h"
 
 /* Drivers */
 #include "unique_id.h"
@@ -46,9 +47,94 @@ static xQueueHandle radio_queue;
 #define MAG_SENS_1_3_Z   (1/950.)   // for ±1.3gauss scale in gauss/LSB
 #define ONE_SECOND  portTICK_RATE_MS * 1000
 
+/* Simple Commands */
+static int cmd_get_time(int argc, char **argv)
+{
+    if (argc != 1)
+        return 1;
+    printf("ACK %s %u ticks_32khz\n", argv[0], soft_timer_time());
+    return 0;
+}
+
+static int cmd_get_uid(int argc, char **argv)
+{
+    if (argc != 1)
+        return 1;
+    printf("ACK %s %08x%08x%08x\n", argv[0],
+            uid->uid32[0], uid->uid32[1], uid->uid32[2]);
+    return 0;
+}
+
+static int cmd_echo(int argc, char **argv)
+{
+    int i;
+    for (i = 1; i < argc; i++)
+        if (i == 1)
+            printf("%s", argv[i]);
+        else
+            printf(" %s", argv[i]);
+    printf("\n");
+    return 0;
+}
+
+/* Leds Commands */
+static int cmd_leds_on(int argc, char **argv)
+{
+    uint8_t leds = 0;
+    if (argc != 2)
+        return 1;
+
+    if (1 != sscanf(argv[1], "%u", &leds))
+        return 1;
+
+    leds_on(leds);
+    printf("ACK %s %x\n", argv[0], leds);
+    return 0;
+}
+
+static int cmd_leds_off(int argc, char **argv)
+{
+    uint8_t leds = 0;
+    if (argc != 2)
+        return 1;
+
+    if (!sscanf(argv[1], "%u", &leds))
+        return 1;
+
+    leds_off(leds);
+    printf("ACK %s %x\n", argv[0], leds);
+    return 0;
+}
 
 
+static int cmd_leds_blink(int argc, char **argv)
+{
+    uint8_t leds = 0;
+    uint32_t time = 0;
+    static soft_timer_t led_alarm;
 
+    if (argc != 3)
+        return 1;
+    if (!sscanf(argv[1], "%u", &leds))
+        return 1;
+    if (!sscanf(argv[2], "%u", &time))
+        return 1;
+
+    if (time) {
+        soft_timer_set_handler(&led_alarm, (handler_t)leds_toggle,
+                (handler_arg_t)(uint32_t)leds);
+        soft_timer_start(&led_alarm, soft_timer_ms_to_ticks(time), 1);
+        printf("ACK %s %u %u\n", argv[0], leds, time);
+    } else {
+        soft_timer_stop(&led_alarm);
+        printf("ACK %s stop\n", argv[0]);
+    }
+    return 0;
+}
+
+
+#define VALID_RADIO_POWER "-17dBm -12dBm -9dBm -7dBm -5dBm -4dBm -3dBm"\
+    " -2dBm -1dBm 0dBm 0.7dBm 1.3dBm 1.8dBm 2.3dBm 2.8dBm 3dBm"
 static unsigned int parse_power(char *power_str)
 {
     /* valid PHY_POWER_ values for rf231 */
@@ -219,180 +305,106 @@ static int test_flash_nand()
 ////////
 
 
-static int cmd_get_light(char *command)
+static int cmd_get_light(int argc, char **argv)
 {
-    if (strcmp(command, "get_light"))
+    if (argc != 1)
         return 1;
-    printf("ACK get_light %f lux\n", isl29020_read_sample());
+    printf("ACK %s %f lux\n", argv[0], isl29020_read_sample());
     return 0;
 }
 
-static int cmd_get_pressure(char *command)
+static int cmd_get_pressure(int argc, char **argv)
 {
-    if (strcmp(command, "get_pressure"))
+    if (argc != 1)
         return 1;
 
     uint32_t pressure;
     lps331ap_read_pres(&pressure);
-    printf("ACK get_pressure %f mbar\n", pressure / 4096.0);
+    printf("ACK %s %f mbar\n", argv[0], pressure / 4096.0);
     return 0;
 }
 
-static int cmd_test_flash_nand(char *command)
+static int cmd_test_flash_nand(int argc, char **argv)
 {
-    if (strcmp(command, "test_flash"))
+    if (argc != 1)
         return 1;
 
     if (test_flash_nand())
-        printf("NACK test_flash read_different_write\n");
+        printf("NACK %s read_different_write\n", argv[0]);
     else
-        printf("ACK test_flash\n");
+        printf("ACK %s \n", argv[0]);
     return 0;
 }
 
 #endif // IOTLAB_M3
 
 
-/* Leds Commands */
-static int cmd_leds_on(char *command)
-{
-    uint8_t leds = 0;
-    if (1 != sscanf(command, "leds_on %u", &leds))
-        return 1;
-
-    leds_on(leds);
-    printf("ACK leds_on %x\n", leds);
-    return 0;
-}
-
-static int cmd_leds_off(char *command)
-{
-    uint8_t leds = 0;
-    if (1 != sscanf(command, "leds_off %u", &leds))
-        return 1;
-
-    leds_off(leds);
-    printf("ACK leds_off %x\n", leds);
-    return 0;
-}
-
-
-static int cmd_leds_blink(char *command)
-{
-    uint8_t leds = 0;
-    uint32_t period = 0;
-    static soft_timer_t led_alarm;
-    if (2 != sscanf(command, "leds_blink %u %u", &leds, &period))
-        return 1;
-
-    if (period) {
-        soft_timer_set_handler(&led_alarm, (handler_t)leds_toggle,
-                (handler_arg_t)(uint32_t)leds);
-        soft_timer_start(&led_alarm, soft_timer_ms_to_ticks(period), 1);
-        printf("ACK leds_blink %u %u\n", leds, period);
-    } else {
-        soft_timer_stop(&led_alarm);
-        printf("ACK leds_blink stop\n");
-    }
-    return 0;
-}
-
-/* Leds Commands */
-
 
 /* ON<->CN Commands */
-static int cmd_test_i2c(char *command)
+static int cmd_test_i2c(int argc, char **argv)
 {
-    if (strcmp(command, "test_i2c"))
+    if (argc != 1)
         return 1;
 
     char *i2c2_err_msg = on_test_i2c2();
     if (NULL == i2c2_err_msg)
-        printf("ACK test_i2c\n");
+        printf("ACK %s\n", argv[0]);
     else
-        printf("NACK test_i2c %s\n", i2c2_err_msg);
+        printf("NACK %s %s\n", argv[0], i2c2_err_msg);
     return 0;
 }
 
-static int cmd_test_gpio(char *command)
+static int cmd_test_gpio(int argc, char **argv)
 {
-    if (strcmp(command, "test_gpio"))
+    if (argc != 1)
         return 1;
 
     if (on_test_gpio())
-        printf("NACK test_gpio\n");
+        printf("NACK %s\n", argv[0]);
     else
-        printf("ACK test_gpio\n");
+        printf("ACK %s\n", argv[0]);
     return 0;
 }
 
 /* /ON<->CN Commands */
 
 
-/* Simple Commands */
-static int cmd_get_time(char *command)
-{
-    if (strcmp(command, "get_time"))
-        return 1;
-    printf("ACK get_time %u ticks_32khz\n", soft_timer_time());
-    return 0;
-}
-
-static int cmd_get_uid(char *command)
-{
-    if (strcmp(command, "get_uid"))
-        return 1;
-    printf("ACK get_uid %08x%08x%08x\n", uid->uid32[0],
-            uid->uid32[1], uid->uid32[2]);
-    return 0;
-}
-
-static int cmd_echo(char *command)
-{
-    if (1 != sscanf(command, "echo %[^\n]", command))
-        return 1;
-    printf("%s\n", command);
-    return 0;
-}
-
-
-/* /Simple Commands */
 
 /* Get Sensor */
 
-static int _cmd_get_xyz(char *command, char *get_cmd, char *unit,
+static int _cmd_get_xyz(int argc, char **argv, char *unit,
         unsigned int (*sensor)(int16_t*),
         float x_factor, float y_factor, float z_factor)
 {
-    if (strcmp(command, get_cmd))
+    if (argc != 1)
         return 1;
 
     int16_t xyz[3];
     if (sensor(xyz))
-        printf("NACK %s error\n", get_cmd);
+        printf("NACK %s error\n", argv[0]);
     else
-        printf("ACK %s %f %f %f %s\n", get_cmd,
+        printf("ACK %s %f %f %f %s\n", argv[0],
                 xyz[0] * x_factor, xyz[1] * y_factor, xyz[2] * z_factor,
                 unit);
     return 0;
 }
 
 
-static int cmd_get_gyro(char *command)
+static int cmd_get_gyro(int argc, char **argv)
 {
-    return _cmd_get_xyz(command, "get_gyro", "dps", l3g4200d_read_rot_speed,
+    return _cmd_get_xyz(argc, argv, "dps", l3g4200d_read_rot_speed,
             GYR_SENS_8_75, GYR_SENS_8_75, GYR_SENS_8_75);
 }
 
-static int cmd_get_accelero(char *command)
+static int cmd_get_accelero(int argc, char **argv)
 {
-    return _cmd_get_xyz(command, "get_accelero", "g", lsm303dlhc_read_acc,
+    return _cmd_get_xyz(argc, argv, "g", lsm303dlhc_read_acc,
             ACC_SENS_2G, ACC_SENS_2G, ACC_SENS_2G);
 }
 
-static int cmd_get_magneto(char *command)
+static int cmd_get_magneto(int argc, char **argv)
 {
-    return _cmd_get_xyz(command, "get_magneto", "gauss", lsm303dlhc_read_mag,
+    return _cmd_get_xyz(argc, argv, "gauss", lsm303dlhc_read_mag,
             MAG_SENS_1_3_XY, MAG_SENS_1_3_XY, MAG_SENS_1_3_Z);
 }
 
@@ -400,54 +412,49 @@ static int cmd_get_magneto(char *command)
 
 /* Radio */
 
-static int cmd_radio_pkt(char *command)
+static int _radio_cmd(int argc, char **argv,
+        char *(*radio_fct)(uint8_t, uint8_t))
 {
-    char power[8] = {'\0'};
-    uint8_t channel, tx_power;
+    if (argc != 3)
+        return 1;
 
-    if (2 != sscanf(command, "radio_pkt %u %8s", &channel, power))
+    // Channel
+    uint8_t channel;
+    if (1 != sscanf(argv[1], "%u", &channel))
         return 1;
     if (11 > channel || channel > 26)
         return 1;
-    tx_power = parse_power(power);
-    if (255 == tx_power)
-        return 1;
 
-    char *err_msg = radio_pkt(channel, tx_power);
+    // Power
+    uint8_t power;
+    power = parse_power(argv[2]);
+    if (255 == power) {
+        printf("NACK power %s not in \n%s\n", argv[2], VALID_RADIO_POWER);
+        return 1;
+    }
+
+    char *err_msg = radio_fct(channel, power);
     if (NULL == err_msg)
-        printf("ACK radio_pkt %u %s\n", channel, power);
+        printf("ACK %s %u %s\n", argv[0], channel, argv[2]);
     else
-        printf("NACK radio_pkt %s\n", err_msg);
+        printf("NACK %s %s\n", argv[0], err_msg);
+
     return 0;
 }
 
-
-static int cmd_radio_ping_pong(char *command)
+static int cmd_radio_pkt(int argc, char **argv)
 {
-    char power[8];
-    uint8_t channel, tx_power;
-
-    if (2 != sscanf(command, "radio_ping_pong %u %8s", &channel, power))
-        return 1;
-    if (11 > channel || channel > 26)
-        return 1;
-    tx_power = parse_power(power);
-    if (255 == tx_power)
-        return 1;
-
-    char *err_msg = radio_ping_pong(channel, tx_power);
-    if (NULL == err_msg)
-        printf("ACK radio_ping_pong %u %s\n", channel, tx_power);
-    else
-        printf("NACK radio_ping_pong %s\n", err_msg);
-    return 0;
+    return _radio_cmd(argc, argv, radio_pkt);
 }
 
-/* /Radio */
+static int cmd_radio_ping_pong(int argc, char **argv)
+{
+    return _radio_cmd(argc, argv, radio_ping_pong);
+}
 
 
-/* GPS */
-#ifdef IOTLAB_A8_M3
+
+#ifdef IOTLAB_A8_M3 // GPS
 
 static volatile uint32_t seconds = 0;
 static void pps_handler_irq(handler_arg_t arg)
@@ -456,117 +463,78 @@ static void pps_handler_irq(handler_arg_t arg)
     seconds++;
 }
 
-static int cmd_test_pps_start(char *command)
+static int cmd_test_pps_start(int argc, char **argv)
 {
-    if (strcmp(command, "test_pps_start"))
+    if (argc != 1)
         return 1;
     // third gpio line
     seconds = 0;
     gpio_enable_irq(&gpio_config[3], IRQ_RISING, pps_handler_irq, NULL);
-    printf("ACK test_pps_start\n");
+    printf("ACK %s\n", argv[0]);
     return 0;
 }
 
-static int cmd_test_pps_stop(char *command)
+static int cmd_test_pps_stop(int argc, char **argv)
 {
-    if (strcmp(command, "test_pps_stop"))
+    if (argc != 1)
         return 1;
     // third gpio line
     seconds = 0;
     gpio_disable_irq(&gpio_config[3]);
-    printf("ACK test_pps_stop\n");
+    printf("ACK %s\n", argv[0]);
     return 0;
 }
 
-static int cmd_test_pps_get(char *command)
+static int cmd_test_pps_get(int argc, char **argv)
 {
-    if (strcmp(command, "test_pps_get"))
+    if (argc != 1)
         return 1;
-    printf("ACK test_pps_get %d pps\n", seconds);
+    printf("ACK %s %d pps\n", argv[0], seconds);
     return 0;
 }
 
-#endif
-/* /GPS */
+#endif // A8 - GPS
 
 
-/* command_func_t
- * Return 0 if command has been handled
- * Return non zero if the command was not for us
- */
-typedef int (*command_func_t)(char *);
-static command_func_t commands_handlers[] = {
+struct shell_command commands[] = {
+    {"echo",           "echo given arguments", cmd_echo},
+    {"get_time",       "Print board time",     cmd_get_time},
+    {"get_uid",        "Print board uid",      cmd_get_uid},
 
-    cmd_get_time,
-    cmd_get_uid,
-    cmd_echo,
+    {"leds_on",        "[leds_flag] Turn given leds on",  cmd_leds_on},
+    {"leds_off",       "[leds_flag] Turn given leds off", cmd_leds_off},
+    {"leds_blink",     "[leds_flag] [time] Blink leds every 'time'. If 'time' == 0 disable", cmd_leds_blink},
 
-    cmd_leds_on,
-    cmd_leds_off,
-    cmd_leds_blink,
+    {"get_accelero",   "Get accelero sensor",   cmd_get_accelero},
+    {"get_magneto",    "Get magnneto sensor",   cmd_get_magneto},
+    {"get_gyro",       "Get gyro sensor",       cmd_get_gyro},
 
-    cmd_get_accelero,
-    cmd_get_magneto,
-    cmd_get_gyro,
-
-    cmd_test_i2c,
-    cmd_test_gpio,
-
-    cmd_radio_pkt,
-    cmd_radio_ping_pong,
+    {"test_i2c",       "Test i2c with CN",      cmd_test_i2c},
+    {"test_gpio",      "Test gpio with CN",     cmd_test_gpio},
 
 #ifdef IOTLAB_M3
-    cmd_get_light,
-    cmd_get_pressure,
-    cmd_test_flash_nand,
+    {"get_light",      "Get light sensor",      cmd_get_light},
+    {"get_pressure",   "Get pressure sensor",   cmd_get_pressure},
+    {"test_flash",     "Test flash nand",       cmd_test_flash_nand},
 #endif
+
+    {"radio_pkt",       "[channel] [power] Send radio packet",    cmd_radio_pkt},
+    {"radio_ping_pong", "[channel] [power] Radio ping pong test", cmd_radio_ping_pong},
 
 #ifdef IOTLAB_A8_M3
-    cmd_test_pps_start,
-    cmd_test_pps_stop,
-    cmd_test_pps_get,
+    {"test_pps_start", "Start PPS test",        cmd_test_pps_start},
+    {"test_pps_stop",  "Stop PPS test",         cmd_test_pps_stop},
+    {"test_pps_get",   "Get current PPS count", cmd_test_pps_get},
 #endif
 
-    NULL
+    {NULL, NULL, NULL},
 };
-
-
-static void parse_command(handler_arg_t arg)
-{
-    char *command_buffer = arg;
-    command_func_t *callback = NULL;
-
-    for (callback = commands_handlers; *callback != NULL; callback++) {
-        if (0 == (*callback)(command_buffer))
-            return;  // command handled
-    }
-    printf("NACK invalid_command '%s'\n", command_buffer);
-}
-
-
-static void char_handler_irq(handler_arg_t arg, uint8_t c)
-{
-    static char command_buffer[COMMAND_LEN];
-    static size_t index = 0;
-
-    if (('\n' != c) && ('\r' != c))
-        command_buffer[index++] = c;
-
-    // line full or new line
-    if (('\n' == c) || (COMMAND_LEN == index)) {
-        command_buffer[index] = '\0';
-        index = 0;
-        event_post_from_isr(EVENT_QUEUE_APPLI, parse_command, command_buffer);
-    }
-}
 
 int main(void)
 {
     platform_init();
     soft_timer_init();
     event_init();
-
-    uart_set_rx_handler(uart_print, char_handler_irq, NULL);
 
     radio_queue = xQueueCreate(1, sizeof(int));  // radio sync queue
 
@@ -591,6 +559,7 @@ int main(void)
             LSM303DLHC_ACC_RATE_400HZ, LSM303DLHC_ACC_SCALE_2G,
             LSM303DLHC_ACC_UPDATE_ON_READ);
 
+    shell_init(commands, 0);
     platform_run();
     return 1;
 }
