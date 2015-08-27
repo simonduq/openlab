@@ -12,11 +12,16 @@ include_directories(
 
 if (PLATFORM STREQUAL "iotlab-m3")
 add_executable(m3_autotest main)
-target_link_libraries(m3_autotest iotlab_autotest_on iotlab_gpio platform)
+target_link_libraries(m3_autotest iotlab_autotest_on iotlab_gpio shell platform)
 endif (PLATFORM STREQUAL "iotlab-m3")
 
 if (PLATFORM STREQUAL "iotlab-a8-m3")
 add_executable(a8_autotest main)
-target_link_libraries(a8_autotest iotlab_autotest_on iotlab_gpio platform)
+target_link_libraries(a8_autotest iotlab_autotest_on iotlab_gpio shell platform)
 endif (PLATFORM STREQUAL "iotlab-a8-m3")
+
+if (PLATFORM STREQUAL "agile-fox")
+add_executable(fox_autotest main)
+target_link_libraries(fox_autotest shell platform)
+endif (PLATFORM STREQUAL "agile-fox")
 

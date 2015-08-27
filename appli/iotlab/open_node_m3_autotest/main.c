@@ -340,6 +340,7 @@ static int cmd_test_flash_nand(int argc, char **argv)
 
 
 
+#if defined(IOTLAB_M3) || defined(IOTLAB_A8_M3)
 /* ON<->CN Commands */
 static int cmd_test_i2c(int argc, char **argv)
 {
@@ -365,6 +366,7 @@ static int cmd_test_gpio(int argc, char **argv)
         printf("ACK %s\n", argv[0]);
     return 0;
 }
+#endif
 
 /* /ON<->CN Commands */
 
@@ -509,8 +511,10 @@ struct shell_command commands[] = {
     {"get_magneto",    "Get magnneto sensor",   cmd_get_magneto},
     {"get_gyro",       "Get gyro sensor",       cmd_get_gyro},
 
+#if defined(IOTLAB_M3) || defined(IOTLAB_A8_M3)
     {"test_i2c",       "Test i2c with CN",      cmd_test_i2c},
     {"test_gpio",      "Test gpio with CN",     cmd_test_gpio},
+#endif//
 
 #ifdef IOTLAB_M3
     {"get_light",      "Get light sensor",      cmd_get_light},

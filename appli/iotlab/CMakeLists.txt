@@ -6,7 +6,6 @@ if (PLATFORM MATCHES "iotlab-.*")
 add_subdirectory(control_node)
 add_subdirectory(idle_with_dc)
 
-add_subdirectory(open_node_m3_autotest)
 
 add_subdirectory(node_radio_characterization)
 
@@ -19,4 +18,9 @@ add_subdirectory(periph)
 add_subdirectory(fiteco_test)
 
 
+add_subdirectory(open_node_m3_autotest)
 endif (PLATFORM MATCHES "iotlab-.*")
+
+if (PLATFORM STREQUAL "agile-fox")
+add_subdirectory(open_node_m3_autotest)
+endif (PLATFORM STREQUAL "agile-fox")
