@@ -9,3 +9,4 @@ add_subdirectory(m3_node_interract_cn)
 add_subdirectory(foren6_sniffer)
 
 add_subdirectory(battery_test)
+add_subdirectory(shell_test)

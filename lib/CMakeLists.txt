@@ -56,3 +56,6 @@ add_library(packet STATIC packet/packet packet/packet_storage)
 target_link_libraries(packet freertos)
 
 add_subdirectory(oml)
+
+
+add_library(shell STATIC shell/shell)
