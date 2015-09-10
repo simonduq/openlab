@@ -97,10 +97,12 @@ static int32_t on_start(uint8_t cmd_type, packet_t *pkt)
     if (1 != pkt->length)
         return 1;
 
-    // DC <=> charge
-    if (DC == *pkt->data) {
+    if (DC_CHARGE == *pkt->data) {
         fiteco_lib_gwt_opennode_power_select(FITECO_GWT_OPENNODE_POWER__MAIN);
         fiteco_lib_gwt_battery_charge_enable();
+    } else if (DC_NO_CHARGE == *pkt->data) {
+        fiteco_lib_gwt_opennode_power_select(FITECO_GWT_OPENNODE_POWER__MAIN);
+        fiteco_lib_gwt_battery_charge_disable();
     } else if (BATTERY == *pkt->data) {
         fiteco_lib_gwt_opennode_power_select(FITECO_GWT_OPENNODE_POWER__BATTERY);
         fiteco_lib_gwt_battery_charge_disable();
@@ -128,8 +130,10 @@ static int32_t on_stop(uint8_t cmd_type, packet_t *pkt)
     fiteco_lib_gwt_opennode_power_select(FITECO_GWT_OPENNODE_POWER__OFF);
 
     // Charge if DC
-    if (DC == *pkt->data)
+    if (DC_CHARGE == *pkt->data)
         fiteco_lib_gwt_battery_charge_enable();
+    else if (DC_NO_CHARGE == *pkt->data)
+        fiteco_lib_gwt_battery_charge_disable();
     else if (BATTERY == *pkt->data)
         fiteco_lib_gwt_battery_charge_disable();
     else

@@ -21,11 +21,20 @@ gateway_fw_path()
     ls ${build}/bin/*idle.elf
 }
 
+cn_fw_path()
+{
+    local platform=$1
+    local build=build.release.${platform}
+    ls ${build}/bin/control_node.elf
+}
 
+
+compile_release iotlab-cn
 compile_release iotlab-m3
 compile_release iotlab-a8-m3
 compile_release agile-fox
 
+cn_fw_path      iotlab-cn
 gateway_fw_path iotlab-m3
 gateway_fw_path iotlab-a8-m3
 gateway_fw_path agile-fox
