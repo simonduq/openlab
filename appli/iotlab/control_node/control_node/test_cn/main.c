@@ -76,7 +76,7 @@ int main()
     //set the open node power to off and charge the battery
     //fiteco_lib_gwt_opennode_power_select(FITECO_GWT_OPENNODE_POWER__MAIN);
     fiteco_lib_gwt_opennode_power_select(FITECO_GWT_OPENNODE_POWER__OFF);
-    fiteco_lib_gwt_battery_charge_enable();
+    fiteco_lib_gwt_battery_charge_disable();
     fiteco_lib_gwt_opennode_power_select(FITECO_GWT_OPENNODE_POWER__MAIN);
     cn_i2c_start();
 
