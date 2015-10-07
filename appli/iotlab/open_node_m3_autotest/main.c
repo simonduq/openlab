@@ -22,6 +22,8 @@
 #include "n25xxx.h"
 #endif
 
+#include "phy_power.c.h"
+
 #include "iotlab_gpio.h"
 #include "iotlab_autotest_on.h"
 
@@ -131,55 +133,6 @@ static int cmd_leds_blink(int argc, char **argv)
     }
     return 0;
 }
-
-
-#define VALID_RADIO_POWER "-17dBm -12dBm -9dBm -7dBm -5dBm -4dBm -3dBm"\
-    " -2dBm -1dBm 0dBm 0.7dBm 1.3dBm 1.8dBm 2.3dBm 2.8dBm 3dBm"
-static unsigned int parse_power(char *power_str)
-{
-    /* valid PHY_POWER_ values for rf231 */
-
-    if (strcmp("-17dBm", power_str) == 0)
-        return PHY_POWER_m17dBm;
-    if (strcmp("-12dBm", power_str) == 0)
-        return PHY_POWER_m12dBm;
-
-    if (strcmp("-9dBm", power_str) == 0)
-        return PHY_POWER_m9dBm;
-    if (strcmp("-7dBm", power_str) == 0)
-        return PHY_POWER_m7dBm;
-    if (strcmp("-5dBm", power_str) == 0)
-        return PHY_POWER_m5dBm;
-    if (strcmp("-4dBm", power_str) == 0)
-        return PHY_POWER_m4dBm;
-    if (strcmp("-3dBm", power_str) == 0)
-        return PHY_POWER_m3dBm;
-    if (strcmp("-2dBm", power_str) == 0)
-        return PHY_POWER_m2dBm;
-    if (strcmp("-1dBm", power_str) == 0)
-        return PHY_POWER_m1dBm;
-
-    if (strcmp("0dBm", power_str) == 0)
-        return PHY_POWER_0dBm;
-    if (strcmp("0.7dBm", power_str) == 0)
-        return PHY_POWER_0_7dBm;
-
-    if (strcmp("1.3dBm", power_str) == 0)
-        return PHY_POWER_1_3dBm;
-    if (strcmp("1.8dBm", power_str) == 0)
-        return PHY_POWER_1_8dBm;
-
-    if (strcmp("2.3dBm", power_str) == 0)
-        return PHY_POWER_2_3dBm;
-    if (strcmp("2.8dBm", power_str) == 0)
-        return PHY_POWER_2_8dBm;
-
-    if (strcmp("3dBm", power_str) == 0)
-        return PHY_POWER_3dBm;
-
-    return 255;
-};
-
 
 static void radio_rx_tx_done(phy_status_t status)
 {
@@ -429,9 +382,9 @@ static int _radio_cmd(int argc, char **argv,
 
     // Power
     uint8_t power;
-    power = parse_power(argv[2]);
+    power = parse_power_rf231(argv[2]);
     if (255 == power) {
-        printf("NACK power %s not in \n%s\n", argv[2], VALID_RADIO_POWER);
+        printf("NACK power %s not in \n%s\n", argv[2], radio_power_rf231_str);
         return 1;
     }
 
