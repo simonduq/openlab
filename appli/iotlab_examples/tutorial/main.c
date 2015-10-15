@@ -15,6 +15,8 @@
 #include "mac_csma.h"
 #include "phy.h"
 
+#include "iotlab_uid_num_hashtable.h"
+
 // choose channel in [11-26]
 #define CHANNEL 11
 #define RADIO_POWER PHY_POWER_0dBm
@@ -116,10 +118,13 @@ void mac_csma_data_received(uint16_t src_addr,
 {
     // disable help message after receiving one packet
     print_help = 0;
+    struct node src_node = node_from_uid(src_addr);
 
     printf("\nradio > ");
-    printf("Got packet from %x. Len: %u Rssi: %d: '%s'\n",
-            src_addr, length, rssi, (const char*)data);
+    printf("Got packet from %x (%s-%u). Len: %u Rssi: %d: '%s'\n",
+            src_addr, src_node.type_str, src_node.num,
+            length, rssi, (const char*)data);
+
     handle_cmd((handler_arg_t) '\n');
 }
 

@@ -6,11 +6,23 @@
 #include <debug.h>
 
 
+static char *node_type_string(uint8_t type)
+{
+    switch (type) {
+    case M3:
+        return "m3";
+    case A8:
+        return "a8";
+    default:
+        return NULL;
+    }
+}
+
 
 struct node node_from_uid(uint16_t uid)
 {
     log_info("node_from_uid(0x%x)", uid);
-    struct node found_node = {0, 0};
+    struct node found_node = {0, 0, NULL};
     size_t first, last, cur;
     const struct node_entry *current;
 
@@ -29,6 +41,7 @@ struct node node_from_uid(uint16_t uid)
         } else { // Equals, found it
             found_node.type = 0xf & (current->node >> 24);
             found_node.num  = 0x0fff & current->node;
+            found_node.type_str = node_type_string(found_node.type);
             log_info("Node %u-%u found", found_node.type, found_node.num);
             return found_node;
         }

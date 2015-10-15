@@ -18,6 +18,7 @@ struct node_entry {
 struct node {
     uint8_t type;
     uint32_t num;
+    char *type_str;
 };
 
 extern const struct node_entry const nodes_uid_dict[1249];
