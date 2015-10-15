@@ -35,10 +35,11 @@ static soft_timer_t tx_timer;
 volatile int8_t print_help  = 1;
 volatile int8_t leds_active = 1;
 
+
+#ifdef IOTLAB_M3
 /**
  * Sensors
  */
-#ifdef IOTLAB_M3
 static void temperature_sensor()
 {
     int16_t value;
@@ -46,11 +47,13 @@ static void temperature_sensor()
     printf("Chip temperature measure: %f\n", 42.5 + value / 480.0);
 }
 
+
 static void light_sensor()
 {
     float value = isl29020_read_sample();
     printf("Luminosity measure: %f lux\n", value);
 }
+
 
 static void pressure_sensor()
 {
@@ -83,6 +86,7 @@ static void send_packet()
     else
         printf("Packet sent failed\n");
 }
+
 
 static void send_big_packet()
 {
@@ -119,23 +123,26 @@ void mac_csma_data_received(uint16_t src_addr,
     handle_cmd((handler_arg_t) '\n');
 }
 
-/* Leds action */
+
+/**
+ * Leds action
+ */
 static void leds_action()
 {
-  printf("\nleds > ");
-  if (leds_active) {
-    // The alarm timer looses the hand
-    leds_active = 0;
-    // Switch off the LEDs
-    leds_off(LED_0 | LED_1 | LED_2);
-    printf("off\n");
-  } else {
-    // The alarm timer takes the hand
-    leds_active = 1;
-    printf("blinking\n");
-  }
-
+    printf("\nleds > ");
+    if (leds_active) {
+        // The alarm timer looses the hand
+        leds_active = 0;
+        // Switch off the LEDs
+        leds_off(LED_0 | LED_1 | LED_2);
+        printf("off\n");
+    } else {
+        // The alarm timer takes the hand
+        leds_active = 1;
+        printf("blinking\n");
+    }
 }
+
 
 /*
  * HELP
@@ -156,6 +163,7 @@ static void print_usage()
     if (print_help)
         printf("\n Type Enter to stop printing this help\n");
 }
+
 
 static void hardware_init()
 {
@@ -187,8 +195,8 @@ static void hardware_init()
     // Initialize a openlab timer
     soft_timer_set_handler(&tx_timer, alarm, NULL);
     soft_timer_start(&tx_timer, BLINK_PERIOD, 1);
-
 }
+
 
 static void handle_cmd(handler_arg_t arg)
 {
@@ -223,6 +231,7 @@ static void handle_cmd(handler_arg_t arg)
     }
 }
 
+
 int main()
 {
     hardware_init();
@@ -232,21 +241,23 @@ int main()
 
 
 /* Reception of a char on UART and store it in 'cmd' */
-static void char_rx(handler_arg_t arg, uint8_t c) {
+static void char_rx(handler_arg_t arg, uint8_t c)
+{
     // disable help message after receiving char
     print_help = 0;
     event_post_from_isr(EVENT_QUEUE_APPLI, handle_cmd,
             (handler_arg_t)(uint32_t) c);
 }
 
-static void alarm(handler_arg_t arg) {
-     if (leds_active)
-       leds_toggle(LED_0 | LED_1 | LED_2);
+
+static void alarm(handler_arg_t arg)
+{
+    if (leds_active)
+        leds_toggle(LED_0 | LED_1 | LED_2);
 
     /* Print help before getting first real \n */
     if (print_help) {
         event_post(EVENT_QUEUE_APPLI, handle_cmd, (handler_arg_t) 'h');
         event_post(EVENT_QUEUE_APPLI, handle_cmd, (handler_arg_t) '\n');
     }
-
 }
