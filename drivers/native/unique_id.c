@@ -27,8 +27,8 @@
 #include "unique_id.h"
 #include "printf.h"
 
-uid_t uuid;
-const uid_t const *uid = &uuid;
+openlab_uid_t uuid;
+const openlab_uid_t const *uid = &uuid;
 
 void uid_print()
 {

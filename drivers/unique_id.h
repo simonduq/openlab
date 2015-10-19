@@ -52,12 +52,12 @@ typedef union
     uint32_t uid32[3];
     uint16_t uid16[6];
     uint8_t  uid8 [12];
-} uid_t;
+} openlab_uid_t;
 
 /**
  * Pointer to the Unique ID.
  */
-extern const uid_t const *uid;
+extern const openlab_uid_t const *uid;
 
 /**
  * Return a 16b uid processed from uid

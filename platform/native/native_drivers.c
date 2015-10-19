@@ -41,7 +41,7 @@ openlab_timer_t TIM_6 = TIM_6, TIM_7  = TIM_7;
 openlab_timer_t TIM_9 = TIM_9, TIM_10 = TIM_10, TIM_11 = TIM_11;
 
 /* unique ID */
-uid_t native_uuid;
+openlab_uid_t native_uuid;
 
 void native_uuid_init()
 {
