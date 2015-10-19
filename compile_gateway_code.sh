@@ -21,6 +21,13 @@ gateway_fw_path()
     ls ${build}/bin/*idle.elf
 }
 
+tutorial_fw_path()
+{
+    local platform=$1
+    local build=build.release.${platform}
+    ls ${build}/bin/tutorial_*.elf
+}
+
 cn_fw_path()
 {
     local platform=$1
@@ -38,4 +45,5 @@ cn_fw_path      iotlab-cn
 gateway_fw_path iotlab-m3
 gateway_fw_path iotlab-a8-m3
 gateway_fw_path agile-fox
-
+tutorial_fw_path iotlab-m3
+tutorial_fw_path iotlab-a8-m3
