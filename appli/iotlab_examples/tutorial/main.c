@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <printf.h>
 #include <string.h>
+#include <time.h>
 
 #include "phy.h"
 #include "soft_timer.h"
@@ -15,6 +16,7 @@
 #include "iotlab_uid.h"
 #include "mac_csma.h"
 #include "phy.h"
+#include "iotlab_i2c.h"
 
 #include "iotlab_uid_num_hashtable.h"
 
@@ -76,6 +78,28 @@ static void print_node_uid()
     struct node node = node_from_uid(node_uid);
     printf("Current node uid: %04x (%s-%u)\n",
             node_uid, node.type_str, node.num);
+}
+
+
+/**
+ * Control Node interaction
+ */
+
+static void print_cn_time()
+{
+    // Query control node time
+    struct soft_timer_timeval time;
+    if (iotlab_get_time(&time)) {
+        printf("Error while getting Control node time\n");
+        return;
+    }
+
+    struct tm *local_time = gmtime((time_t *)&time.tv_sec);
+    char date_str[64];
+    strftime(date_str, (sizeof date_str), "%Y-%m-%d %H:%M:%S", local_time);
+
+    printf("Control Node time: %u.%06u. Date is: UTC %s.%06u\n",
+            time.tv_sec, time.tv_usec, date_str, time.tv_usec);
 }
 
 
@@ -176,6 +200,7 @@ static void print_usage()
     printf("\tp:\tpressure measure\n");
 #endif
     printf("\tu:\tprint node uid\n");
+    printf("\td:\tread current date using control_node\n");
     printf("\ts:\tsend a radio packet\n");
     printf("\tb:\tsend a big radio packet\n");
     printf("\te:\ttoggle leds blinking\n");
@@ -211,6 +236,9 @@ static void hardware_init()
     // Init csma Radio mac layer
     mac_csma_init(CHANNEL, RADIO_POWER);
 
+    // Init control_node i2c
+    iotlab_i2c_init();
+
     // Initialize a openlab timer
     soft_timer_set_handler(&tx_timer, alarm, NULL);
     soft_timer_start(&tx_timer, BLINK_PERIOD, 1);
@@ -233,6 +261,9 @@ static void handle_cmd(handler_arg_t arg)
 #endif
         case 'u':
             print_node_uid();
+            break;
+        case 'd':
+            print_cn_time();
             break;
         case 's':
             send_packet();
