@@ -12,6 +12,7 @@
 #include "lps331ap.h"
 #include "isl29020.h"
 #endif
+#include "iotlab_uid.h"
 #include "mac_csma.h"
 #include "phy.h"
 
@@ -64,6 +65,18 @@ static void pressure_sensor()
     printf("Pressure measure: %f mabar\n", value / 4096.0);
 }
 #endif
+
+
+/**
+ * Node UID
+ */
+static void print_node_uid()
+{
+    uint16_t node_uid = iotlab_uid();
+    struct node node = node_from_uid(node_uid);
+    printf("Current node uid: %04x (%s-%u)\n",
+            node_uid, node.type_str, node.num);
+}
 
 
 /*
@@ -162,6 +175,7 @@ static void print_usage()
     printf("\tl:\tluminosity measure\n");
     printf("\tp:\tpressure measure\n");
 #endif
+    printf("\tu:\tprint node uid\n");
     printf("\ts:\tsend a radio packet\n");
     printf("\tb:\tsend a big radio packet\n");
     printf("\te:\ttoggle leds blinking\n");
@@ -217,6 +231,9 @@ static void handle_cmd(handler_arg_t arg)
             pressure_sensor();
             break;
 #endif
+        case 'u':
+            print_node_uid();
+            break;
         case 's':
             send_packet();
             break;
