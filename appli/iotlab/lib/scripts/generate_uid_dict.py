@@ -141,6 +141,7 @@ def generate_a_c_hash_table(radio_type, archi_tables, lib_file_name):
     struct node {
         uint8_t type;
         uint32_t num;
+        char *type_str;
     };
 
     extern const struct node_entry const nodes_uid_dict[%u];
