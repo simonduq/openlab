@@ -4,6 +4,7 @@
 """ Run radio characterizations on nodes """
 
 import os
+import json
 import sys
 import time
 
@@ -59,7 +60,7 @@ class RadioCharac(object):
                 #results.append("%s" % ' '.join(line[2:6]))
                 results['success'].append(tuple(line[2:6]))
             elif line[0] == 'radio_rx_error':
-                sender = self.current_sender_node.node_id
+                sender = self.current_sender_node.hostname
 
                 # add list for this node
                 results = self.state['radio'][sender].get(
@@ -69,7 +70,7 @@ class RadioCharac(object):
                 results['errors'].append("%s" % line[1])
 
                 # print >> sys.stderr, "Radio_rx_error %s %s sender %s" % (
-                #         node_id, line[1], self.current_sender_node.node_id)
+                #         node_id, line[1], self.current_sender_node.hostname)
 
             else:
                 print >> sys.stderr, "UNKOWN_MSG: %s %r" % (node_id, msg)
@@ -82,6 +83,9 @@ class RadioCharac(object):
         """ Run the radio characterizations on nodes"""
 
         self.start()
+        # wait until aggregator started, there may be issues when nodes
+        # disconnect (aggregator bug)
+        time.sleep(1)
 
         self.state['options'] = {'power': power, 'channel': channel,
                                  'num_pkts': num_pkts, 'delay': delay}
@@ -97,7 +101,7 @@ class RadioCharac(object):
         self.state['radio'] = {}
 
         for node in self.nodes.values():
-            self.state['radio'][node.node_id] = {}
+            self.state['radio'][node.hostname] = {}
             node.line_handler.append(self._answers_handler)
 
         cmd = "config_radio -c {channel}\n"
@@ -108,8 +112,8 @@ class RadioCharac(object):
         cmd = "send_packets -i {node_id} -p {power} -n {num_pkts} -d {delay}\n"
         for node in self.nodes.values():
             self.current_sender_node = node
-            print >> sys.stderr, "sending node %s" % node.node_id
-            node.send(cmd.format(node_id=node.node_id, power=power,
+            print >> sys.stderr, "sending node %s" % node.hostname
+            node.send(cmd.format(node_id=node.hostname, power=power,
                                  num_pkts=num_pkts, delay=delay))
             time.sleep(2)
             self.current_sender_node = None
@@ -166,7 +170,6 @@ def main(argv):
     if '--summary' in argv:
         result = simple_results_summary(result, human_readable=('-h' in argv))
 
-    import json
     result_str = json.dumps(result, sort_keys=True, indent=4)
     print result_str
 
