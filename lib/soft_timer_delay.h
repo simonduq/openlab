@@ -77,11 +77,8 @@
 
 #include <stdint.h>
 
-enum
-{
-    /** Standard timer frequency, corresponding to a 32kHz clock */
-    SOFT_TIMER_FREQUENCY = 32768,
-};
+/** Standard timer frequency, corresponding to a 32kHz clock */
+#define SOFT_TIMER_FREQUENCY 32768
 
 /**
  * Convert a duration in microseconds to a number of 32kHz timer ticks.
