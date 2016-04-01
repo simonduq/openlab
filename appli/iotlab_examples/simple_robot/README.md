@@ -2,18 +2,11 @@
 
 ## Overview 
 
-This example shows how to use a mobile node embedded on a robot (Turtlebot 2 or Wifibot) with predefined trajectories. The code is here: 
-
-https://github.com/iot-lab/openlab/tree/master/appli/iotlab_examples/simple_robot
+This example shows how to use a mobile node embedded on a robot (Turtlebot 2 or Wifibot) with predefined trajectories.
 
 This firmware is used in the tutorial:
-
 https://www.iot-lab.info/tutorials/submit-an-experiment-with-a-mobile-m3-nodes-using-the-web-portal/
 
-
-## Prerequisites
-
-- Tutorial : [Submit an experiment with a mobile M3 nodes using the web portal](https://www.iot-lab.info/tutorials/submit-an-experiment-with-a-mobile-m3-nodes-using-the-web-portal/)
 
 ## Code
 
@@ -32,12 +25,11 @@ https://www.iot-lab.info/tutorials/submit-an-experiment-with-a-mobile-m3-nodes-u
 
 #### Deploy firmware on nodes
 
-The firmware deployment can be carried out conventionally using web-portal
-on a mobile node see ([tutorial](https://www.iot-lab.info/tutorials/submit-an-experiment-with-a-mobile-m3-nodes-using-the-web-portal/)).
+The firmware deployment can be carried out conventionally using the web-portal, see [this tutorial](https://www.iot-lab.info/tutorials/submit-an-experiment-with-a-mobile-m3-nodes-using-the-web-portal/).
 
-#### simple_robot
+#### Output
 
-When the deployement is ok, you can print the mobile node serial link,
+When the deployement is ok, you can print the mobile node's serial link,
 for example on Grenoble site:
 
 ```
@@ -76,8 +68,3 @@ Where SensorType is a sensor value, printed each second:
 
 The output can be saved on a file (e.g. ``nc 20000 m3-381 > robot.txt``) and plotted
 using ``python plot_imu.py robot.txt``
-
-
-## Demo with animated plot
-
-A complete demo using this firmware is described on the [wiki iotlab github](https://www.iot-lab.info/tutorials/submit-an-experiment-with-a-mobile-m3-nodes-using-the-web-portal/)
