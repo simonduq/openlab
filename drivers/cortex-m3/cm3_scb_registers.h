@@ -29,6 +29,10 @@
 
 #include "cm3_memmap.h"
 
+static inline volatile uint32_t *cm3_scb_get_ICSR()
+{
+    return mem_get_reg32(CM3_SCB_BASE_ADDRESS + CM3_SCB_ICSR_OFFSET);
+}
 static inline volatile uint32_t *cm3_scb_get_AIRCR()
 {
     return mem_get_reg32(CM3_SCB_BASE_ADDRESS + CM3_SCB_AIRCR_OFFSET);
@@ -97,6 +101,11 @@ enum
     CM3_SCB_SCR__SEVONPEND = 0x0010,
     CM3_SCB_SCR__SLEEPDEEP = 0x0004,
     CM3_SCB_SCR__SLEEPONEXIT = 0x0002,
+};
+
+enum
+{
+    CM3_SCB_ICSR__VECTACTIVE = 0x1FFUL,
 };
 
 #endif /* CM3_SCB_REGISTERS_H_ */
