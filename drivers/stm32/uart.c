@@ -27,6 +27,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "stm32f1xx/stm32f1xx.h"
 #include "uart.h"
 #include "uart_.h"
 #include "uart_registers.h"
@@ -34,13 +35,28 @@
 #include "gpio_.h"
 #include "nvic_.h"
 
+#include "printf.h"
+#include "debug.h"
+
+
 #include "platform.h"
 
+uint8_t rx_buffer[4];
+
+static void rx_done(const _uart_t *_uart);
+static inline void rx_setup_dma(const _uart_t *_uart, const uint8_t *tx_buffer,
+                          uint16_t length);
 static inline void tx_dma(const _uart_t *_uart, const uint8_t *tx_buffer,
                           uint16_t length);
 static inline void tx_interrupt(const _uart_t *_uart, const uint8_t *tx_buffer,
                                 uint16_t length);
 static void tx_done(const _uart_t *_uart);
+
+void
+debug_uart(void)
+{
+printf("UART Rx buffer: %x %x %x %x\n", rx_buffer[0], rx_buffer[1], rx_buffer[2], rx_buffer[3]);
+}
 
 void uart_enable(uart_t uart, uint32_t baudrate)
 {
@@ -96,6 +112,30 @@ void uart_enable(uart_t uart, uint32_t baudrate)
     {
         dma_enable(_uart->data->dma_channel_tx);
     }
+
+    memset(rx_buffer, 0xff, 4);
+    dma_enable(DMA_1_CH6);
+    dma_config(
+        // The DMA channel
+        DMA_1_CH6,
+        // the Peripheral Address (UART Data Register)
+        (uint32_t) uart_get_DR(_uart),
+        // The Memory address: if rx_buffer is provided, use it
+        (uint32_t) rx_buffer,
+        // The length
+        sizeof(rx_buffer),
+        // The Transfer size: 8bit
+        DMA_SIZE_8bit,
+        // Direction: from peripheral to memory
+        DMA_DIRECTION_FROM_PERIPHERAL,
+        // Increment memory address
+        DMA_INCREMENT_ON);
+
+    // Start the RX DMA, with the Uart handler
+    dma_start(DMA_1_CH6, (handler_t) rx_done, (handler_arg_t) (uint32_t) _uart);
+
+    // Enable the DMA trigger generation
+    *uart_get_CR3(_uart) |= UART_CR3__DMAR;
 }
 
 void uart_disable(uart_t uart)
@@ -122,7 +162,7 @@ void uart_set_rx_handler(uart_t uart, uart_handler_t handler, handler_arg_t arg)
     // Enable RX interrupt if required
     if (handler)
     {
-        *uart_get_CR1(_uart) |= UART_CR1__RXNEIE;
+     //   *uart_get_CR1(_uart) |= UART_CR1__RXNEIE;
     }
     else
     {
@@ -243,6 +283,16 @@ static void tx_done(const _uart_t *_uart)
     {
         _uart->data->tx_handler(_uart->data->tx_handler_arg);
     }
+}
+static void rx_done(const _uart_t *_uart)
+{
+  printf("Rx done!!!\n");
+
+    // Call handler if any
+    //if (_uart->data->rx_handler)
+  //{
+  //    _uart->data->rx_handler(_uart->data->rx_handler_arg);
+  //}
 }
 void uart_handle_interrupt(const _uart_t *_uart)
 {

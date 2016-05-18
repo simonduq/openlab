@@ -44,11 +44,13 @@ extern const _gpio_t _gpioA, _gpioB, _gpioC, _gpioD, _gpioE, _gpioF, _gpioG;
 #define GPIO_F (&_gpioF)
 #define GPIO_G (&_gpioG)
 
-extern const _dma_t _dma1_ch2, _dma1_ch3, _dma1_ch4, _dma1_ch5, _dma2_ch4;
+extern const _dma_t _dma1_ch2, _dma1_ch3, _dma1_ch4, _dma1_ch5, _dma1_ch6, _dma1_ch7, _dma2_ch4;
 #define DMA_1_CH2 (&_dma1_ch2)
 #define DMA_1_CH3 (&_dma1_ch3)
 #define DMA_1_CH4 (&_dma1_ch4)
 #define DMA_1_CH5 (&_dma1_ch5)
+#define DMA_1_CH6 (&_dma1_ch6)
+#define DMA_1_CH7 (&_dma1_ch7)
 #define DMA_2_CH4 (&_dma2_ch4)
 
 extern const _i2c_t _i2c1, _i2c2;
